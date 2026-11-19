@@ -1,0 +1,17 @@
+%% DFD Context, Individual Mini ERP
+%% Dibuat dari dfd-context.dot dengan scripts/dot_to_mmd.py
+%% Gambar PNG dirender dari file dot yang sama
+flowchart LR
+    Admin["Admin"]
+    Gudang["Staff Gudang"]
+    Sales["Staff Sales"]
+    Manajemen["Manajemen"]
+    Sistem(("0<br/>Sistem Mini ERP"))
+    Admin -->|"email dan password<br/> data pengguna, data master"| Sistem
+    Sistem -->|"session dan hak akses<br/> daftar pengguna dan master"| Admin
+    Gudang -->|"email dan password<br/>data PO<br/>data penerimaan barang<br/>permintaan mutasi"| Sistem
+    Sistem -->|"session dan hak akses<br/>status PO, info stok, daftar master<br/>bukti Goods Receipt, riwayat mutasi"| Gudang
+    Sales -->|"email dan password<br/>data SO<br/>data pengiriman barang"| Sistem
+    Sistem -->|"session dan hak akses<br/>status SO, info stok, daftar master<br/>bukti Delivery"| Sales
+    Manajemen -->|"email dan password<br/>permintaan laporan<br/>periode tanggal"| Sistem
+    Sistem -->|"session dan hak akses<br/>laporan pembelian<br/>laporan penjualan, laporan stok"| Manajemen

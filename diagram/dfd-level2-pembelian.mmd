@@ -1,0 +1,31 @@
+%% DFD Level2 Pembelian, Individual Mini ERP
+%% Dibuat dari dfd-level2-pembelian.dot dengan scripts/dot_to_mmd.py
+%% Gambar PNG dirender dari file dot yang sama
+flowchart LR
+    Gudang["Staff Gudang"]
+    P31(("3.1<br/>Buat PO"))
+    P32(("3.2<br/>Approve PO"))
+    P33(("3.3<br/>Catat GR"))
+    P34(("3.4<br/>Perbarui<br/>Stok Masuk"))
+    D4[("D4 suppliers")]
+    D3[("D3 products")]
+    D6[("D6 purchase_orders")]
+    D7[("D7 goods_receipts")]
+    D10[("D10 stock_movements")]
+    Gudang -->|"data PO<br/>supplier, produk, qty, harga"| P31
+    P31 <-->|"baca supplier"| D4
+    P31 <-->|"baca produk"| D3
+    P31 -->|"simpan PO Draft"| D6
+    P31 -->|"nomor PO"| Gudang
+    Gudang -->|"perintah approve"| P32
+    P32 <-->|"baca PO Draft"| D6
+    P32 -->|"ubah status<br/>menjadi Approved"| D6
+    P32 -->|"status Approved"| Gudang
+    Gudang -->|"data GR<br/>jumlah diterima"| P33
+    P33 <-->|"baca PO Approved"| D6
+    P33 -->|"simpan GR"| D7
+    P33 -->|"data terima<br/>per produk"| P34
+    P34 -->|"tambah stok"| D3
+    P34 -->|"movement masuk"| D10
+    P34 -->|"ubah status menjadi<br/>Received jika penuh"| D6
+    P34 -->|"stok bertambah"| Gudang

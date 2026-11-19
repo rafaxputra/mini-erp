@@ -1,0 +1,22 @@
+%% DFD Level2 Persediaan, Individual Mini ERP
+%% Dibuat dari dfd-level2-persediaan.dot dengan scripts/dot_to_mmd.py
+%% Gambar PNG dirender dari file dot yang sama
+flowchart LR
+    Admin["Admin"]
+    Gudang["Staff Gudang"]
+    P51(("5.1<br/>Lihat Stok<br/>dan Mutasi"))
+    P52(("5.2<br/>Penyesuaian<br/>Stok"))
+    D3[("D3 products")]
+    D10[("D10 stock_movements")]
+    D11[("D11 warehouses")]
+    Admin -->|"permintaan stok"| P51
+    Gudang -->|"permintaan mutasi"| P51
+    P51 <-->|"baca stok"| D3
+    P51 <-->|"baca mutasi"| D10
+    P51 <-->|"baca gudang"| D11
+    P51 -->|"stok per produk"| Admin
+    P51 -->|"riwayat mutasi"| Gudang
+    Admin -->|"data penyesuaian<br/>produk, arah, qty, alasan"| P52
+    P52 <-->|"baca dan ubah stok"| D3
+    P52 -->|"movement penyesuaian"| D10
+    P52 -->|"stok berubah"| Admin

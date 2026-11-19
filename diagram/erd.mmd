@@ -1,0 +1,148 @@
+%% ERD Individual Mini ERP, PT Nusantara Distribusi
+%% Dibuat dari docs/erd.dot dengan scripts/dot_to_mmd.py
+%% Gambar PNG dirender dari file dot yang sama
+erDiagram
+    users {
+        int id PK
+        string name
+        string email UK
+        string password_hash
+        string role
+        boolean is_active
+    }
+    categories {
+        int id PK
+        string name UK
+        string description
+    }
+    suppliers {
+        int id PK
+        string code UK
+        string name
+        string phone
+        string email
+        string address
+    }
+    customers {
+        int id PK
+        string code UK
+        string name
+        string phone
+        string email
+        string address
+    }
+    warehouses {
+        int id PK
+        string code UK
+        string name
+        string location
+        boolean is_default
+    }
+    products {
+        int id PK
+        string code UK
+        string name
+        int category_id FK
+        string unit
+        decimal purchase_price
+        decimal selling_price
+        int stock_qty
+        int min_stock
+        boolean is_active
+    }
+    purchase_orders {
+        int id PK
+        string po_number UK
+        int supplier_id FK
+        date order_date
+        string status
+        decimal total_amount
+        int created_by FK
+    }
+    purchase_order_items {
+        int id PK
+        int purchase_order_id FK
+        int product_id FK
+        int qty
+        decimal unit_price
+        decimal subtotal
+    }
+    goods_receipts {
+        int id PK
+        string gr_number UK
+        int purchase_order_id FK
+        date receipt_date
+        int received_by FK
+    }
+    goods_receipt_items {
+        int id PK
+        int goods_receipt_id FK
+        int purchase_order_item_id FK
+        int product_id FK
+        int qty_received
+    }
+    sales_orders {
+        int id PK
+        string so_number UK
+        int customer_id FK
+        date order_date
+        string status
+        decimal total_amount
+        int created_by FK
+    }
+    sales_order_items {
+        int id PK
+        int sales_order_id FK
+        int product_id FK
+        int qty
+        decimal unit_price
+        decimal subtotal
+    }
+    deliveries {
+        int id PK
+        string delivery_number UK
+        int sales_order_id FK
+        date delivery_date
+        int delivered_by FK
+    }
+    delivery_items {
+        int id PK
+        int delivery_id FK
+        int sales_order_item_id FK
+        int product_id FK
+        int qty_delivered
+    }
+    stock_movements {
+        int id PK
+        int product_id FK
+        int warehouse_id FK
+        string movement_type
+        string reference_type
+        int reference_id
+        int qty
+        int qty_before
+        int qty_after
+        int created_by FK
+    }
+    users ||--o{ purchase_orders : "creates"
+    users ||--o{ sales_orders : "creates"
+    users ||--o{ goods_receipts : "receives"
+    users ||--o{ deliveries : "delivers"
+    users ||--o{ stock_movements : "records"
+    categories ||--o{ products : "groups"
+    suppliers ||--o{ purchase_orders : "supplies"
+    customers ||--o{ sales_orders : "orders"
+    warehouses ||--o{ stock_movements : "stores"
+    products ||--o{ purchase_order_items : "ordered in"
+    products ||--o{ goods_receipt_items : "received as"
+    products ||--o{ sales_order_items : "sold in"
+    products ||--o{ delivery_items : "delivered as"
+    products ||--o{ stock_movements : "moves"
+    purchase_orders ||--o{ purchase_order_items : "has"
+    purchase_orders ||--o{ goods_receipts : "received by"
+    goods_receipts ||--o{ goods_receipt_items : "has"
+    purchase_order_items ||--o{ goods_receipt_items : "fulfilled by"
+    sales_orders ||--o{ sales_order_items : "has"
+    sales_orders ||--o{ deliveries : "delivered by"
+    deliveries ||--o{ delivery_items : "has"
+    sales_order_items ||--o{ delivery_items : "fulfilled by"

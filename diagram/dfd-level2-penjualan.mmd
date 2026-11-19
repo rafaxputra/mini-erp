@@ -1,0 +1,32 @@
+%% DFD Level2 Penjualan, Individual Mini ERP
+%% Dibuat dari dfd-level2-penjualan.dot dengan scripts/dot_to_mmd.py
+%% Gambar PNG dirender dari file dot yang sama
+flowchart LR
+    Sales["Staff Sales"]
+    P41(("4.1<br/>Buat SO"))
+    P42(("4.2<br/>Konfirmasi SO"))
+    P43(("4.3<br/>Catat Delivery"))
+    P44(("4.4<br/>Perbarui<br/>Stok Keluar"))
+    D5[("D5 customers")]
+    D3[("D3 products")]
+    D8[("D8 sales_orders")]
+    D9[("D9 deliveries")]
+    D10[("D10 stock_movements")]
+    Sales -->|"data SO<br/>customer, produk, qty, harga"| P41
+    P41 <-->|"baca customer"| D5
+    P41 <-->|"baca produk"| D3
+    P41 -->|"simpan SO Draft"| D8
+    P41 -->|"nomor SO"| Sales
+    Sales -->|"perintah konfirmasi"| P42
+    P42 <-->|"baca SO Draft"| D8
+    P42 -->|"ubah status<br/>menjadi Confirmed"| D8
+    P42 -->|"status Confirmed"| Sales
+    Sales -->|"data Delivery<br/>jumlah dikirim"| P43
+    P43 <-->|"baca SO Confirmed"| D8
+    P43 <-->|"cek stok"| D3
+    P43 -->|"simpan Delivery"| D9
+    P43 -->|"data kirim<br/>per produk"| P44
+    P44 -->|"kurangi stok"| D3
+    P44 -->|"movement keluar"| D10
+    P44 -->|"ubah status menjadi<br/>Delivered jika penuh"| D8
+    P44 -->|"stok berkurang"| Sales
