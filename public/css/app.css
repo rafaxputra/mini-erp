@@ -1,0 +1,100 @@
+/* Mini ERP - styling kecil, Bootstrap 5 tetap yang utama.
+   File ini cuma poles tampilan, logika dan validasi ada di controller. */
+
+:root {
+  --erp-teal: #0f3d47;
+  --erp-teal-light: #17606e;
+  --erp-bg: #f4f6f8;
+  --erp-border: #dee5e8;
+}
+
+body {
+  background: var(--erp-bg);
+}
+
+/* Navbar: teal gelap, bukan biru bawaan Bootstrap */
+.navbar-erp {
+  background: var(--erp-teal) !important;
+  box-shadow: 0 2px 8px rgba(15, 61, 71, .25);
+}
+.navbar-erp .navbar-brand {
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+.navbar-erp .nav-link,
+.navbar-erp .navbar-text {
+  color: rgba(255, 255, 255, .85);
+}
+.navbar-erp .nav-link:hover,
+.navbar-erp .nav-link:focus {
+  color: #fff;
+}
+.navbar-erp .dropdown-menu {
+  border: 1px solid var(--erp-border);
+  box-shadow: 0 4px 16px rgba(15, 61, 71, .12);
+}
+
+/* Kartu dan tabel: sudut membulat, bayangan halus */
+.card {
+  border: 1px solid var(--erp-border);
+  border-radius: .75rem;
+  box-shadow: 0 1px 4px rgba(15, 61, 71, .06);
+}
+.card-header {
+  background: #fff;
+  border-bottom: 1px solid var(--erp-border);
+  font-weight: 600;
+}
+.table {
+  margin-bottom: 0;
+}
+.table thead th {
+  background: #eef3f4;
+  border-bottom: 2px solid var(--erp-border);
+  font-size: .875rem;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--erp-teal);
+}
+.table tbody tr:hover {
+  background: #f2f7f8;
+}
+
+/* Tombol dan form: fokus teal, sudut sedikit membulat */
+.btn {
+  border-radius: .5rem;
+}
+.btn-primary {
+  background: var(--erp-teal);
+  border-color: var(--erp-teal);
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--erp-teal-light);
+  border-color: var(--erp-teal-light);
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--erp-teal-light);
+  box-shadow: 0 0 0 .25rem rgba(23, 96, 110, .15);
+}
+
+/* Judul halaman */
+.page-title {
+  color: var(--erp-teal);
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+/* Login: kartu di tengah, lebar pas */
+.login-card {
+  max-width: 420px;
+  margin: 4rem auto 0;
+}
+.login-card .card-header {
+  background: var(--erp-teal);
+  color: #fff;
+  text-align: center;
+  border-radius: .75rem .75rem 0 0;
+  padding: 1rem;
+}

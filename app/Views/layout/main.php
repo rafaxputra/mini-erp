@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= esc($title ?? 'Mini ERP') ?> - Mini ERP PT Nusantara Distribusi</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="<?= base_url('css/app.css') ?>" rel="stylesheet">
 </head>
 <body>
 <?php if (session()->get('user_id')): ?>
 <?php $role = session()->get('user_role'); ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg navbar-dark navbar-erp">
   <div class="container-fluid">
     <a class="navbar-brand" href="/dashboard">Mini ERP PT Nusantara Distribusi</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
@@ -34,7 +35,7 @@
   </div>
 </nav>
 <?php else: ?>
-<nav class="navbar navbar-dark bg-primary"><div class="container-fluid"><span class="navbar-brand">Mini ERP PT Nusantara Distribusi</span></div></nav>
+<nav class="navbar navbar-dark navbar-erp"><div class="container-fluid"><span class="navbar-brand">Mini ERP PT Nusantara Distribusi</span></div></nav>
 <?php endif; ?>
 <div class="container mt-4 mb-5">
   <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
