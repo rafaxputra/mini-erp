@@ -10,6 +10,14 @@
 <body>
 <?php if (session()->get('user_id')): ?>
 <?php $role = session()->get('user_role'); ?>
+<?php
+$currentPath = uri_string();
+$activeGroup = '';
+if (preg_match('#^(categories|products|suppliers|customers|users)(/|$)#', $currentPath)) $activeGroup = 'master';
+$navActive = static function (string $prefix) use ($currentPath): string {
+    return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
+};
+?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
 <?php
 $dbNotif = \Config\Database::connect();
@@ -35,22 +43,22 @@ if ($initials === '') $initials = '?';
       <div class="collapse navbar-collapse" id="sidebar-menu">
         <ul class="navbar-nav pt-lg-3">
           <li class="nav-item">
-            <a class="nav-link" href="/dashboard">
+            <a class="nav-link <?= ($currentPath === 'dashboard' || $currentPath === '') ? 'active' : '' ?>" href="/dashboard">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /> </svg></span>
               <span class="nav-link-title">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="false">
+          <li class="nav-item dropdown <?= $activeGroup === 'master' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'master' ? 'true' : 'false' ?>">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /> </svg></span>
               <span class="nav-link-title">Data Utama</span>
             </a>
-            <div class="dropdown-menu">
-              <?php if ($role === 'admin'): ?><a class="dropdown-item" href="/categories">Kategori</a><?php endif; ?>
-              <a class="dropdown-item" href="/products">Produk</a>
-              <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item" href="/suppliers">Pemasok</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item" href="/customers">Pelanggan</a><?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item" href="/users">Pengguna</a><?php endif; ?>
+            <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
+              <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
+              <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
+              <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a><?php endif; ?>
             </div>
           </li>
         </ul>

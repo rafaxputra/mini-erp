@@ -9,4 +9,5 @@ class UserModel extends Model
     protected $returnType = 'array';
     protected $useTimestamps = true;
     protected $allowedFields = ['name', 'email', 'password_hash', 'role_id', 'is_active'];
+    protected array $casts = ['is_active' => 'boolean'];
 }

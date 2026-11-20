@@ -7,6 +7,10 @@
 <tbody>
 <?php foreach ($users as $u): ?><tr><td><?= esc($u['id']) ?></td><td><?= esc($u['name']) ?></td><td><?= esc($u['email']) ?></td><td><?= esc($u['role_name']) ?></td><td><?= $u['is_active'] ? 'Ya' : 'Tidak' ?></td><td><?= esc($u['created_at']) ?></td>
 <td><a class="btn btn-sm btn-warning" href="/users/edit/<?= esc($u['id']) ?>">Ubah</a>
-<form action="/users/delete/<?= esc($u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Hapus pengguna ini?')"><button class="btn btn-sm btn-danger" type="submit">Hapus</button></form></td></tr><?php endforeach; ?>
+<?php if ($u['is_active']): ?>
+<form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Nonaktifkan pengguna ini?')"><button class="btn btn-sm btn-danger" type="submit">Nonaktifkan</button></form>
+<?php else: ?>
+<form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Aktifkan pengguna ini?')"><button class="btn btn-sm btn-success" type="submit">Aktifkan</button></form>
+<?php endif; ?></td></tr><?php endforeach; ?>
 </tbody></table>
 <?= $this->endSection() ?>

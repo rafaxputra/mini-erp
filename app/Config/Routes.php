@@ -38,5 +38,6 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('users/store', 'Users::store');
     $routes->get('users/edit/(:num)', 'Users::edit/$1');
     $routes->post('users/update/(:num)', 'Users::update/$1');
-    $routes->post('users/delete/(:num)', 'Users::delete/$1');
+    $routes->post('users/toggle/(:num)', 'Users::toggle/$1');
 });
+
