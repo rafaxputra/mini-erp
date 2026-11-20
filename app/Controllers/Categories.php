@@ -16,8 +16,9 @@ class Categories extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola kategori.')) return $r;
-        if (! $this->validate(['name' => 'required|min_length[2]|max_length[100]|is_unique[categories.name]', 'description' => 'permit_empty'])) {
-            return redirect()->back()->withInput()->with('error', 'Nama kategori wajib diisi dan belum dipakai.');
+                $messages = ['name' => ['required' => 'Nama kategori wajib diisi.', 'min_length' => 'Nama kategori minimal 2 karakter.', 'max_length' => 'Nama kategori maksimal 100 karakter.', 'is_unique' => 'Nama kategori {value} sudah dipakai.']];
+        if (! $this->validate(['name' => 'required|min_length[2]|max_length[100]|is_unique[categories.name]', 'description' => 'permit_empty'], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new CategoryModel())->insert(['name' => $this->request->getPost('name'), 'description' => $this->request->getPost('description')]);
         return redirect()->to('/categories')->with('success', 'Kategori berhasil ditambahkan.');
@@ -32,8 +33,9 @@ class Categories extends BaseController
     public function update($id)
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola kategori.')) return $r;
-        if (! $this->validate(['name' => 'required|min_length[2]|max_length[100]|is_unique[categories.name,id,' . $id . ']', 'description' => 'permit_empty'])) {
-            return redirect()->back()->withInput()->with('error', 'Nama kategori wajib diisi dan belum dipakai produk lain.');
+                $messages = ['name' => ['required' => 'Nama kategori wajib diisi.', 'min_length' => 'Nama kategori minimal 2 karakter.', 'max_length' => 'Nama kategori maksimal 100 karakter.', 'is_unique' => 'Nama kategori {value} sudah dipakai.']];
+        if (! $this->validate(['name' => 'required|min_length[2]|max_length[100]|is_unique[categories.name,id,' . $id . ']', 'description' => 'permit_empty'], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new CategoryModel())->update($id, ['name' => $this->request->getPost('name'), 'description' => $this->request->getPost('description')]);
         return redirect()->to('/categories')->with('success', 'Kategori berhasil diubah.');

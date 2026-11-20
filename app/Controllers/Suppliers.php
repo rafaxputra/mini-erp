@@ -17,8 +17,15 @@ class Suppliers extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
         $rules = ['code' => 'required|max_length[20]|is_unique[suppliers.code]', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Periksa kembali isian. Kode harus unik dan email harus valid.');
+        $messages = [
+            'code' => ['required' => 'Kode pemasok wajib diisi.', 'max_length' => 'Kode pemasok maksimal 20 karakter.', 'is_unique' => 'Kode pemasok {value} sudah dipakai.'],
+            'name' => ['required' => 'Nama pemasok wajib diisi.', 'min_length' => 'Nama pemasok minimal 2 karakter.', 'max_length' => 'Nama pemasok maksimal 150 karakter.'],
+            'phone' => ['max_length' => 'Nomor telepon maksimal 30 karakter.'],
+            'email' => ['valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new SupplierModel())->insert($this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
         return redirect()->to('/suppliers')->with('success', 'Pemasok berhasil ditambahkan.');
@@ -34,8 +41,15 @@ class Suppliers extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
         $rules = ['code' => 'required|max_length[20]|is_unique[suppliers.code,id,' . $id . ']', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Periksa kembali isian. Kode harus unik dan email harus valid.');
+        $messages = [
+            'code' => ['required' => 'Kode pemasok wajib diisi.', 'max_length' => 'Kode pemasok maksimal 20 karakter.', 'is_unique' => 'Kode pemasok {value} sudah dipakai.'],
+            'name' => ['required' => 'Nama pemasok wajib diisi.', 'min_length' => 'Nama pemasok minimal 2 karakter.', 'max_length' => 'Nama pemasok maksimal 150 karakter.'],
+            'phone' => ['max_length' => 'Nomor telepon maksimal 30 karakter.'],
+            'email' => ['valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new SupplierModel())->update($id, $this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
         return redirect()->to('/suppliers')->with('success', 'Pemasok berhasil diubah.');

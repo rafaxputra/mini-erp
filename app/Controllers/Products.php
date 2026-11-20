@@ -28,8 +28,19 @@ class Products extends BaseController
             'stock_qty' => 'required|integer|greater_than_equal_to[0]',
             'min_stock' => 'required|integer|greater_than_equal_to[0]',
         ];
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Periksa kembali isian produk. Kode harus unik, harga dan stok tidak boleh negatif.');
+        $messages = [
+            'code' => ['required' => 'Kode produk wajib diisi.', 'max_length' => 'Kode produk maksimal 20 karakter.', 'is_unique' => 'Kode produk {value} sudah dipakai produk lain.'],
+            'name' => ['required' => 'Nama produk wajib diisi.', 'min_length' => 'Nama produk minimal 2 karakter.', 'max_length' => 'Nama produk maksimal 150 karakter.'],
+            'category_id' => ['required' => 'Kategori wajib dipilih.', 'integer' => 'Kategori tidak valid.'],
+            'unit' => ['required' => 'Satuan wajib diisi.', 'max_length' => 'Satuan maksimal 20 karakter.'],
+            'purchase_price' => ['required' => 'Harga beli wajib diisi.', 'numeric' => 'Harga beli harus berupa angka.', 'greater_than_equal_to' => 'Harga beli tidak boleh negatif.'],
+            'selling_price' => ['required' => 'Harga jual wajib diisi.', 'numeric' => 'Harga jual harus berupa angka.', 'greater_than_equal_to' => 'Harga jual tidak boleh negatif.'],
+            'stock_qty' => ['required' => 'Stok wajib diisi.', 'integer' => 'Stok harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok tidak boleh negatif.'],
+            'min_stock' => ['required' => 'Stok minimum wajib diisi.', 'integer' => 'Stok minimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok minimum tidak boleh negatif.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new ProductModel())->insert($this->request->getPost(['code', 'name', 'category_id', 'unit', 'purchase_price', 'selling_price', 'stock_qty', 'min_stock']));
         return redirect()->to('/products')->with('success', 'Produk berhasil ditambahkan.');
@@ -54,8 +65,19 @@ class Products extends BaseController
             'stock_qty' => 'required|integer|greater_than_equal_to[0]',
             'min_stock' => 'required|integer|greater_than_equal_to[0]',
         ];
-        if (! $this->validate($rules)) {
-            return redirect()->back()->withInput()->with('error', 'Periksa kembali isian produk. Kode harus unik, harga dan stok tidak boleh negatif.');
+        $messages = [
+            'code' => ['required' => 'Kode produk wajib diisi.', 'max_length' => 'Kode produk maksimal 20 karakter.', 'is_unique' => 'Kode produk {value} sudah dipakai produk lain.'],
+            'name' => ['required' => 'Nama produk wajib diisi.', 'min_length' => 'Nama produk minimal 2 karakter.', 'max_length' => 'Nama produk maksimal 150 karakter.'],
+            'category_id' => ['required' => 'Kategori wajib dipilih.', 'integer' => 'Kategori tidak valid.'],
+            'unit' => ['required' => 'Satuan wajib diisi.', 'max_length' => 'Satuan maksimal 20 karakter.'],
+            'purchase_price' => ['required' => 'Harga beli wajib diisi.', 'numeric' => 'Harga beli harus berupa angka.', 'greater_than_equal_to' => 'Harga beli tidak boleh negatif.'],
+            'selling_price' => ['required' => 'Harga jual wajib diisi.', 'numeric' => 'Harga jual harus berupa angka.', 'greater_than_equal_to' => 'Harga jual tidak boleh negatif.'],
+            'stock_qty' => ['required' => 'Stok wajib diisi.', 'integer' => 'Stok harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok tidak boleh negatif.'],
+            'min_stock' => ['required' => 'Stok minimum wajib diisi.', 'integer' => 'Stok minimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok minimum tidak boleh negatif.'],
+        ];
+
+        if (! $this->validate($rules, $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new ProductModel())->update($id, $this->request->getPost(['code', 'name', 'category_id', 'unit', 'purchase_price', 'selling_price', 'stock_qty', 'min_stock']));
         return redirect()->to('/products')->with('success', 'Produk berhasil diubah.');

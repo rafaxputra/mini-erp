@@ -17,13 +17,19 @@ class Users extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
+        $messages = [
+            'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
+            'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],
+            'password' => ['required' => 'Password wajib diisi.', 'min_length' => 'Password minimal 6 karakter.', 'max_length' => 'Password maksimal 100 karakter.'],
+            'role_id' => ['required' => 'Peran wajib dipilih.', 'integer' => 'Peran tidak valid.', 'is_not_unique' => 'Peran yang dipilih tidak ada.'],
+        ];
         if (! $this->validate([
             'name' => 'required|min_length[2]|max_length[100]',
             'email' => 'required|valid_email|max_length[150]|is_unique[users.email]',
             'password' => 'required|min_length[6]|max_length[100]',
             'role_id' => 'required|integer|is_not_unique[roles.id]',
-        ])) {
-            return redirect()->back()->withInput()->with('error', 'Nama, email, password minimal 6 karakter, dan peran wajib diisi. Email belum boleh dipakai pengguna lain.');
+        ], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new UserModel())->insert([
             'name' => $this->request->getPost('name'),
@@ -46,13 +52,19 @@ class Users extends BaseController
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
         $item = (new UserModel())->find($id);
         if (! $item) return redirect()->to('/users')->with('error', 'Pengguna tidak ditemukan.');
+        $messages = [
+            'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
+            'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],
+            'password' => ['required' => 'Password wajib diisi.', 'min_length' => 'Password minimal 6 karakter.', 'max_length' => 'Password maksimal 100 karakter.'],
+            'role_id' => ['required' => 'Peran wajib dipilih.', 'integer' => 'Peran tidak valid.', 'is_not_unique' => 'Peran yang dipilih tidak ada.'],
+        ];
         if (! $this->validate([
             'name' => 'required|min_length[2]|max_length[100]',
             'email' => 'required|valid_email|max_length[150]|is_unique[users.email,id,' . $id . ']',
             'password' => 'permit_empty|min_length[6]|max_length[100]',
             'role_id' => 'required|integer|is_not_unique[roles.id]',
-        ])) {
-            return redirect()->back()->withInput()->with('error', 'Nama, email, dan peran wajib diisi. Email belum boleh dipakai pengguna lain. Password baru minimal 6 karakter kalau diisi.');
+        ], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $data = [
             'name' => $this->request->getPost('name'),

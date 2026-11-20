@@ -21,8 +21,12 @@ class Roles extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola peran.')) return $r;
         $name = strtolower(trim((string) $this->request->getPost('name')));
-        if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name]', 'description' => 'permit_empty|max_length[255]'])) {
-            return redirect()->back()->withInput()->with('error', 'Nama peran wajib diisi (huruf, angka, garis bawah, tanpa spasi, maks 20 karakter) dan belum dipakai.');
+        $messages = [
+            'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
+            'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
+        ];
+        if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name]', 'description' => 'permit_empty|max_length[255]'], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new RoleModel())->insert(['name' => $name, 'description' => $this->request->getPost('description')]);
         return redirect()->to('/roles')->with('success', 'Peran berhasil ditambahkan.');
@@ -41,15 +45,23 @@ class Roles extends BaseController
         if (! $item) return redirect()->to('/roles')->with('error', 'Peran tidak ditemukan.');
         $isCore = in_array($item['name'], self::CORE, true);
         if ($isCore) {
-            if (! $this->validate(['description' => 'permit_empty|max_length[255]'])) {
-                return redirect()->back()->withInput()->with('error', 'Deskripsi maksimal 255 karakter.');
+        $messages = [
+            'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
+            'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
+        ];
+            if (! $this->validate(['description' => 'permit_empty|max_length[255]'], $messages)) {
+                return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
             }
             (new RoleModel())->update($id, ['description' => $this->request->getPost('description')]);
             return redirect()->to('/roles')->with('success', 'Peran berhasil diubah.');
         }
         $name = strtolower(trim((string) $this->request->getPost('name')));
-        if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name,id,' . $id . ']', 'description' => 'permit_empty|max_length[255]'])) {
-            return redirect()->back()->withInput()->with('error', 'Nama peran wajib diisi (huruf, angka, garis bawah, tanpa spasi, maks 20 karakter) dan belum dipakai.');
+        $messages = [
+            'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
+            'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
+        ];
+        if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name,id,' . $id . ']', 'description' => 'permit_empty|max_length[255]'], $messages)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         (new RoleModel())->update($id, ['name' => $name, 'description' => $this->request->getPost('description')]);
         return redirect()->to('/roles')->with('success', 'Peran berhasil diubah.');
