@@ -70,18 +70,17 @@ class Users extends BaseController
         (new UserModel())->update($id, $data);
         return redirect()->to('/users')->with('success', 'Pengguna berhasil diubah.');
     }
-    public function delete($id)
+    public function toggle($id)
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
         if ((int) $id === (int) session()->get('user_id')) {
-            return redirect()->to('/users')->with('error', 'Akun sendiri tidak bisa dihapus.');
+            return redirect()->to('/users')->with('error', 'Akun sendiri tidak bisa dinonaktifkan.');
         }
-        try {
-            (new UserModel())->delete($id);
-            return redirect()->to('/users')->with('success', 'Pengguna berhasil dihapus.');
-        } catch (\Throwable $e) {
-            return redirect()->to('/users')->with('error', 'Pengguna tidak bisa dihapus karena sudah dipakai di transaksi.');
-        }
+        $item = (new UserModel())->find($id);
+        if (! $item) return redirect()->to('/users')->with('error', 'Pengguna tidak ditemukan.');
+        $newActive = ! (bool) $item['is_active'];
+        (new UserModel())->update($id, ['is_active' => $newActive]);
+        return redirect()->to('/users')->with('success', $newActive ? 'Pengguna berhasil diaktifkan.' : 'Pengguna berhasil dinonaktifkan.');
     }
     private function roles(): array
     {
