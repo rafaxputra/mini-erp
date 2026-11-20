@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= esc($title ?? 'Mini ERP') ?> - Mini ERP PT Nusantara Distribusi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/css/tabler.min.css" rel="stylesheet">
 <link href="<?= base_url('css/app.css') ?>" rel="stylesheet">
 </head>
@@ -17,17 +20,10 @@ if (preg_match('#^(categories|products|suppliers|customers|users)(/|$)#', $curre
 $navActive = static function (string $prefix) use ($currentPath): string {
     return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
 };
+$backSegments = explode('/', trim($currentPath, '/'));
+$backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
 ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
-<?php
-$dbNotif = \Config\Database::connect();
-$lowStockNotif = $dbNotif->query('SELECT code, name, stock_qty, min_stock FROM products WHERE stock_qty <= min_stock ORDER BY stock_qty ASC')->getResultArray();
-$lowStockCount = count($lowStockNotif);
-$userName = (string) session()->get('user_name');
-$nameParts = preg_split('/\s+/', trim($userName));
-$initials = strtoupper(substr($nameParts[0] ?? '', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
-if ($initials === '') $initials = '?';
-?>
 <div class="page">
   <aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
@@ -36,7 +32,7 @@ if ($initials === '') $initials = '?';
       </button>
       <div class="navbar-brand">
         <a href="/dashboard" aria-label="PT Nusantara Distribusi">
-          <img src="<?= base_url('img/logo.jpg') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
+          <img src="<?= base_url('img/logo-nusantara.webp') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
           <span class="navbar-brand-text">PT Nusantara Distribusi</span>
         </a>
       </div>
@@ -82,33 +78,6 @@ if ($initials === '') $initials = '?';
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="navbar-nav flex-row order-md-last">
-          <div class="nav-item dropdown d-none d-md-flex me-3">
-            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Notifikasi stok">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a6 6 0 0 0 -12 0c0 7 -3 9 -3 9h18s-3 -2 -3 -9"/><path d="M13.73 21a2 2 0 0 1 -3.46 0"/></svg></span>
-              <?php if ($lowStockCount > 0): ?><span class="badge bg-red badge-notification badge-pill"><?= $lowStockCount ?></span><?php endif; ?>
-            </a>
-            <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
-              <div class="card">
-                <div class="card-header"><h3 class="card-title">Stok Hampir Habis</h3></div>
-                <div class="list-group list-group-flush list-group-hoverable">
-                  <?php if (empty($lowStockNotif)): ?>
-                    <div class="list-group-item"><div class="text-secondary">Tidak ada produk yang stoknya menipis.</div></div>
-                  <?php else: ?>
-                    <?php foreach ($lowStockNotif as $n): ?>
-                    <a href="/dashboard" class="list-group-item">
-                      <div class="row align-items-center">
-                        <div class="col text-truncate">
-                          <span class="text-body d-block"><?= esc($n['code']) ?> <?= esc($n['name']) ?></span>
-                          <div class="d-block text-secondary text-truncate mt-n1">Sisa <?= esc($n['stock_qty']) ?>, minimal <?= esc($n['min_stock']) ?></div>
-                        </div>
-                      </div>
-                    </a>
-                    <?php endforeach; ?>
-                  <?php endif; ?>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="nav-item dropdown">
             <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Menu akun">
               <span class="avatar avatar-sm" style="background-color: #0f3d47; color: #fff;"><?= esc($initials) ?></span>
@@ -128,6 +97,7 @@ if ($initials === '') $initials = '?';
       <div class="container-xl">
         <div class="row g-2 align-items-center">
           <div class="col">
+            <?php if ($backUrl): ?><a href="<?= $backUrl ?>" class="btn btn-ghost-secondary btn-sm mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg> Kembali</a><?php endif; ?>
             <h1 class="page-title"><?= esc($title ?? 'Mini ERP') ?></h1>
           </div>
         </div>
@@ -135,10 +105,10 @@ if ($initials === '') $initials = '?';
     </div>
     <div class="page-body">
       <div class="container-xl">
-        <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
-        <?php if (session()->getFlashdata('error')): ?><div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div><?php endif; ?>
+        <?php if (session()->getFlashdata('success')): ?><div class="alert alert-important alert-success alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></div><div><?= esc(session()->getFlashdata('success')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
+        <?php if (session()->getFlashdata('error')): ?><div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><?= esc(session()->getFlashdata('error')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
         <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
-        <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
+        <div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>
         <?php endif; ?>
         <?= $this->renderSection('content') ?>
       </div>
@@ -153,10 +123,10 @@ if ($initials === '') $initials = '?';
       <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
       <div class="text-secondary">Mini ERP</div>
     </div>
-    <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
-    <?php if (session()->getFlashdata('error')): ?><div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div><?php endif; ?>
+    <?php if (session()->getFlashdata('success')): ?><div class="alert alert-important alert-success alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></div><div><?= esc(session()->getFlashdata('success')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
+    <?php if (session()->getFlashdata('error')): ?><div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><?= esc(session()->getFlashdata('error')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
     <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
-    <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
+    <div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>
     <?php endif; ?>
     <?= $this->renderSection('content') ?>
   </div>
