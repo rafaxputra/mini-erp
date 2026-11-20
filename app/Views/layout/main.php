@@ -70,6 +70,13 @@ if ($initials === '') {
           </li>
         </ul>
         <div class="navbar-side">
+          <div class="d-flex align-items-center px-3 py-2">
+            <span class="avatar avatar-sm me-2" style="background-color: #0f3d47; color: #fff;"><?= esc($initials) ?></span>
+            <div class="lh-1">
+              <div class="text-white"><?= esc($userName) ?></div>
+              <div class="mt-1 small text-white-50"><?= esc($roleLabel) ?></div>
+            </div>
+          </div>
           <ul class="navbar-nav">
             <li class="nav-item">
               <a class="nav-link" href="/auth/logout">
@@ -83,27 +90,6 @@ if ($initials === '') {
     </div>
   </aside>
   <div class="page-wrapper">
-    <header class="navbar navbar-expand-md d-print-none">
-      <div class="container-xl">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="navbar-nav flex-row order-md-last">
-          <div class="nav-item dropdown">
-            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Menu akun">
-              <span class="avatar avatar-sm" style="background-color: #0f3d47; color: #fff;"><?= esc($initials) ?></span>
-              <div class="d-none d-xl-block ps-2">
-                <div><?= esc($userName) ?></div>
-                <div class="mt-1 small text-secondary"><?= esc($roleLabel) ?></div>
-              </div>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-              <a href="/auth/logout" class="dropdown-item">Logout</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
     <div class="page-header d-print-none">
       <div class="container-xl">
         <div class="row g-2 align-items-center">
