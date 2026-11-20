@@ -22,6 +22,16 @@ $navActive = static function (string $prefix) use ($currentPath): string {
 };
 $backSegments = explode('/', trim($currentPath, '/'));
 $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
+
+$userName = (string) (session()->get('user_name') ?? 'Pengguna');
+$nameParts = array_filter(preg_split('/\s+/', trim($userName)));
+$initials = '';
+foreach (array_slice($nameParts, 0, 2) as $part) {
+    $initials .= mb_strtoupper(mb_substr($part, 0, 1));
+}
+if ($initials === '') {
+    $initials = 'U';
+}
 ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
 <div class="page">
@@ -32,7 +42,7 @@ $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
       </button>
       <div class="navbar-brand">
         <a href="/dashboard" aria-label="PT Nusantara Distribusi">
-          <img src="<?= base_url('img/logo-nusantara.webp') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
+          <img src="<?= base_url('img/logo.jpg') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
           <span class="navbar-brand-text">PT Nusantara Distribusi</span>
         </a>
       </div>
@@ -119,7 +129,7 @@ $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
 <div class="page page-center">
   <div class="container py-4">
     <div class="text-center mb-4">
-      <img src="<?= base_url('img/logo-nusantara.webp') ?>" width="64" height="64" alt="PT Nusantara Distribusi">
+      <img src="<?= base_url('img/logo.jpg') ?>" width="64" height="64" alt="PT Nusantara Distribusi">
       <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
       <div class="text-secondary">Mini ERP</div>
     </div>
