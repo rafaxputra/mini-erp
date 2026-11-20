@@ -11,6 +11,15 @@
 <?php if (session()->get('user_id')): ?>
 <?php $role = session()->get('user_role'); ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
+<?php
+$dbNotif = \Config\Database::connect();
+$lowStockNotif = $dbNotif->query('SELECT code, name, stock_qty, min_stock FROM products WHERE stock_qty <= min_stock ORDER BY stock_qty ASC')->getResultArray();
+$lowStockCount = count($lowStockNotif);
+$userName = (string) session()->get('user_name');
+$nameParts = preg_split('/\s+/', trim($userName));
+$initials = strtoupper(substr($nameParts[0] ?? '', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
+if ($initials === '') $initials = '?';
+?>
 <div class="page">
   <aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
@@ -59,14 +68,59 @@
     </div>
   </aside>
   <div class="page-wrapper">
+    <header class="navbar navbar-expand-md d-print-none">
+      <div class="container-xl">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav flex-row order-md-last">
+          <div class="nav-item dropdown d-none d-md-flex me-3">
+            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Notifikasi stok">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 8a6 6 0 0 0 -12 0c0 7 -3 9 -3 9h18s-3 -2 -3 -9"/><path d="M13.73 21a2 2 0 0 1 -3.46 0"/></svg></span>
+              <?php if ($lowStockCount > 0): ?><span class="badge bg-red badge-notification badge-pill"><?= $lowStockCount ?></span><?php endif; ?>
+            </a>
+            <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
+              <div class="card">
+                <div class="card-header"><h3 class="card-title">Stok Hampir Habis</h3></div>
+                <div class="list-group list-group-flush list-group-hoverable">
+                  <?php if (empty($lowStockNotif)): ?>
+                    <div class="list-group-item"><div class="text-secondary">Tidak ada produk yang stoknya menipis.</div></div>
+                  <?php else: ?>
+                    <?php foreach ($lowStockNotif as $n): ?>
+                    <a href="/dashboard" class="list-group-item">
+                      <div class="row align-items-center">
+                        <div class="col text-truncate">
+                          <span class="text-body d-block"><?= esc($n['code']) ?> <?= esc($n['name']) ?></span>
+                          <div class="d-block text-secondary text-truncate mt-n1">Sisa <?= esc($n['stock_qty']) ?>, minimal <?= esc($n['min_stock']) ?></div>
+                        </div>
+                      </div>
+                    </a>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="nav-item dropdown">
+            <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Menu akun">
+              <span class="avatar avatar-sm" style="background-color: #0f3d47; color: #fff;"><?= esc($initials) ?></span>
+              <div class="d-none d-xl-block ps-2">
+                <div><?= esc($userName) ?></div>
+                <div class="mt-1 small text-secondary"><?= esc($roleLabel) ?></div>
+              </div>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+              <a href="/auth/logout" class="dropdown-item">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
     <div class="page-header d-print-none">
       <div class="container-xl">
         <div class="row g-2 align-items-center">
           <div class="col">
             <h1 class="page-title"><?= esc($title ?? 'Mini ERP') ?></h1>
-          </div>
-          <div class="col-auto ms-auto d-print-none">
-            <span class="text-secondary"><?= esc(session()->get('user_name')) ?> (<?= esc($roleLabel) ?>)</span>
           </div>
         </div>
       </div>
