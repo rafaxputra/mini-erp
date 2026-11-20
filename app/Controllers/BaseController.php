@@ -50,10 +50,13 @@ abstract class BaseController extends Controller
         }
         return redirect()->to($redirect)->with('error', $message);
     }
-    protected function nextNumber(string $table, string $column, string $prefix): string
+    protected function nextNumber(string $table, string $column, string $prefix, int $lockKey = 0): string
     {
         $db = \Config\Database::connect();
-        $row = $db->query("SELECT COUNT(*) AS total FROM " . $table . " WHERE DATE(created_at) = ?", [date('Y-m-d')])->getRowArray();
+        if ($lockKey > 0) {
+            $db->query('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
+        }
+        $row = $db->query("SELECT COUNT(DISTINCT " . $column . ") AS total FROM " . $table . " WHERE DATE(created_at) = ?", [date('Y-m-d')])->getRowArray();
         $n = ((int) ($row['total'] ?? 0)) + 1;
         return $prefix . '-' . date('Ymd') . '-' . str_pad((string) $n, 3, '0', STR_PAD_LEFT);
     }

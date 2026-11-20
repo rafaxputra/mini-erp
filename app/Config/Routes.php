@@ -1,15 +1,14 @@
 <?php
 use CodeIgniter\Router\RouteCollection;
-/** @var RouteCollection $routes */
-// Fondasi aplikasi Hari ke-3: autentikasi dan master data saja.
-// Modul purchasing, sales, inventory, dan laporan menyusul di hari berikutnya.
-$routes->get('/', 'Dashboard::index', ['filter' => 'auth']);
+/**
+ * @var RouteCollection $routes
+ */
 $routes->get('auth/login', 'Auth::login');
 $routes->post('auth/login', 'Auth::loginPost');
 $routes->get('auth/logout', 'Auth::logout');
+$routes->get('/', 'Dashboard::index', ['filter' => 'auth']);
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
-    $routes->get('users', 'Users::index');
     $routes->get('categories', 'Categories::index');
     $routes->get('categories/create', 'Categories::create');
     $routes->post('categories/store', 'Categories::store');
@@ -34,4 +33,5 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('customers/edit/(:num)', 'Customers::edit/$1');
     $routes->post('customers/update/(:num)', 'Customers::update/$1');
     $routes->post('customers/delete/(:num)', 'Customers::delete/$1');
+    $routes->get('users', 'Users::index');
 });
