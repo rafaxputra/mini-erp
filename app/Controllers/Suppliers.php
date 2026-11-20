@@ -6,12 +6,12 @@ class Suppliers extends BaseController
     public function index()
     {
         if ($r = $this->requireRole(['admin', 'purchasing', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar supplier.')) return $r;
-        return view('suppliers/index', ['title' => 'Supplier', 'items' => (new SupplierModel())->orderBy('code', 'ASC')->findAll()]);
+        return view('suppliers/index', ['title' => 'Pemasok', 'items' => (new SupplierModel())->orderBy('code', 'ASC')->findAll()]);
     }
     public function create()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
-        return view('suppliers/form', ['title' => 'Tambah Supplier', 'item' => null]);
+        return view('suppliers/form', ['title' => 'Tambah Pemasok', 'item' => null]);
     }
     public function store()
     {
@@ -21,14 +21,14 @@ class Suppliers extends BaseController
             return redirect()->back()->withInput()->with('error', 'Periksa kembali isian. Kode harus unik dan email harus valid.');
         }
         (new SupplierModel())->insert($this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
-        return redirect()->to('/suppliers')->with('success', 'Supplier berhasil ditambahkan.');
+        return redirect()->to('/suppliers')->with('success', 'Pemasok berhasil ditambahkan.');
     }
     public function edit($id)
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
         $item = (new SupplierModel())->find($id);
-        if (! $item) return redirect()->to('/suppliers')->with('error', 'Supplier tidak ditemukan.');
-        return view('suppliers/form', ['title' => 'Ubah Supplier', 'item' => $item]);
+        if (! $item) return redirect()->to('/suppliers')->with('error', 'Pemasok tidak ditemukan.');
+        return view('suppliers/form', ['title' => 'Ubah Pemasok', 'item' => $item]);
     }
     public function update($id)
     {
@@ -38,16 +38,16 @@ class Suppliers extends BaseController
             return redirect()->back()->withInput()->with('error', 'Periksa kembali isian. Kode harus unik dan email harus valid.');
         }
         (new SupplierModel())->update($id, $this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
-        return redirect()->to('/suppliers')->with('success', 'Supplier berhasil diubah.');
+        return redirect()->to('/suppliers')->with('success', 'Pemasok berhasil diubah.');
     }
     public function delete($id)
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
         try {
             (new SupplierModel())->delete($id);
-            return redirect()->to('/suppliers')->with('success', 'Supplier berhasil dihapus.');
+            return redirect()->to('/suppliers')->with('success', 'Pemasok berhasil dihapus.');
         } catch (\Throwable $e) {
-            return redirect()->to('/suppliers')->with('error', 'Supplier tidak bisa dihapus karena sudah dipakai transaksi.');
+            return redirect()->to('/suppliers')->with('error', 'Pemasok tidak bisa dihapus karena sudah dipakai transaksi.');
         }
     }
 }

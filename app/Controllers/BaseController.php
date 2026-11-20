@@ -11,7 +11,7 @@ abstract class BaseController extends Controller
     protected $session;
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
-        $this->helpers = ['form', 'url'];
+        $this->helpers = ['form', 'url', 'label'];
         parent::initController($request, $response, $logger);
         $this->session = session();
     }

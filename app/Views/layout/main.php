@@ -19,12 +19,12 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Master Data</a>
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Data Utama</a>
           <ul class="dropdown-menu">
             <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/categories">Kategori</a></li><?php endif; ?>
             <li><a class="dropdown-item" href="/products">Produk</a></li>
-            <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/suppliers">Supplier</a></li><?php endif; ?>
-            <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/customers">Customer</a></li><?php endif; ?>
+            <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/suppliers">Pemasok</a></li><?php endif; ?>
+            <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/customers">Pelanggan</a></li><?php endif; ?>
             <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/users">Pengguna</a></li><?php endif; ?>
           </ul>
         </li>
