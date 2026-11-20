@@ -1,6 +1,6 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
-<div class="d-flex justify-content-between mb-3"><h4>Daftar Pengguna</h4><a class="btn btn-primary" href="/users/create">Tambah Pengguna</a></div>
+<div class="d-flex justify-content-end mb-3"><a class="btn btn-primary" href="/users/create">Tambah Pengguna</a></div>
 <p class="text-muted">Halaman ini hanya untuk admin.</p>
 <table class="table table-bordered table-striped">
 <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Peran</th><th>Aktif</th><th>Dibuat</th><th>Aksi</th></tr></thead>

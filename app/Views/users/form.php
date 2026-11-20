@@ -1,6 +1,5 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
-<h4 class="mb-3"><?= esc($title) ?></h4>
 <form action="<?= $item ? '/users/update/' . esc($item['id']) : '/users/store' ?>" method="post">
   <div class="mb-3"><label class="form-label">Nama</label><input type="text" name="name" class="form-control" value="<?= esc(old('name', $item['name'] ?? '')) ?>" required></div>
   <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="<?= esc(old('email', $item['email'] ?? '')) ?>" required></div>

@@ -1,100 +1,53 @@
-/* Mini ERP - styling kecil, Bootstrap 5 tetap yang utama.
-   File ini cuma poles tampilan, logika dan validasi ada di controller. */
+/* Mini ERP - Tabler + palet kertas dan tinta.
+   Tabler yang mengatur komponen (kartu, tabel, tombol, form);
+   file ini cuma menimpa palet dan beberapa aksen. */
 
 :root {
   --erp-teal: #0f3d47;
   --erp-teal-light: #17606e;
-  --erp-bg: #f4f6f8;
-  --erp-border: #dee5e8;
+  --erp-amber: #f59e0b;
+  --erp-paper: #faf9f6;
+  --erp-border: #e3e0d8;
+
+  /* Timpa warna primer Tabler jadi teal: sidebar, tombol, link ikut */
+  --tblr-primary: #0f3d47;
+  --tblr-primary-rgb: 15, 61, 71;
+  --tblr-primary-fg: #ffffff;
+  --tblr-primary-darken: #0a2b33;
+  --tblr-link-color: #0f3d47;
+  --tblr-link-hover-color: #17606e;
+
+  /* Latar putih kertas */
+  --tblr-body-bg: #faf9f6;
+  --tblr-body-bg-rgb: 250, 249, 246;
+
+  /* Aksen amber (warna stabilo) */
+  --tblr-warning: #f59e0b;
+  --tblr-warning-rgb: 245, 158, 11;
 }
 
-body {
-  background: var(--erp-bg);
+/* Brand di sidebar: logo + nama perusahaan */
+.navbar-vertical .navbar-brand a {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  text-decoration: none;
 }
-
-/* Navbar: teal gelap, bukan biru bawaan Bootstrap */
-.navbar-erp {
-  background: var(--erp-teal) !important;
-  box-shadow: 0 2px 8px rgba(15, 61, 71, .25);
-}
-.navbar-erp .navbar-brand {
+.navbar-brand-text {
   font-weight: 600;
-  letter-spacing: .2px;
-}
-.navbar-erp .nav-link,
-.navbar-erp .navbar-text {
-  color: rgba(255, 255, 255, .85);
-}
-.navbar-erp .nav-link:hover,
-.navbar-erp .nav-link:focus {
+  font-size: .9375rem;
   color: #fff;
-}
-.navbar-erp .dropdown-menu {
-  border: 1px solid var(--erp-border);
-  box-shadow: 0 4px 16px rgba(15, 61, 71, .12);
+  white-space: nowrap;
 }
 
-/* Kartu dan tabel: sudut membulat, bayangan halus */
-.card {
-  border: 1px solid var(--erp-border);
-  border-radius: .75rem;
-  box-shadow: 0 1px 4px rgba(15, 61, 71, .06);
-}
-.card-header {
-  background: #fff;
-  border-bottom: 1px solid var(--erp-border);
-  font-weight: 600;
-}
-.table {
-  margin-bottom: 0;
-}
+/* Header tabel: aksen teal, huruf kecil kapital */
 .table thead th {
   background: #eef3f4;
-  border-bottom: 2px solid var(--erp-border);
-  font-size: .875rem;
+  font-size: .8125rem;
   text-transform: uppercase;
   letter-spacing: .3px;
   color: var(--erp-teal);
 }
 .table tbody tr:hover {
   background: #f2f7f8;
-}
-
-/* Tombol dan form: fokus teal, sudut sedikit membulat */
-.btn {
-  border-radius: .5rem;
-}
-.btn-primary {
-  background: var(--erp-teal);
-  border-color: var(--erp-teal);
-}
-.btn-primary:hover,
-.btn-primary:focus {
-  background: var(--erp-teal-light);
-  border-color: var(--erp-teal-light);
-}
-.form-control:focus,
-.form-select:focus {
-  border-color: var(--erp-teal-light);
-  box-shadow: 0 0 0 .25rem rgba(23, 96, 110, .15);
-}
-
-/* Judul halaman */
-.page-title {
-  color: var(--erp-teal);
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-/* Login: kartu di tengah, lebar pas */
-.login-card {
-  max-width: 420px;
-  margin: 4rem auto 0;
-}
-.login-card .card-header {
-  background: var(--erp-teal);
-  color: #fff;
-  text-align: center;
-  border-radius: .75rem .75rem 0 0;
-  padding: 1rem;
 }

@@ -1,6 +1,5 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
-<h4 class="mb-3"><?= esc($title) ?></h4>
 <form action="<?= $item ? '/products/update/' . esc($item['id']) : '/products/store' ?>" method="post">
   <div class="row">
     <div class="col-md-6 mb-3"><label class="form-label">Kode Produk</label><input type="text" name="code" class="form-control" value="<?= esc(old('code', $item['code'] ?? '')) ?>" required></div>

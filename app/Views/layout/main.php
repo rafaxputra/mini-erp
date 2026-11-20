@@ -1,51 +1,106 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-navbar-theme="primary">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= esc($title ?? 'Mini ERP') ?> - Mini ERP PT Nusantara Distribusi</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/css/tabler.min.css" rel="stylesheet">
 <link href="<?= base_url('css/app.css') ?>" rel="stylesheet">
 </head>
 <body>
 <?php if (session()->get('user_id')): ?>
 <?php $role = session()->get('user_role'); ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
-<nav class="navbar navbar-expand-lg navbar-dark navbar-erp">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/dashboard">Mini ERP PT Nusantara Distribusi</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
-    <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Data Utama</a>
-          <ul class="dropdown-menu">
-            <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/categories">Kategori</a></li><?php endif; ?>
-            <li><a class="dropdown-item" href="/products">Produk</a></li>
-            <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/suppliers">Pemasok</a></li><?php endif; ?>
-            <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/customers">Pelanggan</a></li><?php endif; ?>
-            <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/users">Pengguna</a></li><?php endif; ?>
+<div class="page">
+  <aside class="navbar navbar-vertical navbar-expand-lg">
+    <div class="container-fluid">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle sidebar navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-brand">
+        <a href="/dashboard" aria-label="PT Nusantara Distribusi">
+          <img src="<?= base_url('img/logo-nusantara.webp') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
+          <span class="navbar-brand-text">PT Nusantara Distribusi</span>
+        </a>
+      </div>
+      <div class="collapse navbar-collapse" id="sidebar-menu">
+        <ul class="navbar-nav pt-lg-3">
+          <li class="nav-item">
+            <a class="nav-link" href="/dashboard">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /> </svg></span>
+              <span class="nav-link-title">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="false">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /> </svg></span>
+              <span class="nav-link-title">Data Utama</span>
+            </a>
+            <div class="dropdown-menu">
+              <?php if ($role === 'admin'): ?><a class="dropdown-item" href="/categories">Kategori</a><?php endif; ?>
+              <a class="dropdown-item" href="/products">Produk</a>
+              <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item" href="/suppliers">Pemasok</a><?php endif; ?>
+              <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item" href="/customers">Pelanggan</a><?php endif; ?>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item" href="/users">Pengguna</a><?php endif; ?>
+            </div>
+          </li>
+        </ul>
+        <div class="navbar-side">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/logout">
+                <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" /> </svg></span>
+                <span class="nav-link-title">Logout</span>
+              </a>
+            </li>
           </ul>
-        </li>
-      </ul>
-      <span class="navbar-text text-white me-3"><?= esc(session()->get('user_name')) ?> (<?= esc($roleLabel) ?>)</span>
-      <a class="btn btn-outline-light btn-sm" href="/auth/logout">Logout</a>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="page-wrapper">
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <h1 class="page-title"><?= esc($title ?? 'Mini ERP') ?></h1>
+          </div>
+          <div class="col-auto ms-auto d-print-none">
+            <span class="text-secondary"><?= esc(session()->get('user_name')) ?> (<?= esc($roleLabel) ?>)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="container-xl">
+        <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
+        <?php if (session()->getFlashdata('error')): ?><div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div><?php endif; ?>
+        <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
+        <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
+        <?php endif; ?>
+        <?= $this->renderSection('content') ?>
+      </div>
     </div>
   </div>
-</nav>
-<?php else: ?>
-<nav class="navbar navbar-dark navbar-erp"><div class="container-fluid"><span class="navbar-brand">Mini ERP PT Nusantara Distribusi</span></div></nav>
-<?php endif; ?>
-<div class="container mt-4 mb-5">
-  <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
-  <?php if (session()->getFlashdata('error')): ?><div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div><?php endif; ?>
-  <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
-  <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
-  <?php endif; ?>
-  <?= $this->renderSection('content') ?>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php else: ?>
+<div class="page page-center">
+  <div class="container py-4">
+    <div class="text-center mb-4">
+      <img src="<?= base_url('img/logo-nusantara.webp') ?>" width="64" height="64" alt="PT Nusantara Distribusi">
+      <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
+      <div class="text-secondary">Mini ERP</div>
+    </div>
+    <?php if (session()->getFlashdata('success')): ?><div class="alert alert-success"><?= esc(session()->getFlashdata('success')) ?></div><?php endif; ?>
+    <?php if (session()->getFlashdata('error')): ?><div class="alert alert-danger"><?= esc(session()->getFlashdata('error')) ?></div><?php endif; ?>
+    <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
+    <div class="alert alert-danger"><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div>
+    <?php endif; ?>
+    <?= $this->renderSection('content') ?>
+  </div>
+</div>
+<?php endif; ?>
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/js/tabler.min.js"></script>
 <?= $this->renderSection('scripts') ?>
 </body>
 </html>
