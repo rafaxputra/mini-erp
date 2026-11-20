@@ -22,7 +22,9 @@ $navActive = static function (string $prefix) use ($currentPath): string {
 };
 $backSegments = explode('/', trim($currentPath, '/'));
 $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
-
+?>
+<?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
+<?php
 $userName = (string) (session()->get('user_name') ?? 'Pengguna');
 $nameParts = array_filter(preg_split('/\s+/', trim($userName)));
 $initials = '';
@@ -33,7 +35,6 @@ if ($initials === '') {
     $initials = 'U';
 }
 ?>
-<?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
 <div class="page">
   <aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
@@ -133,12 +134,16 @@ if ($initials === '') {
       <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
       <div class="text-secondary">Mini ERP</div>
     </div>
+<div class="row justify-content-center">
+      <div class="col-md-6">
     <?php if (session()->getFlashdata('success')): ?><div class="alert alert-important alert-success alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></div><div><?= esc(session()->getFlashdata('success')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
     <?php if (session()->getFlashdata('error')): ?><div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><?= esc(session()->getFlashdata('error')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
     <?php $verrors = \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
     <div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>
     <?php endif; ?>
-    <?= $this->renderSection('content') ?>
+      </div>
+    </div>
+        <?= $this->renderSection('content') ?>
   </div>
 </div>
 <?php endif; ?>
