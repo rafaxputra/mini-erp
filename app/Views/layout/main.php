@@ -24,40 +24,9 @@
             <li><a class="dropdown-item" href="/products">Produk</a></li>
             <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/suppliers">Supplier</a></li><?php endif; ?>
             <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><li><a class="dropdown-item" href="/customers">Customer</a></li><?php endif; ?>
-            <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/users">Pengguna</a></li><li><a class="dropdown-item" href="/import">Import Data CSV</a></li><?php endif; ?>
+            <?php if ($role === 'admin'): ?><li><a class="dropdown-item" href="/users">Pengguna</a></li><?php endif; ?>
           </ul>
         </li>
-        <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Pembelian</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/purchase-orders">Purchase Order</a></li>
-            <li><a class="dropdown-item" href="/goods-receipts">Goods Receipt</a></li>
-          </ul>
-        </li>
-        <?php endif; ?>
-        <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Penjualan</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/sales-orders">Sales Order</a></li>
-            <li><a class="dropdown-item" href="/deliveries">Delivery</a></li>
-          </ul>
-        </li>
-        <?php endif; ?>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory</a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/inventory">Stok Produk</a></li>
-            <li><a class="dropdown-item" href="/inventory/movements">Riwayat Mutasi</a></li>
-            <?php if ($role === 'admin'): ?>
-            <li><a class="dropdown-item" href="/inventory/adjust">Penyesuaian Stok</a></li>
-            <?php endif; ?>
-          </ul>
-        </li>
-        <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
-        <li class="nav-item"><a class="nav-link" href="/reports">Laporan</a></li>
-        <?php endif; ?>
       </ul>
       <span class="navbar-text text-white me-3"><?= esc(session()->get('user_name')) ?> (<?= esc($roleLabel) ?>)</span>
       <a class="btn btn-outline-light btn-sm" href="/auth/logout">Logout</a>
