@@ -39,5 +39,11 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('users/edit/(:num)', 'Users::edit/$1');
     $routes->post('users/update/(:num)', 'Users::update/$1');
     $routes->post('users/toggle/(:num)', 'Users::toggle/$1');
+    $routes->get('roles', 'Roles::index');
+    $routes->get('roles/create', 'Roles::create');
+    $routes->post('roles/store', 'Roles::store');
+    $routes->get('roles/edit/(:num)', 'Roles::edit/$1');
+    $routes->post('roles/update/(:num)', 'Roles::update/$1');
+    $routes->post('roles/delete/(:num)', 'Roles::delete/$1');
 });
 

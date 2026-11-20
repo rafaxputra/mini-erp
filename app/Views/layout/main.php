@@ -16,7 +16,7 @@
 <?php
 $currentPath = uri_string();
 $activeGroup = '';
-if (preg_match('#^(categories|products|suppliers|customers|users)(/|$)#', $currentPath)) $activeGroup = 'master';
+if (preg_match('#^(categories|products|suppliers|customers|users|roles)(/|$)#', $currentPath)) $activeGroup = 'master';
 $navActive = static function (string $prefix) use ($currentPath): string {
     return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
 };
@@ -66,6 +66,7 @@ if ($initials === '') {
               <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a><?php endif; ?>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran</a><?php endif; ?>
             </div>
           </li>
         </ul>
