@@ -1,5 +1,6 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
+<?php $canManage = in_array(session()->get('user_role'), ['admin', 'purchasing'], true); ?>
 
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -38,7 +39,9 @@
             <th class="text-end" style="width: 130px;">Harga Jual</th>
             <th class="text-center" style="width: 90px;">Stok</th>
             <th class="text-center" style="width: 80px;">Min.</th>
-            <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php if ($canManage): ?>
+              <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -58,6 +61,7 @@
             <?php endif; ?>
           </td>
           <td class="text-center text-muted"><?= esc($it['min_stock']) ?></td>
+          <?php if ($canManage): ?>
           <td class="text-end">
             <div class="d-inline-flex align-items-center gap-1">
               <a class="btn btn-sm btn-outline-warning" href="/products/edit/<?= esc($it['id']) ?>" title="Ubah data">
@@ -72,6 +76,7 @@
               </form>
             </div>
           </td>
+          <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         </tbody>

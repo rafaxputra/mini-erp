@@ -1,6 +1,27 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
+<?php if (empty($suppliers) || empty($products)): ?>
+  <div class="alert alert-warning mb-3">
+    <div class="d-flex">
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+      </div>
+      <div>
+        <div class="fw-bold">Data Master Belum Lengkap</div>
+        <div class="text-secondary small">
+          <?php if (empty($suppliers)): ?>
+            Anda belum mendaftarkan data Pemasok. Silakan buat pemasok di menu <a href="/suppliers/create">Tambah Pemasok</a> terlebih dahulu.<br>
+          <?php endif; ?>
+          <?php if (empty($products)): ?>
+            Anda belum memiliki produk terdaftar. Silakan buat produk di menu <a href="/products/create">Tambah Produk</a> terlebih dahulu.
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <form action="/purchase-orders/store" method="post" id="poForm">
   <!-- Kartu Informasi Pesanan -->
   <div class="card mb-3 border-0 shadow-sm">
@@ -134,6 +155,50 @@ function recalc() {
   document.getElementById('totalAmount').textContent = 'Rp ' + total.toLocaleString('id-ID');
 }
 
+function updateProductDropdowns() {
+  const selects = document.querySelectorAll('#detailRows .product-select');
+  const selectedValues = [];
+
+  selects.forEach(function (sel) {
+    if (sel.value) {
+      selectedValues.push(sel.value);
+    }
+  });
+
+  selects.forEach(function (sel) {
+    const currentVal = sel.value;
+    Array.from(sel.options).forEach(function (opt) {
+      if (!opt.value) {
+        opt.disabled = false;
+        opt.hidden = false;
+        return;
+      }
+
+      // Sembunyikan dan matikan opsi yang sudah dipilih di baris lain
+      if (selectedValues.includes(opt.value) && opt.value !== currentVal) {
+        opt.disabled = true;
+        opt.hidden = true;
+      } else {
+        opt.disabled = false;
+        opt.hidden = false;
+      }
+    });
+  });
+
+  // Kunci tombol tambah jika seluruh produk katalog sudah dimasukkan
+  const addBtn = document.getElementById('addRowBtn');
+  if (addBtn) {
+    const totalCatalogProducts = products.length;
+    if (selects.length >= totalCatalogProducts) {
+      addBtn.disabled = true;
+      addBtn.title = 'Seluruh produk katalog sudah dipilih';
+    } else {
+      addBtn.disabled = false;
+      addBtn.title = '';
+    }
+  }
+}
+
 function bindRowEvents(row) {
   const sel = row.querySelector('.product-select');
   const priceInput = row.querySelector('.price');
@@ -141,8 +206,9 @@ function bindRowEvents(row) {
 
   sel.addEventListener('change', function () {
     const opt = sel.options[sel.selectedIndex];
-    const defPrice = opt.getAttribute('data-price') || '0';
+    const defPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
     priceInput.value = parseInt(defPrice, 10).toLocaleString('id-ID').replace(/,/g, '.');
+    updateProductDropdowns();
     recalc();
   });
 
@@ -158,6 +224,7 @@ function removeRow(btn) {
   const tbody = document.getElementById('detailRows');
   if (tbody.querySelectorAll('tr').length > 1) {
     btn.closest('tr').remove();
+    updateProductDropdowns();
     recalc();
   } else {
     alert('Pesanan harus memiliki minimal 1 produk.');
@@ -166,9 +233,16 @@ function removeRow(btn) {
 
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('#detailRows tr').forEach(bindRowEvents);
+  updateProductDropdowns();
 
   document.getElementById('addRowBtn').addEventListener('click', function () {
     const tbody = document.getElementById('detailRows');
+    const totalCatalogProducts = products.length;
+    if (tbody.querySelectorAll('tr').length >= totalCatalogProducts) {
+      alert('Semua produk dalam katalog sudah dimasukkan ke dalam pesanan.');
+      return;
+    }
+
     const firstRow = tbody.querySelector('tr');
     const newRow = firstRow.cloneNode(true);
 
@@ -179,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     tbody.appendChild(newRow);
     bindRowEvents(newRow);
+    updateProductDropdowns();
   });
 
   document.getElementById('poForm').addEventListener('submit', function () {

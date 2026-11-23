@@ -1,6 +1,7 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
+<?php $isAdmin = session()->get('user_role') === 'admin'; ?>
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="input-icon" style="max-width: 300px; width: 100%;">
@@ -9,7 +10,7 @@
       </span>
       <input type="text" class="form-control form-control-sm js-table-search" placeholder="Cari kode atau nama gudang..." aria-label="Cari gudang">
     </div>
-    <?php if (in_array(session()->get('user_role'), ['admin'], true)): ?>
+    <?php if ($isAdmin): ?>
       <a class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" href="/warehouses/create">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
         Tambah Gudang
@@ -34,7 +35,9 @@
             <th>Nama Gudang</th>
             <th>Lokasi</th>
             <th class="text-center" style="width: 110px;">Status Gudang</th>
-            <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php if ($isAdmin): ?>
+              <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -46,6 +49,7 @@
           <td class="text-center">
             <?= $it['is_default'] ? '<span class="badge bg-success-lt fw-bold">Gudang Utama</span>' : '<span class="badge bg-secondary-lt">Gudang Cabang</span>' ?>
           </td>
+          <?php if ($isAdmin): ?>
           <td class="text-end">
             <div class="d-inline-flex align-items-center gap-1">
               <a class="btn btn-sm btn-outline-warning" href="/warehouses/edit/<?= esc($it['id']) ?>" title="Ubah data">
@@ -62,6 +66,7 @@
               <?php endif; ?>
             </div>
           </td>
+          <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         </tbody>

@@ -1,5 +1,6 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
+<?php $canManage = in_array(session()->get('user_role'), ['admin', 'sales'], true); ?>
 
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -34,7 +35,9 @@
             <th>Nama Pelanggan</th>
             <th>Kontak (Telepon & Email)</th>
             <th>Alamat</th>
-            <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php if ($canManage): ?>
+              <th class="text-end" style="width: 150px;">Aksi</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
@@ -51,6 +54,7 @@
           <td class="text-secondary text-truncate" style="max-width: 250px;" title="<?= esc($it['address']) ?>">
             <?= esc($it['address'] ?: '-') ?>
           </td>
+          <?php if ($canManage): ?>
           <td class="text-end">
             <div class="d-inline-flex align-items-center gap-1">
               <a class="btn btn-sm btn-outline-warning" href="/customers/edit/<?= esc($it['id']) ?>" title="Ubah data">
@@ -65,6 +69,7 @@
               </form>
             </div>
           </td>
+          <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         </tbody>
