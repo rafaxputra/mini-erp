@@ -17,6 +17,7 @@
 $currentPath = uri_string();
 $activeGroup = '';
 if (preg_match('#^(categories|products|suppliers|customers|users|roles)(/|$)#', $currentPath)) $activeGroup = 'master';
+elseif (preg_match('#^(purchase-orders|goods-receipts)(/|$)#', $currentPath)) $activeGroup = 'pembelian';
 $navActive = static function (string $prefix) use ($currentPath): string {
     return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
 };
@@ -69,6 +70,18 @@ if ($initials === '') {
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran</a><?php endif; ?>
             </div>
           </li>
+          <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pembelian' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 17h-11v-14h-2" /> <path d="M6 5l14 1l-1 7h-13" /> </svg></span>
+              <span class="nav-link-title">Pembelian</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Beli</a>
+              <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Barang Masuk</a>
+            </div>
+          </li>
+          <?php endif; ?>
         </ul>
         <div class="navbar-side">
           <div class="d-flex align-items-center px-3 py-2">

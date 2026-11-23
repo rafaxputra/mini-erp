@@ -45,5 +45,14 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('roles/edit/(:num)', 'Roles::edit/$1');
     $routes->post('roles/update/(:num)', 'Roles::update/$1');
     $routes->post('roles/delete/(:num)', 'Roles::delete/$1');
+    $routes->get('purchase-orders', 'PurchaseOrders::index');
+    $routes->get('purchase-orders/create', 'PurchaseOrders::create');
+    $routes->post('purchase-orders/store', 'PurchaseOrders::store');
+    $routes->get('purchase-orders/show/(:num)', 'PurchaseOrders::show/$1');
+    $routes->post('purchase-orders/approve/(:num)', 'PurchaseOrders::approve/$1');
+    $routes->post('purchase-orders/cancel/(:num)', 'PurchaseOrders::cancel/$1');
+    $routes->get('goods-receipts', 'GoodsReceipts::index');
+    $routes->get('goods-receipts/create', 'GoodsReceipts::create');
+    $routes->post('goods-receipts/store', 'GoodsReceipts::store');
 });
 
