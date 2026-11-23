@@ -147,10 +147,10 @@ if ($initials === '') {
         </ul>
         <div class="navbar-side">
           <div class="d-flex align-items-center px-3 py-2">
-            <span class="avatar avatar-sm me-2" style="background-color: #0f3d47; color: #fff;"><?= esc($initials) ?></span>
+            <span class="avatar avatar-sm me-2 avatar-user-badge"><?= esc($initials) ?></span>
             <div class="lh-1">
-              <div class="text-white"><?= esc($userName) ?></div>
-              <div class="mt-1 small text-white-50"><?= esc($roleLabel) ?></div>
+              <div class="text-white fw-medium"><?= esc($userName) ?></div>
+              <div class="mt-1 role-badge-text"><?= esc($roleLabel) ?></div>
             </div>
           </div>
           <ul class="navbar-nav">
@@ -270,17 +270,33 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   document.querySelectorAll('form').forEach(function (f) {
-    f.addEventListener('submit', function () {
+    f.addEventListener('submit', function (e) {
+      // 1. Jika validasi form HTML5 belum lengkap, batalkan (jangan ubah tombol)
+      if (f.checkValidity && !f.checkValidity()) {
+        return;
+      }
+
+      // 2. Jika pengguna menekan "Cancel" pada dialog konfirmasi apapun, batalkan (tombol tetap utuh)
+      if (e.defaultPrevented) {
+        return;
+      }
+
       f.querySelectorAll('.js-rupiah').forEach(function (inp) {
         inp.value = inp.value.replace(/\./g, '');
       });
 
-      if (f.method.toLowerCase() === 'post' && !f.classList.contains('no-disable')) {
+      // 3. Jangan ubah tombol pada form aksi kecil di dalam tabel (Hapus, Toggle Aktif/Nonaktif)
+      if (f.closest('.table') || f.classList.contains('no-disable')) {
+        return;
+      }
+
+      // 4. Hanya ubah tombol pada form pengisian data utama saat benar-benar dikirim
+      if (f.method.toLowerCase() === 'post') {
         const btn = f.querySelector('button[type="submit"]');
         if (btn) {
           setTimeout(function () {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...';
           }, 10);
         }
       }

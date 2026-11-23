@@ -1,55 +1,109 @@
-/* Mini ERP - Tabler + palet kertas dan tinta.
-   Tabler yang mengatur komponen (kartu, tabel, tombol, form);
-   file ini cuma menimpa palet dan beberapa aksen. */
+/* Mini ERP - PT Nusantara Distribusi
+   Tema Midnight Navy Korporat + Aksen Emas (Gold) Nusantara */
 
 :root {
-  --erp-teal: #0f3d47;
-  --erp-teal-light: #17606e;
-  --erp-amber: #f59e0b;
-  --erp-paper: #faf9f6;
-  --erp-border: #e3e0d8;
+  --erp-navy: #0f172a;        /* Midnight Slate Navy untuk Sidebar */
+  --erp-navy-dark: #090d16;   /* Deep Dark Navy */
+  --erp-navy-light: #1e293b;  /* Slate 800 */
+  --erp-navy-surface: #334155;/* Slate 700 */
+  --erp-blue-brand: #1d4ed8;  /* Royal Corporate Blue untuk tombol utama & link */
+  --erp-amber: #f59e0b;       /* Emas / Amber Nusantara (senada dengan Logo) */
+  --erp-amber-light: #fbbf24;
+  --erp-paper: #f8fafc;       /* Slate 50 ultra clean background */
+  --erp-border: #e2e8f0;      /* Slate 200 soft clean border */
 
-  /* Timpa warna primer Tabler jadi teal: sidebar, tombol, link ikut */
-  --tblr-primary: #0f3d47;
-  --tblr-primary-rgb: 15, 61, 71;
+  /* Timpa warna primer Tabler jadi Royal Navy */
+  --tblr-primary: #1d4ed8;
+  --tblr-primary-rgb: 29, 78, 216;
   --tblr-primary-fg: #ffffff;
-  --tblr-primary-darken: #0a2b33;
-  --tblr-link-color: #0f3d47;
-  --tblr-link-hover-color: #17606e;
+  --tblr-primary-darken: #1e40af;
+  --tblr-link-color: #1d4ed8;
+  --tblr-link-hover-color: #1e40af;
 
-  /* Latar putih kertas */
-  --tblr-body-bg: #faf9f6;
-  --tblr-body-bg-rgb: 250, 249, 246;
+  /* Latar belakang halaman */
+  --tblr-body-bg: #f8fafc;
+  --tblr-body-bg-rgb: 248, 250, 252;
 
-  /* Aksen amber (warna stabilo) */
+  /* Aksen emas / amber */
   --tblr-warning: #f59e0b;
   --tblr-warning-rgb: 245, 158, 11;
 }
 
-/* Brand di sidebar: logo + nama perusahaan */
+/* Sidebar Midnight Navy */
+.navbar-vertical {
+  background: var(--erp-navy) !important;
+  box-shadow: 2px 0 18px rgba(15, 23, 42, 0.25);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .navbar-vertical .navbar-brand a {
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: .75rem;
   text-decoration: none;
+  padding: .6rem 0;
 }
 .navbar-brand-text {
-  font-weight: 600;
-  font-size: .9375rem;
+  font-weight: 700;
+  font-size: .95rem;
   color: #fff;
+  letter-spacing: .3px;
   white-space: nowrap;
 }
 
-/* Header tabel: aksen teal, huruf kecil kapital */
+.navbar-vertical .nav-item .nav-link {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 3px solid transparent;
+  padding-left: 1rem;
+  color: rgba(226, 232, 240, 0.78);
+  font-weight: 500;
+}
+
+.navbar-vertical .nav-item .nav-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.navbar-vertical .nav-item .nav-link.active,
+.navbar-vertical .dropdown-item.active {
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: #ffffff !important;
+  border-left: 3px solid var(--erp-amber) !important;
+  font-weight: 600;
+}
+
+.navbar-vertical .nav-item .nav-link.active .nav-link-icon,
+.navbar-vertical .nav-item .nav-link:hover .nav-link-icon {
+  color: var(--erp-amber) !important;
+}
+
+/* Avatar Profil Pengguna di Bawah Sidebar */
+.avatar-user-badge {
+  background: var(--erp-navy-light) !important;
+  color: var(--erp-amber-light) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.6) !important;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.18);
+}
+.role-badge-text {
+  color: var(--erp-amber-light) !important;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Header tabel korporat */
 .table thead th {
-  background: #eef3f4;
+  background: #f1f5f9;
   font-size: .8125rem;
   text-transform: uppercase;
-  letter-spacing: .3px;
-  color: var(--erp-teal);
+  letter-spacing: .4px;
+  color: #334155;
+  border-bottom: 1px solid var(--erp-border);
 }
 .table tbody tr:hover {
-  background: #f2f7f8;
+  background: #f8fafc;
 }
 
 .table td {
@@ -72,8 +126,8 @@
   border-color: var(--erp-border);
 }
 .js-table-search:focus {
-  border-color: var(--erp-teal-light);
-  box-shadow: 0 0 0 .25rem rgba(15, 61, 71, .15);
+  border-color: var(--erp-blue-brand);
+  box-shadow: 0 0 0 .25rem rgba(29, 78, 216, 0.15);
 }
 
 /* Chip Akun Demo Login */
@@ -83,8 +137,8 @@
   border-radius: 20px;
 }
 .demo-login-btn:hover {
-  background-color: var(--erp-teal);
-  border-color: var(--erp-teal);
+  background-color: var(--erp-navy);
+  border-color: var(--erp-navy);
   color: #fff;
 }
 
@@ -94,4 +148,3 @@
   color: #d63939;
   font-weight: bold;
 }
-
