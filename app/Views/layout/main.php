@@ -135,6 +135,64 @@ if ($initials === '') {
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/js/tabler.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.js-table-search').forEach(function (input) {
+    input.addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      const targetSelector = this.dataset.target || 'table tbody';
+      const tbody = document.querySelector(targetSelector);
+      if (!tbody) return;
+
+      const rows = tbody.querySelectorAll('tr:not(.no-search-results)');
+      let matchCount = 0;
+      rows.forEach(function (row) {
+        const text = row.innerText.toLowerCase();
+        const matches = text.includes(q);
+        row.style.display = matches ? '' : 'none';
+        if (matches) matchCount++;
+      });
+
+      let emptyRow = tbody.querySelector('.no-search-results');
+      if (matchCount === 0 && rows.length > 0) {
+        if (!emptyRow) {
+          emptyRow = document.createElement('tr');
+          emptyRow.className = 'no-search-results';
+          emptyRow.innerHTML = '<td colspan="100%" class="text-center text-secondary py-4"><div>Data tidak ditemukan untuk pencarian <strong>"' + q.replace(/</g, '&lt;') + '"</strong></div></td>';
+          tbody.appendChild(emptyRow);
+        } else {
+          emptyRow.style.display = '';
+          emptyRow.querySelector('td').innerHTML = '<div>Data tidak ditemukan untuk pencarian <strong>"' + q.replace(/</g, '&lt;') + '"</strong></div>';
+        }
+      } else if (emptyRow) {
+        emptyRow.style.display = 'none';
+      }
+    });
+  });
+
+  function formatRupiah(val) {
+    const clean = String(val).replace(/\D/g, '');
+    return clean ? clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+  }
+
+  document.querySelectorAll('.js-rupiah').forEach(function (inp) {
+    if (inp.value) {
+      inp.value = formatRupiah(inp.value);
+    }
+    inp.addEventListener('input', function () {
+      this.value = formatRupiah(this.value);
+    });
+  });
+
+  document.querySelectorAll('form').forEach(function (f) {
+    f.addEventListener('submit', function () {
+      f.querySelectorAll('.js-rupiah').forEach(function (inp) {
+        inp.value = inp.value.replace(/\./g, '');
+      });
+    });
+  });
+});
+</script>
 <?= $this->renderSection('scripts') ?>
 </body>
 </html>

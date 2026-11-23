@@ -51,3 +51,39 @@
 .table tbody tr:hover {
   background: #f2f7f8;
 }
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Tombol aksi tabel */
+.table td .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .25rem .5rem;
+  font-size: .8125rem;
+  border-radius: 4px;
+}
+
+/* Field pencarian tabel */
+.js-table-search {
+  background-color: #fff;
+  border-color: var(--erp-border);
+}
+.js-table-search:focus {
+  border-color: var(--erp-teal-light);
+  box-shadow: 0 0 0 .25rem rgba(15, 61, 71, .15);
+}
+
+/* Chip Akun Demo Login */
+.demo-login-btn {
+  font-size: .75rem;
+  padding: .2rem .5rem;
+  border-radius: 20px;
+}
+.demo-login-btn:hover {
+  background-color: var(--erp-teal);
+  border-color: var(--erp-teal);
+  color: #fff;
+}
