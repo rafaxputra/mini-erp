@@ -44,7 +44,7 @@ if ($initials === '') {
       </button>
       <div class="navbar-brand">
         <a href="/dashboard" aria-label="PT Nusantara Distribusi">
-          <img src="<?= base_url('img/logo.jpg') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
+          <img src="<?= base_url('img/logo.png') ?>" width="32" height="32" alt="PT Nusantara Distribusi" class="navbar-brand-image">
           <span class="navbar-brand-text">PT Nusantara Distribusi</span>
         </a>
       </div>
@@ -131,7 +131,7 @@ if ($initials === '') {
 <div class="page page-center">
   <div class="container py-4">
     <div class="text-center mb-4">
-      <img src="<?= base_url('img/logo.jpg') ?>" width="64" height="64" alt="PT Nusantara Distribusi">
+      <img src="<?= base_url('img/logo.png') ?>" width="64" height="64" alt="PT Nusantara Distribusi">
       <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
       <div class="text-secondary">Mini ERP</div>
     </div>
