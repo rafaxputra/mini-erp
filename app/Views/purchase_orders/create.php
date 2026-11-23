@@ -1,50 +1,127 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
-<form action="/purchase-orders/store" method="post">
-  <div class="row">
-    <div class="col-md-6 mb-3"><label class="form-label">Pemasok</label><select name="supplier_id" class="form-select" required><option value="">Pilih pemasok</option><?php foreach ($suppliers as $s): ?><option value="<?= esc($s['id']) ?>"><?= esc($s['code']) ?> - <?= esc($s['name']) ?></option><?php endforeach; ?></select><small class="form-hint">Pemasok yang memasok barang untuk pesanan ini.</small></div>
-    <div class="col-md-6 mb-3"><label class="form-label">Tanggal PO</label><input type="date" name="order_date" class="form-control" value="<?= date('Y-m-d') ?>" required></div>
+
+<form action="/purchase-orders/store" method="post" id="poForm">
+  <!-- Kartu Informasi Pesanan -->
+  <div class="card mb-3 border-0 shadow-sm">
+    <div class="card-header bg-transparent py-3">
+      <h3 class="card-title m-0 fw-bold">Informasi Pesanan Beli</h3>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label required">Pemasok</label>
+          <select name="supplier_id" class="form-select" required>
+            <option value="">-- Pilih Pemasok --</option>
+            <?php foreach ($suppliers as $s): ?>
+              <option value="<?= esc($s['id']) ?>"><?= esc($s['code']) ?> - <?= esc($s['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="form-text">Pemasok yang menyediakan barang untuk pesanan ini.</div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label required">Tanggal Pesanan</label>
+          <input type="date" name="order_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label required">Gudang Penerima</label>
+          <select name="warehouse_id" class="form-select" required>
+            <?php foreach ($warehouses as $w): ?>
+              <option value="<?= esc($w['id']) ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+          <div class="form-text">Gudang penyimpanan fisik barang saat tiba.</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Catatan Tambahan</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Pesanan berkala, kirim langsung ke pintu loading dock gudang utama"></textarea>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="row">
-    <div class="col-md-6 mb-3"><label class="form-label">Gudang</label><select name="warehouse_id" class="form-select" required><option value="">Pilih gudang</option><?php foreach ($warehouses as $w): ?><option value="<?= esc($w['id']) ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option><?php endforeach; ?></select><small class="form-hint">Barang pesanan ini akan masuk ke gudang ini.</small></div>
+
+  <!-- Kartu Daftar Item Produk -->
+  <div class="card mb-3 border-0 shadow-sm">
+    <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+      <h3 class="card-title m-0 fw-bold">Daftar Produk yang Dipesan</h3>
+      <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+        Tambah Baris Produk
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-vcenter table-bordered mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Pilih Produk</th>
+            <th style="width: 130px;">Jumlah</th>
+            <th style="width: 220px;">Harga Satuan Beli</th>
+            <th class="text-end" style="width: 200px;">Subtotal</th>
+            <th style="width: 60px;" class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="detailRows">
+          <tr>
+            <td>
+              <select name="product_id[]" class="form-select product-select" required>
+                <option value="">-- Pilih Produk --</option>
+                <?php foreach ($products as $p): ?>
+                  <option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['purchase_price']) ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+            <td>
+              <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" required>
+            </td>
+            <td>
+              <div class="input-group">
+                <span class="input-group-text">Rp</span>
+                <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="0" required>
+              </div>
+            </td>
+            <td class="text-end fw-bold subtotal text-dark">Rp 0</td>
+            <td class="text-center">
+              <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus baris" onclick="removeRow(this)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <td colspan="3" class="text-end fw-bold fs-3">Total Estimasi Nilai PO:</td>
+            <td class="text-end fw-bold fs-2 text-primary" id="totalAmount">Rp 0</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
   </div>
-  <div class="mb-3"><label class="form-label">Catatan</label><textarea name="notes" class="form-control" placeholder="Contoh: Pesanan rutin bulanan, kirim ke gudang utama"></textarea></div>
-  <h5>Detail Produk</h5>
-  <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Produk</th><th>Jumlah</th><th>Harga Satuan</th><th>Subtotal</th><th>Aksi</th></tr></thead>
-  <tbody id="detailRows"><tr>
-    <td><select name="product_id[]" class="form-select product-select" required><option value="">Pilih produk</option><?php foreach ($products as $p): ?><option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['purchase_price']) ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option><?php endforeach; ?></select></td>
-    <td><input type="number" name="qty[]" class="form-control qty" min="1" value="1" required></td>
-    <td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="Contoh: 15000" required></div></td>
-    <td class="subtotal">Rp 0</td>
-    <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); recalc();">
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-      Hapus
-    </button></td>
-  </tr></tbody></table></div>
-  <button type="button" class="btn btn-outline-secondary mb-3" id="addRowBtn">
-    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-    Tambah Baris
-  </button>
-  <p><strong>Total: <span id="totalAmount">Rp 0</span></strong></p>
-  <div class="mt-2">
-    <button type="submit" class="btn btn-primary">
+
+  <div class="d-flex align-items-center gap-2">
+    <button type="submit" class="btn btn-primary px-4">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h8l4 4v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg>
-      Simpan PO
+      Simpan & Buat Pesanan Beli
     </button>
     <a class="btn btn-secondary" href="/purchase-orders">Batal</a>
   </div>
 </form>
+
 <?= $this->endSection() ?>
+
 <?= $this->section('scripts') ?>
 <script>
 const products = <?= json_encode(array_map(function ($p) { return ['id' => $p['id'], 'code' => $p['code'], 'name' => $p['name'], 'price' => (float) $p['purchase_price']]; }, $products)) ?>;
+
 function formatRupiahInput(el) {
   const digits = el.value.replace(/\D/g, '');
   el.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 function priceValue(el) {
   return parseFloat((el.value || '').replace(/\./g, '')) || 0;
 }
+
 function recalc() {
   let total = 0;
   document.querySelectorAll('#detailRows tr').forEach(function (row) {
@@ -56,44 +133,59 @@ function recalc() {
   });
   document.getElementById('totalAmount').textContent = 'Rp ' + total.toLocaleString('id-ID');
 }
-function bindPrice(input) {
-  input.addEventListener('input', function () { formatRupiahInput(input); recalc(); });
-}
-function addRow() {
-  const tbody = document.getElementById('detailRows');
-  const row = document.createElement('tr');
-  let opts = '<option value="">Pilih produk</option>';
-  products.forEach(function (p) { opts += '<option value="' + p.id + '" data-price="' + p.price + '">' + p.code + ' - ' + p.name + '</option>'; });
-  row.innerHTML = '<td><select name="product_id[]" class="form-select product-select" required>' + opts + '</select></td>'
-    + '<td><input type="number" name="qty[]" class="form-control qty" min="1" value="1" required></td>'
-    + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="Contoh: 15000" required></div></td>'
-    + '<td class="subtotal">Rp 0</td>'
-    + '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove(); recalc();">Hapus</button></td>';
-  tbody.appendChild(row);
-  row.querySelector('.product-select').addEventListener('change', function () {
-    const sel = this.options[this.selectedIndex];
-    const priceEl = row.querySelector('.price');
-    priceEl.value = sel.getAttribute('data-price') || '';
-    formatRupiahInput(priceEl);
+
+function bindRowEvents(row) {
+  const sel = row.querySelector('.product-select');
+  const priceInput = row.querySelector('.price');
+  const qtyInput = row.querySelector('.qty');
+
+  sel.addEventListener('change', function () {
+    const opt = sel.options[sel.selectedIndex];
+    const defPrice = opt.getAttribute('data-price') || '0';
+    priceInput.value = parseInt(defPrice, 10).toLocaleString('id-ID').replace(/,/g, '.');
     recalc();
   });
-  row.querySelectorAll('.qty').forEach(function (el) { el.addEventListener('input', recalc); });
-  bindPrice(row.querySelector('.price'));
-  recalc();
-}
-document.getElementById('addRowBtn').addEventListener('click', addRow);
-document.querySelectorAll('#detailRows .qty').forEach(function (el) { el.addEventListener('input', recalc); });
-document.querySelectorAll('#detailRows .price').forEach(function (el) { bindPrice(el); });
-document.querySelectorAll('#detailRows .product-select').forEach(function (sel) {
-  sel.addEventListener('change', function () {
-    const row = this.closest('tr');
-    const opt = this.options[this.selectedIndex];
-    const priceEl = row.querySelector('.price');
-    priceEl.value = opt.getAttribute('data-price') || '';
-    formatRupiahInput(priceEl);
+
+  priceInput.addEventListener('input', function () {
+    formatRupiahInput(priceInput);
     recalc();
+  });
+
+  qtyInput.addEventListener('input', recalc);
+}
+
+function removeRow(btn) {
+  const tbody = document.getElementById('detailRows');
+  if (tbody.querySelectorAll('tr').length > 1) {
+    btn.closest('tr').remove();
+    recalc();
+  } else {
+    alert('Pesanan harus memiliki minimal 1 produk.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('#detailRows tr').forEach(bindRowEvents);
+
+  document.getElementById('addRowBtn').addEventListener('click', function () {
+    const tbody = document.getElementById('detailRows');
+    const firstRow = tbody.querySelector('tr');
+    const newRow = firstRow.cloneNode(true);
+
+    newRow.querySelector('.product-select').value = '';
+    newRow.querySelector('.qty').value = '1';
+    newRow.querySelector('.price').value = '';
+    newRow.querySelector('.subtotal').textContent = 'Rp 0';
+
+    tbody.appendChild(newRow);
+    bindRowEvents(newRow);
+  });
+
+  document.getElementById('poForm').addEventListener('submit', function () {
+    document.querySelectorAll('.js-rupiah').forEach(function (inp) {
+      inp.value = inp.value.replace(/\./g, '');
+    });
   });
 });
-recalc();
 </script>
 <?= $this->endSection() ?>

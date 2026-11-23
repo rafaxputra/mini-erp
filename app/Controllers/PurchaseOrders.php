@@ -160,15 +160,33 @@ class PurchaseOrders extends BaseController
         if ($po['status'] === 'cancelled') {
             return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO sudah dibatalkan.');
         }
+
+        $reason = trim((string) $this->request->getPost('cancel_reason'));
+        if ($reason === '') {
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Wajib menyertakan alasan pembatalan pesanan.');
+        }
+
+        $existingNotes = $po['notes'] ? trim($po['notes']) : '';
+        $canceller = session()->get('user_name') ?: 'User';
+        $cancelNote = "[Dibatalkan oleh {$canceller} pada " . date('d/m/Y H:i') . "]: " . $reason;
+        $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
+
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
-            $db->table('purchase_orders')->where('po_number', $po['po_number'])->where('status <>', 'cancelled')->update(['status' => 'cancelled', 'updated_at' => date('Y-m-d H:i:s')]);
+            $db->table('purchase_orders')
+                ->where('po_number', $po['po_number'])
+                ->where('status <>', 'cancelled')
+                ->update([
+                    'status' => 'cancelled',
+                    'notes' => $updatedNotes,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
             $db->transCommit();
         } catch (\Throwable $e) {
             $db->transRollback();
             return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal membatalkan Pesanan Beli.');
         }
-        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil dibatalkan. Riwayat tetap tersimpan.');
+        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil dibatalkan beserta alasannya.');
     }
 }

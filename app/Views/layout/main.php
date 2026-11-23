@@ -16,13 +16,64 @@
 <?php
 $currentPath = uri_string();
 $activeGroup = '';
-if (preg_match('#^(categories|products|suppliers|customers|users|roles|warehouses)(/|$)#', $currentPath)) $activeGroup = 'master';
+if (preg_match('#^(categories|products|suppliers|customers|warehouses)(/|$)#', $currentPath)) $activeGroup = 'master';
 elseif (preg_match('#^(purchase-orders|goods-receipts)(/|$)#', $currentPath)) $activeGroup = 'pembelian';
+elseif (preg_match('#^(users|roles)(/|$)#', $currentPath)) $activeGroup = 'pengaturan';
+
 $navActive = static function (string $prefix) use ($currentPath): string {
     return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
 };
 $backSegments = explode('/', trim($currentPath, '/'));
 $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
+
+$moduleLabels = [
+    'categories' => 'Kategori',
+    'products' => 'Produk',
+    'suppliers' => 'Pemasok',
+    'customers' => 'Pelanggan',
+    'warehouses' => 'Gudang',
+    'users' => 'Pengguna',
+    'roles' => 'Peran',
+    'purchase-orders' => 'Pesanan Beli',
+    'goods-receipts' => 'Barang Masuk',
+];
+
+$breadcrumbs = [];
+if ($currentPath !== '' && $currentPath !== 'dashboard') {
+    $breadcrumbs[] = ['title' => 'Dashboard', 'url' => '/dashboard', 'active' => false];
+    $mod = $backSegments[0] ?? '';
+    $modLabel = $moduleLabels[$mod] ?? ucfirst($mod);
+
+    if (count($backSegments) === 1) {
+        $breadcrumbs[] = [
+            'title' => $modLabel,
+            'url' => '/' . $mod,
+            'active' => true,
+        ];
+    } else {
+        $breadcrumbs[] = [
+            'title' => $modLabel,
+            'url' => '/' . $mod,
+            'active' => false,
+        ];
+
+        $pageTitle = $title ?? '';
+        if ($pageTitle === '' || $pageTitle === 'Mini ERP' || $pageTitle === $modLabel) {
+            $action = $backSegments[1] ?? '';
+            $actionMap = ['create' => 'Tambah', 'edit' => 'Ubah', 'show' => 'Detail'];
+            $pageTitle = ($actionMap[$action] ?? ucfirst($action)) . ' ' . $modLabel;
+            if (isset($backSegments[2]) && is_numeric($backSegments[2])) {
+                $pageTitle .= ' #' . $backSegments[2];
+            }
+        }
+
+        $breadcrumbs[] = [
+            'title' => $pageTitle,
+            'url' => '',
+            'active' => true,
+        ];
+    }
+}
 ?>
 <?php $roleLabel = ['admin' => 'Admin', 'purchasing' => 'Staff Purchasing', 'gudang' => 'Staff Gudang', 'sales' => 'Staff Sales', 'manajemen' => 'Manajemen'][$role] ?? $role; ?>
 <?php
@@ -59,16 +110,14 @@ if ($initials === '') {
           <li class="nav-item dropdown <?= $activeGroup === 'master' ? 'show' : '' ?>">
             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'master' ? 'true' : 'false' ?>">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /> </svg></span>
-              <span class="nav-link-title">Data Utama</span>
+              <span class="nav-link-title">Data Master</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
               <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a><?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran</a><?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('warehouses') ?>" href="/warehouses">Gudang</a><?php endif; ?>
+              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('warehouses') ?>" href="/warehouses">Gudang</a><?php endif; ?>
             </div>
           </li>
           <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?>
@@ -80,6 +129,18 @@ if ($initials === '') {
             <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
               <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Beli</a>
               <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Barang Masuk</a>
+            </div>
+          </li>
+          <?php endif; ?>
+          <?php if ($role === 'admin'): ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg></span>
+              <span class="nav-link-title">Pengaturan</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a>
+              <a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran & Akses</a>
             </div>
           </li>
           <?php endif; ?>
@@ -105,12 +166,22 @@ if ($initials === '') {
     </div>
   </aside>
   <div class="page-wrapper">
-    <div class="page-header d-print-none">
+    <div class="page-header d-print-none mb-3">
       <div class="container-xl">
         <div class="row g-2 align-items-center">
           <div class="col">
-            <?php if ($backUrl): ?><a href="<?= $backUrl ?>" class="btn btn-ghost-secondary btn-sm mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></svg> Kembali</a><?php endif; ?>
-            <h1 class="page-title"><?= esc($title ?? 'Mini ERP') ?></h1>
+            <?php if (! empty($breadcrumbs)): ?>
+            <ol class="breadcrumb breadcrumb-arrows mb-2" aria-label="breadcrumbs">
+              <?php foreach ($breadcrumbs as $b): ?>
+                <?php if ($b['active']): ?>
+                  <li class="breadcrumb-item active" aria-current="page"><span class="text-dark fw-bold"><?= esc($b['title']) ?></span></li>
+                <?php else: ?>
+                  <li class="breadcrumb-item"><a href="<?= $b['url'] ?>" class="text-secondary"><?= esc($b['title']) ?></a></li>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </ol>
+            <?php endif; ?>
+            <h1 class="page-title text-dark fw-bold"><?= esc($title ?? 'Mini ERP') ?></h1>
           </div>
         </div>
       </div>
@@ -203,6 +274,16 @@ document.addEventListener('DOMContentLoaded', function () {
       f.querySelectorAll('.js-rupiah').forEach(function (inp) {
         inp.value = inp.value.replace(/\./g, '');
       });
+
+      if (f.method.toLowerCase() === 'post' && !f.classList.contains('no-disable')) {
+        const btn = f.querySelector('button[type="submit"]');
+        if (btn) {
+          setTimeout(function () {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...';
+          }, 10);
+        }
+      }
     });
   });
 });

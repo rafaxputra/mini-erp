@@ -15,6 +15,20 @@ if (! function_exists('status_label')) {
         ][$status] ?? $status;
     }
 }
+if (! function_exists('status_badge_class')) {
+    function status_badge_class(string $status): string
+    {
+        return [
+            'draft'     => 'bg-secondary-lt',
+            'approved'  => 'bg-azure-lt',
+            'confirmed' => 'bg-azure-lt',
+            'received'  => 'bg-success-lt',
+            'delivered' => 'bg-success-lt',
+            'completed' => 'bg-success-lt',
+            'cancelled' => 'bg-danger-lt',
+        ][$status] ?? 'bg-secondary-lt';
+    }
+}
 if (! function_exists('movement_label')) {
     function movement_label(string $type): string
     {

@@ -1,42 +1,87 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
-<form action="<?= $item ? '/products/update/' . esc($item['id']) : '/products/store' ?>" method="post">
-  <div class="row">
-    <div class="col-md-6 mb-3"><label class="form-label">Kode Produk</label><input type="text" name="code" class="form-control" placeholder="Contoh: PRD-001" value="<?= esc(old('code', $item['code'] ?? '')) ?>" required></div>
-    <div class="col-md-6 mb-3"><label class="form-label">Nama Produk</label><input type="text" name="name" class="form-control" placeholder="Nama produk lengkap" value="<?= esc(old('name', $item['name'] ?? '')) ?>" required></div>
-  </div>
-  <div class="row">
-    <div class="col-md-6 mb-3"><label class="form-label">Kategori</label><select name="category_id" class="form-select" required><?php foreach ($categories as $c): ?><option value="<?= esc($c['id']) ?>" <?= (string) old('category_id', $item['category_id'] ?? '') === (string) $c['id'] ? 'selected' : '' ?>><?= esc($c['name']) ?></option><?php endforeach; ?></select></div>
-    <div class="col-md-6 mb-3"><label class="form-label">Satuan</label><input type="text" name="unit" class="form-control" placeholder="pcs, box, kg..." value="<?= esc(old('unit', $item['unit'] ?? 'pcs')) ?>" required></div>
-  </div>
-  <div class="row">
-    <div class="col-md-6 mb-3">
-      <label class="form-label">Harga Beli</label>
-      <div class="input-group">
-        <span class="input-group-text">Rp</span>
-        <input type="text" inputmode="numeric" name="purchase_price" class="form-control js-rupiah" value="<?= esc(old('purchase_price', isset($item['purchase_price']) ? (int) $item['purchase_price'] : '')) ?>" placeholder="0" required>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent py-3">
+        <h3 class="card-title m-0 fw-bold"><?= $item ? 'Ubah Data Produk' : 'Tambah Produk Baru' ?></h3>
       </div>
-      <div class="form-text">Biaya modal beli per satuan barang.</div>
-    </div>
-    <div class="col-md-6 mb-3">
-      <label class="form-label">Harga Jual</label>
-      <div class="input-group">
-        <span class="input-group-text">Rp</span>
-        <input type="text" inputmode="numeric" name="selling_price" class="form-control js-rupiah" value="<?= esc(old('selling_price', isset($item['selling_price']) ? (int) $item['selling_price'] : '')) ?>" placeholder="0" required>
+      <div class="card-body">
+        <form action="<?= $item ? '/products/update/' . esc($item['id']) : '/products/store' ?>" method="post">
+          <div class="row g-3 mb-3">
+            <div class="col-md-5">
+              <label class="form-label required">Kode Produk (SKU)</label>
+              <input type="text" name="code" class="form-control font-monospace" placeholder="Contoh: PRD-001" value="<?= esc(old('code', $item['code'] ?? '')) ?>" required autofocus>
+              <div class="form-text">Kode unik internal produk.</div>
+            </div>
+            <div class="col-md-7">
+              <label class="form-label required">Nama Produk</label>
+              <input type="text" name="name" class="form-control" placeholder="Nama produk lengkap dan spesifikasi" value="<?= esc(old('name', $item['name'] ?? '')) ?>" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label required">Kategori</label>
+              <select name="category_id" class="form-select" required>
+                <option value="">-- Pilih Kategori --</option>
+                <?php foreach ($categories as $c): ?>
+                  <option value="<?= esc($c['id']) ?>" <?= (string) old('category_id', $item['category_id'] ?? '') === (string) $c['id'] ? 'selected' : '' ?>>
+                    <?= esc($c['name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label required">Satuan</label>
+              <input type="text" name="unit" class="form-control" placeholder="Contoh: pcs, box, rim, kg" value="<?= esc(old('unit', $item['unit'] ?? 'pcs')) ?>" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label required">Harga Beli (Modal)</label>
+              <div class="input-group">
+                <span class="input-group-text">Rp</span>
+                <input type="text" inputmode="numeric" name="purchase_price" class="form-control font-monospace js-rupiah" value="<?= esc(old('purchase_price', isset($item['purchase_price']) ? (int) $item['purchase_price'] : '')) ?>" placeholder="0" required>
+              </div>
+              <div class="form-text">Biaya modal beli per satuan barang.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label required">Harga Jual</label>
+              <div class="input-group">
+                <span class="input-group-text">Rp</span>
+                <input type="text" inputmode="numeric" name="selling_price" class="form-control font-monospace js-rupiah" value="<?= esc(old('selling_price', isset($item['selling_price']) ? (int) $item['selling_price'] : '')) ?>" placeholder="0" required>
+              </div>
+              <div class="form-text">Harga standar jual ke pelanggan.</div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label required">Stok Awal</label>
+              <input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', $item['stock_qty'] ?? 0)) ?>" required>
+              <div class="form-text">Kuantitas fisik saat ini di gudang.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label required">Batas Stok Minimum</label>
+              <input type="number" min="0" name="min_stock" class="form-control" value="<?= esc(old('min_stock', $item['min_stock'] ?? 5)) ?>" required>
+              <div class="form-text">Peringatan otomatis muncul bila stok mencapai angka ini.</div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 pt-2 border-top">
+            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg>
+              Simpan Data Produk
+            </button>
+            <a class="btn btn-outline-secondary" href="/products">Batal</a>
+          </div>
+        </form>
       </div>
-      <div class="form-text">Harga patokan jual ke pelanggan.</div>
     </div>
   </div>
-  <div class="row">
-    <div class="col-md-6 mb-3"><label class="form-label">Stok</label><input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', $item['stock_qty'] ?? 0)) ?>" required></div>
-    <div class="col-md-6 mb-3"><label class="form-label">Stok Minimum</label><input type="number" min="0" name="min_stock" class="form-control" value="<?= esc(old('min_stock', $item['min_stock'] ?? 0)) ?>" required><div class="form-text">Batas peringatan ketika stok mulai menipis.</div></div>
-  </div>
-  <div class="mt-2">
-    <button type="submit" class="btn btn-primary">
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg>
-      Simpan
-    </button>
-    <a class="btn btn-secondary" href="/products">Batal</a>
-  </div>
-</form>
+</div>
+
 <?= $this->endSection() ?>

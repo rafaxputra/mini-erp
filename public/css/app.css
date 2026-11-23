@@ -87,3 +87,11 @@
   border-color: var(--erp-teal);
   color: #fff;
 }
+
+/* Wajib diisi indikator tanda bintang */
+.form-label.required:after {
+  content: " *";
+  color: #d63939;
+  font-weight: bold;
+}
+
