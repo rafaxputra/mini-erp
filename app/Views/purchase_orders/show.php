@@ -1,15 +1,7 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
-<?php
-$statusConfig = [
-    'draft'     => ['badge' => 'bg-secondary-lt', 'label' => 'Draf'],
-    'approved'  => ['badge' => 'bg-azure-lt',     'label' => 'Disetujui'],
-    'received'  => ['badge' => 'bg-success-lt',   'label' => 'Diterima'],
-    'cancelled' => ['badge' => 'bg-danger-lt',    'label' => 'Dibatalkan'],
-];
-$st = $statusConfig[$po['status']] ?? ['badge' => 'bg-secondary-lt', 'label' => status_label($po['status'])];
-?>
+<?php $st = status_badge($po['status']); ?>
 
 <!-- Kartu Ringkasan Informasi Pesanan -->
 <div class="card mb-3 border-0 shadow-sm">

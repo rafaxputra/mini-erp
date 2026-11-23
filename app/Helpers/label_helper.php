@@ -29,6 +29,14 @@ if (! function_exists('status_badge_class')) {
         ][$status] ?? 'bg-secondary-lt';
     }
 }
+// Satu sumber untuk badge + label status, dipakai halaman detail.
+// Dulu tiap halaman detail punya map sendiri, sekarang cukup panggil ini.
+if (! function_exists('status_badge')) {
+    function status_badge(string $status): array
+    {
+        return ['badge' => status_badge_class($status), 'label' => status_label($status)];
+    }
+}
 if (! function_exists('movement_label')) {
     function movement_label(string $type): string
     {

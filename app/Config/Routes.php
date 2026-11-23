@@ -60,5 +60,18 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('goods-receipts', 'GoodsReceipts::index');
     $routes->get('goods-receipts/create', 'GoodsReceipts::create');
     $routes->post('goods-receipts/store', 'GoodsReceipts::store');
+    $routes->get('sales-orders', 'SalesOrders::index');
+    $routes->get('sales-orders/create', 'SalesOrders::create');
+    $routes->post('sales-orders/store', 'SalesOrders::store');
+    $routes->get('sales-orders/show/(:num)', 'SalesOrders::show/$1');
+    $routes->post('sales-orders/confirm/(:num)', 'SalesOrders::confirm/$1');
+    $routes->post('sales-orders/cancel/(:num)', 'SalesOrders::cancel/$1');
+    $routes->get('deliveries', 'Deliveries::index');
+    $routes->get('deliveries/create', 'Deliveries::create');
+    $routes->post('deliveries/store', 'Deliveries::store');
+    $routes->get('inventory', 'Inventory::index');
+    $routes->get('inventory/movements', 'Inventory::movements');
+    $routes->get('inventory/adjust', 'Inventory::adjust');
+    $routes->post('inventory/adjust', 'Inventory::adjustPost');
 });
 

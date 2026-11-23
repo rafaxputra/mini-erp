@@ -18,6 +18,8 @@ $currentPath = uri_string();
 $activeGroup = '';
 if (preg_match('#^(categories|products|suppliers|customers|warehouses)(/|$)#', $currentPath)) $activeGroup = 'master';
 elseif (preg_match('#^(purchase-orders|goods-receipts)(/|$)#', $currentPath)) $activeGroup = 'pembelian';
+elseif (preg_match('#^(sales-orders|deliveries)(/|$)#', $currentPath)) $activeGroup = 'penjualan';
+elseif (preg_match('#^(inventory)(/|$)#', $currentPath)) $activeGroup = 'persediaan';
 elseif (preg_match('#^(users|roles)(/|$)#', $currentPath)) $activeGroup = 'pengaturan';
 
 $navActive = static function (string $prefix) use ($currentPath): string {
@@ -36,6 +38,9 @@ $moduleLabels = [
     'roles' => 'Peran',
     'purchase-orders' => 'Pesanan Beli',
     'goods-receipts' => 'Barang Masuk',
+    'sales-orders' => 'Pesanan Jual',
+    'deliveries' => 'Pengiriman',
+    'inventory' => 'Persediaan',
 ];
 
 $breadcrumbs = [];
@@ -132,7 +137,7 @@ if ($initials === '') {
             </div>
           </li>
           <?php endif; ?>
-          <?php if ($role === 'admin'): ?>
+                    <?php if ($role === 'admin'): ?>
           <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg></span>
@@ -144,6 +149,29 @@ if ($initials === '') {
             </div>
           </li>
           <?php endif; ?>
+<?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304" /> <path d="M9 11v-5a3 3 0 0 1 6 0v5" /> </svg></span>
+              <span class="nav-link-title">Penjualan</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Jual</a>
+              <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman</a>
+            </div>
+          </li>
+          <?php endif; ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /> </svg></span>
+              <span class="nav-link-title">Persediaan</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
+              <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Riwayat Stok</a>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('inventory/adjust') ?>" href="/inventory/adjust">Koreksi Stok</a><?php endif; ?>
+            </div>
+          </li>
         </ul>
         <div class="navbar-side">
           <div class="d-flex align-items-center px-3 py-2">
