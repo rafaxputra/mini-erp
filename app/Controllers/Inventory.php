@@ -9,16 +9,42 @@ class Inventory extends BaseController
     {
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
+
+        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
+
         $builder = $db->table('products p')->select('p.*, c.name AS category_name')->join('categories c', 'c.id = p.category_id');
         if ($q !== '') {
-            $builder->like('p.name', $q);
+            $builder->groupStart()
+                ->like('p.name', $q, 'both', null, true)
+                ->orLike('p.code', $q, 'both', null, true)
+                ->orLike('c.name', $q, 'both', null, true)
+            ->groupEnd();
         }
         $items = $builder->orderBy('p.code', 'ASC')->get()->getResultArray();
+
+        // Saldo terkini per (product_id, warehouse_id) dari mutasi stok terakhir
+        $stockRows = $db->query('SELECT DISTINCT ON (warehouse_id, product_id) warehouse_id, product_id, qty_after FROM stock_movements ORDER BY warehouse_id, product_id, created_at DESC, id DESC')->getResultArray();
+        $stocksMap = [];
+        foreach ($stockRows as $sr) {
+            $stocksMap[(int) $sr['product_id']][(int) $sr['warehouse_id']] = (int) $sr['qty_after'];
+        }
+
         $total = 0;
         foreach ($items as $it) {
-            $total += (int) $it['stock_qty'] * (float) $it['purchase_price'];
+            $qty = $warehouseId > 0 ? ($stocksMap[$it['id']][$warehouseId] ?? 0) : (int) $it['stock_qty'];
+            $total += $qty * (float) $it['purchase_price'];
         }
-        return view('inventory/index', ['title' => 'Stok Produk', 'items' => $items, 'totalValue' => $total, 'q' => $q]);
+
+        return view('inventory/index', [
+            'title' => 'Stok Produk',
+            'items' => $items,
+            'totalValue' => $total,
+            'q' => $q,
+            'warehouses' => $warehouses,
+            'warehouseId' => $warehouseId,
+            'stocksMap' => $stocksMap,
+        ]);
     }
     public function movements()
     {
@@ -36,7 +62,22 @@ class Inventory extends BaseController
     public function adjust()
     {
         if ($r = $this->requireRole(['admin'], '/inventory', 'Hanya admin yang bisa mencatat penyesuaian stok.')) return $r;
-        return view('inventory/adjust', ['title' => 'Koreksi Stok', 'products' => (new ProductModel())->orderBy('code', 'ASC')->findAll(), 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll()]);
+        $db = \Config\Database::connect();
+        $products = (new ProductModel())->orderBy('code', 'ASC')->findAll();
+        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
+
+        $stockRows = $db->query('SELECT DISTINCT ON (warehouse_id, product_id) warehouse_id, product_id, qty_after FROM stock_movements ORDER BY warehouse_id, product_id, created_at DESC, id DESC')->getResultArray();
+        $warehouseStocks = [];
+        foreach ($stockRows as $sr) {
+            $warehouseStocks[(int) $sr['warehouse_id']][(int) $sr['product_id']] = (int) $sr['qty_after'];
+        }
+
+        return view('inventory/adjust', [
+            'title' => 'Koreksi Stok',
+            'products' => $products,
+            'warehouses' => $warehouses,
+            'warehouseStocks' => $warehouseStocks,
+        ]);
     }
     public function adjustPost()
     {

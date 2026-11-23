@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/css/tabler.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 <link href="<?= base_url('css/app.css') ?>" rel="stylesheet">
 </head>
 <body>
@@ -23,7 +24,10 @@ elseif (preg_match('#^(inventory)(/|$)#', $currentPath)) $activeGroup = 'persedi
 elseif (preg_match('#^(users|roles)(/|$)#', $currentPath)) $activeGroup = 'pengaturan';
 
 $navActive = static function (string $prefix) use ($currentPath): string {
-    return $prefix === $currentPath || str_starts_with($currentPath, $prefix . '/') ? 'active' : '';
+    if ($prefix === 'inventory') {
+        return $currentPath === 'inventory' ? 'active' : '';
+    }
+    return ($prefix === $currentPath || str_starts_with($currentPath, $prefix . '/')) ? 'active' : '';
 };
 $backSegments = explode('/', trim($currentPath, '/'));
 $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
@@ -36,11 +40,12 @@ $moduleLabels = [
     'warehouses' => 'Gudang',
     'users' => 'Pengguna',
     'roles' => 'Peran',
-    'purchase-orders' => 'Pesanan Beli',
-    'goods-receipts' => 'Barang Masuk',
-    'sales-orders' => 'Pesanan Jual',
-    'deliveries' => 'Pengiriman',
+    'purchase-orders' => 'Pesanan Pembelian',
+    'goods-receipts' => 'Penerimaan Barang',
+    'sales-orders' => 'Pesanan Penjualan',
+    'deliveries' => 'Pengiriman Barang',
     'inventory' => 'Persediaan',
+    'reports' => 'Laporan',
 ];
 
 $breadcrumbs = [];
@@ -132,12 +137,35 @@ if ($initials === '') {
               <span class="nav-link-title">Pembelian</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
-              <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Beli</a>
-              <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Barang Masuk</a>
+              <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Pembelian (PO)</a>
+              <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
             </div>
           </li>
           <?php endif; ?>
-                    <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
+          <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304" /> <path d="M9 11v-5a3 3 0 0 1 6 0v5" /> </svg></span>
+              <span class="nav-link-title">Penjualan</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Penjualan (SO)</a>
+              <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman Barang (DO)</a>
+            </div>
+          </li>
+          <?php endif; ?>
+          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /> </svg></span>
+              <span class="nav-link-title">Persediaan</span>
+            </a>
+            <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
+              <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
+              <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('inventory/adjust') ?>" href="/inventory/adjust">Penyesuaian Stok</a><?php endif; ?>
+            </div>
+          </li>
+          <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
           <li class="nav-item">
             <a class="nav-link <?= $navActive('reports') ?>" href="/reports">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -14" /> <path d="M4 20h14" /> </svg></span>
@@ -157,29 +185,6 @@ if ($initials === '') {
             </div>
           </li>
           <?php endif; ?>
-<?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304" /> <path d="M9 11v-5a3 3 0 0 1 6 0v5" /> </svg></span>
-              <span class="nav-link-title">Penjualan</span>
-            </a>
-            <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
-              <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Jual</a>
-              <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman</a>
-            </div>
-          </li>
-          <?php endif; ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /> </svg></span>
-              <span class="nav-link-title">Persediaan</span>
-            </a>
-            <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
-              <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
-              <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Riwayat Stok</a>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('inventory/adjust') ?>" href="/inventory/adjust">Koreksi Stok</a><?php endif; ?>
-            </div>
-          </li>
         </ul>
         <div class="navbar-side">
           <div class="d-flex align-items-center px-3 py-2">
@@ -256,8 +261,93 @@ if ($initials === '') {
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/js/tabler.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// Ganti alert bawaan browser dengan modal SweetAlert2 yang lebih elegan
+window.alert = function (message) {
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Perhatian',
+      text: message,
+      confirmButtonText: 'Mengerti',
+      confirmButtonColor: '#1d4ed8',
+      customClass: {
+        popup: 'rounded-4 shadow-lg'
+      }
+    });
+  } else {
+    window.originalAlert ? window.originalAlert(message) : console.warn(message);
+  }
+};
+
 document.addEventListener('DOMContentLoaded', function () {
+  // Notifikasi Flash message via Toast jika ada
+  <?php if (session()->getFlashdata('success')): ?>
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: <?= json_encode(session()->getFlashdata('success')) ?>,
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true
+  });
+  <?php elseif (session()->getFlashdata('error')): ?>
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'error',
+    title: <?= json_encode(session()->getFlashdata('error')) ?>,
+    showConfirmButton: false,
+    timer: 4500,
+    timerProgressBar: true
+  });
+  <?php endif; ?>
+
+  // Interseptor Form Konfirmasi Pengganti confirm() bawaan browser
+  document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form || form.tagName !== 'FORM') return;
+
+    const confirmMsg = form.getAttribute('data-confirm');
+    if (confirmMsg && !form.dataset.confirmed) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const type = form.getAttribute('data-confirm-type') || 'danger';
+      const isDanger = type === 'danger';
+      const isWarning = type === 'warning';
+      const isPrimary = type === 'primary' || type === 'success';
+
+      const title = form.getAttribute('data-confirm-title') || 'Konfirmasi Tindakan';
+      const btnText = form.getAttribute('data-confirm-btn') || (isDanger ? 'Ya, Hapus' : 'Ya, Lanjutkan');
+      const icon = form.getAttribute('data-confirm-icon') || (isDanger ? 'warning' : (isPrimary ? 'question' : 'info'));
+      const confirmColor = isDanger ? '#d63939' : (isWarning ? '#f59e0b' : '#1d4ed8');
+
+      Swal.fire({
+        title: title,
+        html: confirmMsg,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonText: btnText,
+        cancelButtonText: 'Batal',
+        confirmButtonColor: confirmColor,
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+        customClass: {
+          popup: 'rounded-4 shadow-lg p-3'
+        }
+      }).then(function (result) {
+        if (result.isConfirmed) {
+          form.dataset.confirmed = 'true';
+          form.submit();
+        }
+      });
+      return false;
+    }
+  }, true);
+
   document.querySelectorAll('.js-table-search').forEach(function (input) {
     input.addEventListener('input', function () {
       const q = this.value.toLowerCase().trim();

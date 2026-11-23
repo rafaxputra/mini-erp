@@ -79,7 +79,7 @@
         <tr>
           <td><code class="text-dark font-monospace fw-bold"><?= esc($it['so_number']) ?></code></td>
           <td class="fw-semibold text-dark"><?= esc($it['customer_name']) ?></td>
-          <td class="text-secondary"><?= esc($it['order_date']) ?></td>
+          <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['order_date'])) ?></td>
           <td class="text-center"><span class="badge <?= esc(status_badge_class($it['status'])) ?> fw-bold"><?= esc(status_label($it['status'])) ?></span></td>
           <td class="text-end fw-semibold text-dark font-monospace">Rp <?= number_format((float) $it['total_amount'], 0, ',', '.') ?></td>
           <td class="text-secondary"><?= esc($it['creator_name']) ?></td>
@@ -96,7 +96,7 @@
     </div>
 
     <div class="card-footer d-flex flex-wrap justify-content-between align-items-center py-2 bg-transparent gap-2">
-      <span class="text-muted small">Menampilkan <?= esc($pager['from']) ?> sampai <?= esc($pager['to']) ?> dari <?= esc($pager['total']) ?> Pesanan Jual</span>
+      <span class="text-muted small">Menampilkan <?= esc($pager['from']) ?> sampai <?= esc($pager['to']) ?> dari <?= esc($pager['total']) ?> Pesanan Penjualan (SO)</span>
       <?php if ($pager['lastPage'] > 1): ?>
         <ul class="pagination pagination-sm m-0">
           <li class="page-item <?= $pager['page'] <= 1 ? 'disabled' : '' ?>">

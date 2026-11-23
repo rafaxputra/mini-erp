@@ -31,12 +31,12 @@ class PurchaseOrders extends BaseController
         $db = \Config\Database::connect();
         $builder = $db->table('purchase_orders po')->select('MIN(po.id) AS id, po.po_number, po.supplier_id, s.name AS supplier_name, MIN(po.order_date) AS order_date, MIN(po.status) AS status, SUM(po.qty * po.unit_price) AS total_amount, MIN(u.name) AS creator_name, MAX(po.created_at) AS created_at')->join('suppliers s', 's.id = po.supplier_id')->join('users u', 'u.id = po.created_by');
         if ($q !== '') {
-            $builder->groupStart()->like('po.po_number', $q)->orLike('s.name', $q)->groupEnd();
+            $builder->groupStart()->like('po.po_number', $q, 'both', null, true)->orLike('s.name', $q, 'both', null, true)->groupEnd();
         }
         if ($status !== '') $builder->where('po.status', $status);
         if ($start !== '') $builder->where('po.order_date >=', $start);
         if ($end !== '') $builder->where('po.order_date <=', $end);
-        return $builder->groupBy('po.po_number, po.supplier_id, s.name')->orderBy('created_at', 'DESC')->orderBy('po.po_number', 'DESC');
+        return $builder->groupBy('po.po_number, po.supplier_id, s.name')->orderBy('order_date', 'DESC')->orderBy('created_at', 'DESC')->orderBy('po.po_number', 'DESC');
     }
     public function create()
     {

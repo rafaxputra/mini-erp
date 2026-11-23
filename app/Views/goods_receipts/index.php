@@ -3,12 +3,17 @@
 
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <div class="input-icon" style="max-width: 300px; width: 100%;">
-      <span class="input-icon-addon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
-      </span>
-      <input type="text" class="form-control form-control-sm js-table-search" placeholder="Cari nomor GR, PO, penerima..." aria-label="Cari barang masuk">
-    </div>
+    <form action="/goods-receipts" method="get" class="d-flex align-items-center gap-1" style="max-width: 350px; width: 100%;">
+      <div class="input-icon flex-grow-1">
+        <span class="input-icon-addon">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+        </span>
+        <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nomor GR, PO, penerima..." aria-label="Cari barang masuk" value="<?= esc($q ?? '') ?>">
+      </div>
+      <?php if (! empty($q)): ?>
+        <a href="/goods-receipts" class="btn btn-sm btn-outline-secondary" title="Reset filter pencarian">Reset</a>
+      <?php endif; ?>
+    </form>
     <?php if (in_array(session()->get('user_role'), ['admin', 'gudang'], true)): ?>
       <a class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" href="/goods-receipts/create">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
@@ -44,7 +49,7 @@
           <td><code class="text-primary font-monospace fw-bold"><?= esc($it['gr_number']) ?></code></td>
           <td><code class="text-dark font-monospace"><?= esc($it['po_number']) ?></code></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
-          <td class="text-secondary"><?= esc($it['receipt_date']) ?></td>
+          <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['receipt_date'])) ?></td>
           <td class="fw-medium text-dark"><?= esc($it['receiver_name']) ?></td>
           <td class="text-secondary text-truncate" style="max-width: 250px;" title="<?= esc($it['notes']) ?>">
             <?= esc($it['notes'] ?: '-') ?>

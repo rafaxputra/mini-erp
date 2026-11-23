@@ -31,12 +31,12 @@ class SalesOrders extends BaseController
         $db = \Config\Database::connect();
         $builder = $db->table('sales_orders so')->select('MIN(so.id) AS id, so.so_number, so.customer_id, c.name AS customer_name, MIN(so.order_date) AS order_date, MIN(so.status) AS status, SUM(so.qty * so.unit_price) AS total_amount, MIN(u.name) AS creator_name, MAX(so.created_at) AS created_at')->join('customers c', 'c.id = so.customer_id')->join('users u', 'u.id = so.created_by');
         if ($q !== '') {
-            $builder->groupStart()->like('so.so_number', $q)->orLike('c.name', $q)->groupEnd();
+            $builder->groupStart()->like('so.so_number', $q, 'both', null, true)->orLike('c.name', $q, 'both', null, true)->groupEnd();
         }
         if ($status !== '') $builder->where('so.status', $status);
         if ($start !== '') $builder->where('so.order_date >=', $start);
         if ($end !== '') $builder->where('so.order_date <=', $end);
-        return $builder->groupBy('so.so_number, so.customer_id, c.name')->orderBy('created_at', 'DESC')->orderBy('so.so_number', 'DESC');
+        return $builder->groupBy('so.so_number, so.customer_id, c.name')->orderBy('order_date', 'DESC')->orderBy('created_at', 'DESC')->orderBy('so.so_number', 'DESC');
     }
     public function create()
     {

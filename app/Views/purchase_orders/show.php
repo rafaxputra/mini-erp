@@ -16,7 +16,7 @@
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <?php if ($po['status'] === 'draft' && session()->get('user_role') === 'admin'): ?>
-          <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui Pesanan Beli <?= esc($po['po_number']) ?>?')">
+          <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menyetujui Pesanan Beli <strong><?= esc($po['po_number']) ?></strong>?" data-confirm-title="Persetujuan Pesanan Beli" data-confirm-btn="Ya, Setujui" data-confirm-type="primary">
             <button class="btn btn-success" type="submit">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
               Setujui Pesanan

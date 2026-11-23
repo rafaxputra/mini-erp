@@ -11,10 +11,10 @@ class Customers extends BaseController
         $builder = $db->table('customers');
         if ($q !== '') {
             $builder->groupStart()
-                ->like('code', $q)
-                ->orLike('name', $q)
-                ->orLike('phone', $q)
-                ->orLike('email', $q)
+                ->like('code', $q, 'both', null, true)
+                ->orLike('name', $q, 'both', null, true)
+                ->orLike('phone', $q, 'both', null, true)
+                ->orLike('email', $q, 'both', null, true)
             ->groupEnd();
         }
         $total = $builder->countAllResults(false);
@@ -64,33 +64,66 @@ class Customers extends BaseController
         if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
         $item = (new CustomerModel())->find($id);
         if (! $item) return redirect()->to('/customers')->with('error', 'Pelanggan tidak ditemukan.');
-        return view('customers/form', ['title' => 'Ubah Pelanggan', 'item' => $item]);
+
+        $hasTransactions = \Config\Database::connect()->table('sales_orders')->where('customer_id', $id)->countAllResults() > 0;
+
+        return view('customers/form', [
+            'title' => 'Ubah Pelanggan',
+            'item' => $item,
+            'hasTransactions' => $hasTransactions,
+        ]);
     }
     public function update($id)
     {
         if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
-        $rules = ['code' => 'required|max_length[20]|is_unique[customers.code,id,' . $id . ']', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
+        $item = (new CustomerModel())->find($id);
+        if (! $item) return redirect()->to('/customers')->with('error', 'Pelanggan tidak ditemukan.');
+
+        $hasTransactions = \Config\Database::connect()->table('sales_orders')->where('customer_id', $id)->countAllResults() > 0;
+
+        $rules = [
+            'name' => 'required|min_length[2]|max_length[150]',
+            'phone' => 'permit_empty|max_length[30]',
+            'email' => 'permit_empty|valid_email|max_length[150]',
+            'address' => 'permit_empty',
+        ];
         $messages = [
-            'code' => ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'],
             'name' => ['required' => 'Nama pelanggan wajib diisi.', 'min_length' => 'Nama pelanggan minimal 2 karakter.', 'max_length' => 'Nama pelanggan maksimal 150 karakter.'],
             'phone' => ['max_length' => 'Nomor telepon maksimal 30 karakter.'],
             'email' => ['valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.'],
         ];
 
+        if (! $hasTransactions) {
+            $rules['code'] = 'required|max_length[20]|is_unique[customers.code,id,' . $id . ']';
+            $messages['code'] = ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'];
+        }
+
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
-        (new CustomerModel())->update($id, $this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
+
+        $updateData = $this->request->getPost(['name', 'phone', 'email', 'address']);
+        if (! $hasTransactions) {
+            $updateData['code'] = $this->request->getPost('code');
+        }
+
+        (new CustomerModel())->update($id, $updateData);
         return redirect()->to('/customers')->with('success', 'Pelanggan berhasil diubah.');
     }
     public function delete($id)
     {
         if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        
+        $hasTransactions = \Config\Database::connect()->table('sales_orders')->where('customer_id', $id)->countAllResults() > 0;
+        if ($hasTransactions) {
+            return redirect()->to('/customers')->with('error', 'Pelanggan tidak bisa dihapus karena sudah memiliki riwayat transaksi pesanan penjualan (SO).');
+        }
+
         try {
             (new CustomerModel())->delete($id);
             return redirect()->to('/customers')->with('success', 'Pelanggan berhasil dihapus.');
         } catch (\Throwable $e) {
-            return redirect()->to('/customers')->with('error', 'Pelanggan tidak bisa dihapus karena sudah dipakai transaksi.');
+            return redirect()->to('/customers')->with('error', 'Pelanggan tidak bisa dihapus karena masih terikat dengan data lain.');
         }
     }
 }

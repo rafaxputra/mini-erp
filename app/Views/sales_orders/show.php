@@ -16,7 +16,7 @@
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
         <?php if ($so['status'] === 'draft' && in_array(session()->get('user_role'), ['admin', 'sales'], true)): ?>
-          <form action="/sales-orders/confirm/<?= esc($so['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin mengonfirmasi Pesanan Jual <?= esc($so['so_number']) ?>?')">
+          <form action="/sales-orders/confirm/<?= esc($so['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin mengonfirmasi Pesanan Jual <strong><?= esc($so['so_number']) ?></strong>?" data-confirm-title="Konfirmasi Pesanan Jual" data-confirm-btn="Ya, Konfirmasi" data-confirm-type="primary">
             <button class="btn btn-success" type="submit">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
               Konfirmasi Pesanan

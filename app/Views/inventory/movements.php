@@ -62,7 +62,7 @@
         <tbody>
         <?php foreach ($items as $it): ?>
         <tr>
-          <td class="text-secondary small"><?= esc($it['created_at']) ?></td>
+          <td class="text-secondary small font-monospace"><?= date('d/m/Y H:i', strtotime($it['created_at'])) ?></td>
           <td class="fw-semibold text-dark"><code class="text-dark font-monospace"><?= esc($it['code']) ?></code> <?= esc($it['product_name']) ?></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
           <td>

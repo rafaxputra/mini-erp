@@ -100,7 +100,7 @@
             </td>
             <td class="subtotal text-end font-monospace">Rp 0</td>
             <td class="text-center">
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove(); updateProductDropdowns(); recalc();">
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
             </td>
@@ -191,6 +191,17 @@ function updateProductDropdowns() {
   }
 }
 
+function removeRow(btn) {
+  const tbody = document.getElementById('detailRows');
+  if (tbody.querySelectorAll('tr').length > 1) {
+    btn.closest('tr').remove();
+    updateProductDropdowns();
+    recalc();
+  } else {
+    alert('Pesanan harus memiliki minimal 1 produk.');
+  }
+}
+
 function addRow() {
   const tbody = document.getElementById('detailRows');
   const row = document.createElement('tr');
@@ -200,7 +211,7 @@ function addRow() {
     + '<td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" required></td>'
     + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" placeholder="0" required></div></td>'
     + '<td class="subtotal text-end font-monospace">Rp 0</td>'
-    + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest(\'tr\').remove(); recalc();">Hapus</button></td>';
+    + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button></td>';
   tbody.appendChild(row);
   row.querySelector('.product-select').addEventListener('change', function () {
     const sel = this.options[this.selectedIndex];

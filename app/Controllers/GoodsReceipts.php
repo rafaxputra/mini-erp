@@ -14,19 +14,21 @@ class GoodsReceipts extends BaseController
         $q = trim((string) ($this->request->getGet('q') ?? ''));
 
         $subQuery = $db->table('goods_receipts gr')
-            ->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')
+            ->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(s.name) AS supplier_name, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')
             ->join('purchase_orders po', 'po.id = gr.purchase_order_id')
+            ->join('suppliers s', 's.id = po.supplier_id', 'left')
             ->join('users u', 'u.id = gr.received_by')
             ->join('warehouses w', 'w.id = gr.warehouse_id')
             ->groupBy('gr.gr_number');
 
         if ($q !== '') {
-            $subQuery->havingLike('gr.gr_number', $q)
-                ->orHavingLike('MIN(po.po_number)', $q)
-                ->orHavingLike('MIN(w.name)', $q);
+            $subQuery->havingLike('gr.gr_number', $q, 'both', null, true)
+                ->orHavingLike('MIN(po.po_number)', $q, 'both', null, true)
+                ->orHavingLike('MIN(s.name)', $q, 'both', null, true)
+                ->orHavingLike('MIN(w.name)', $q, 'both', null, true);
         }
 
-        $allRows = $subQuery->orderBy('created_at', 'DESC')->get()->getResultArray();
+        $allRows = $subQuery->orderBy('receipt_date', 'DESC')->orderBy('created_at', 'DESC')->get()->getResultArray();
         $total = count($allRows);
         $perPage = 10;
         $lastPage = max(1, (int) ceil($total / $perPage));

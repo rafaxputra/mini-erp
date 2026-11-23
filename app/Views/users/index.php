@@ -60,14 +60,14 @@
                 Ubah
               </a>
               <?php if ($u['is_active']): ?>
-                <form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan akun \'<?= esc($u['name']) ?>\'?')">
+                <form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menonaktifkan akun <strong>'<?= esc($u['name']) ?>'</strong>?" data-confirm-title="Nonaktifkan Pengguna" data-confirm-btn="Ya, Nonaktifkan" data-confirm-type="warning">
                   <button class="btn btn-sm btn-outline-danger" type="submit" title="Nonaktifkan akun">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M5.7 5.7l12.6 12.6"/></svg>
                     Nonaktifkan
                   </button>
                 </form>
               <?php else: ?>
-                <form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin mengaktifkan kembali akun \'<?= esc($u['name']) ?>\'?')">
+                <form action="/users/toggle/<?= esc($u['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin mengaktifkan kembali akun <strong>'<?= esc($u['name']) ?>'</strong>?" data-confirm-title="Aktifkan Pengguna" data-confirm-btn="Ya, Aktifkan" data-confirm-type="primary">
                   <button class="btn btn-sm btn-outline-success" type="submit" title="Aktifkan akun">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
                     Aktifkan

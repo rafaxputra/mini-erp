@@ -43,11 +43,16 @@ class Categories extends BaseController
     public function delete($id)
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola kategori.')) return $r;
+        $hasProducts = \Config\Database::connect()->table('products')->where('category_id', $id)->countAllResults() > 0;
+        if ($hasProducts) {
+            return redirect()->to('/categories')->with('error', 'Kategori tidak bisa dihapus karena masih digunakan oleh produk di katalog.');
+        }
+
         try {
             (new CategoryModel())->delete($id);
             return redirect()->to('/categories')->with('success', 'Kategori berhasil dihapus.');
         } catch (\Throwable $e) {
-            return redirect()->to('/categories')->with('error', 'Kategori tidak bisa dihapus karena sudah dipakai produk.');
+            return redirect()->to('/categories')->with('error', 'Kategori tidak bisa dihapus karena masih terikat data lain.');
         }
     }
 }

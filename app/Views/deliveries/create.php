@@ -101,7 +101,8 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label required">Tanggal Kirim</label>
-            <input type="date" name="delivery_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+            <input type="date" name="delivery_date" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= esc($so['order_date']) ?>" required>
+            <div class="form-text">Minimal sama dengan tanggal pesanan (<?= date('d/m/Y', strtotime($so['order_date'])) ?>).</div>
           </div>
           <div class="col-md-6">
             <label class="form-label required">Gudang Pengirim</label>

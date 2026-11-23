@@ -11,8 +11,43 @@ class Deliveries extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'gudang', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
-        $items = $db->table('deliveries d')->select('MIN(d.id) AS id, d.delivery_number, MIN(so.so_number) AS so_number, MIN(d.delivery_date) AS delivery_date, MIN(d.notes) AS notes, MIN(u.name) AS deliverer_name, MIN(w.name) AS warehouse_name, MAX(d.created_at) AS created_at')->join('sales_orders so', 'so.id = d.sales_order_id')->join('users u', 'u.id = d.delivered_by')->join('warehouses w', 'w.id = d.warehouse_id')->groupBy('d.delivery_number')->orderBy('created_at', 'DESC')->get()->getResultArray();
-        return view('deliveries/index', ['title' => 'Pengiriman', 'items' => $items]);
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+
+        $subQuery = $db->table('deliveries d')
+            ->select('MIN(d.id) AS id, d.delivery_number, MIN(so.so_number) AS so_number, MIN(c.name) AS customer_name, MIN(d.delivery_date) AS delivery_date, MIN(d.notes) AS notes, MIN(u.name) AS deliverer_name, MIN(w.name) AS warehouse_name, MAX(d.created_at) AS created_at')
+            ->join('sales_orders so', 'so.id = d.sales_order_id')
+            ->join('customers c', 'c.id = so.customer_id', 'left')
+            ->join('users u', 'u.id = d.delivered_by')
+            ->join('warehouses w', 'w.id = d.warehouse_id')
+            ->groupBy('d.delivery_number');
+
+        if ($q !== '') {
+            $subQuery->havingLike('d.delivery_number', $q, 'both', null, true)
+                ->orHavingLike('MIN(so.so_number)', $q, 'both', null, true)
+                ->orHavingLike('MIN(c.name)', $q, 'both', null, true)
+                ->orHavingLike('MIN(w.name)', $q, 'both', null, true);
+        }
+
+        $allRows = $subQuery->orderBy('delivery_date', 'DESC')->orderBy('created_at', 'DESC')->get()->getResultArray();
+        $total = count($allRows);
+        $perPage = 10;
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        if ($page < 1) $page = 1;
+        if ($page > $lastPage) $page = $lastPage;
+
+        $items = array_slice($allRows, ($page - 1) * $perPage, $perPage);
+
+        $pager = [
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+            'to' => min($total, $page * $perPage),
+        ];
+
+        return view('deliveries/index', ['title' => 'Pengiriman', 'items' => $items, 'q' => $q, 'pager' => $pager]);
     }
     public function create()
     {

@@ -12,8 +12,16 @@
           <div class="row g-3 mb-3">
             <div class="col-md-5">
               <label class="form-label required">Kode Produk (SKU)</label>
-              <input type="text" name="code" class="form-control font-monospace" placeholder="Contoh: PRD-001" value="<?= esc(old('code', $item['code'] ?? '')) ?>" required autofocus>
-              <div class="form-text">Kode unik internal produk.</div>
+              <?php if (!empty($hasTransactions)): ?>
+                <input type="text" name="code" class="form-control font-monospace bg-light fw-bold" value="<?= esc(old('code', $item['code'] ?? '')) ?>" readonly>
+                <div class="form-text text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon text-secondary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/></svg>
+                  Kode produk tidak dapat diubah karena telah memiliki riwayat transaksi/mutasi gudang.
+                </div>
+              <?php else: ?>
+                <input type="text" name="code" class="form-control font-monospace" placeholder="Contoh: PRD-001" value="<?= esc(old('code', $item['code'] ?? '')) ?>" required autofocus>
+                <div class="form-text">Kode unik internal produk.</div>
+              <?php endif; ?>
             </div>
             <div class="col-md-7">
               <label class="form-label required">Nama Produk</label>
@@ -60,9 +68,18 @@
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label required">Stok Awal</label>
-              <input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', $item['stock_qty'] ?? 0)) ?>" required>
-              <div class="form-text">Kuantitas fisik saat ini di gudang.</div>
+              <?php if (isset($item)): ?>
+                <label class="form-label">Stok Saat Ini (Terkonsolidasi)</label>
+                <div class="input-group">
+                  <input type="text" class="form-control bg-light font-monospace fw-semibold" value="<?= esc($item['stock_qty']) ?> <?= esc($item['unit'] ?? 'unit') ?>" readonly>
+                  <a href="/inventory/adjust" class="btn btn-outline-secondary" title="Buka Penyesuaian Stok">Koreksi Stok</a>
+                </div>
+                <div class="form-text text-muted">Stok fisik tidak dapat diedit langsung di master produk agar kartu stok dan mutasi gudang tidak rusak. Gunakan <a href="/inventory/adjust" class="text-decoration-none fw-medium">Penyesuaian Stok</a> untuk koreksi fisik di gudang.</div>
+              <?php else: ?>
+                <label class="form-label required">Stok Awal Fisik</label>
+                <input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', 0)) ?>" required>
+                <div class="form-text">Saldo awal fisik saat pendaftaran barang (akan otomatis dialokasikan ke Gudang Utama dan tercatat di riwayat mutasi).</div>
+              <?php endif; ?>
             </div>
             <div class="col-md-6">
               <label class="form-label required">Batas Stok Minimum</label>

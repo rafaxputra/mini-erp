@@ -11,8 +11,16 @@
         <form action="<?= $item ? '/warehouses/update/' . esc($item['id']) : '/warehouses/store' ?>" method="post">
           <div class="mb-3">
             <label class="form-label required">Kode Gudang</label>
-            <input type="text" name="code" class="form-control font-monospace" value="<?= esc(old('code', $item['code'] ?? '')) ?>" placeholder="Contoh: GUD-02" required autofocus>
-            <div class="form-text">Kode unik identifikasi gudang.</div>
+            <?php if (!empty($hasTransactions)): ?>
+              <input type="text" name="code" class="form-control font-monospace bg-light fw-bold" value="<?= esc(old('code', $item['code'] ?? '')) ?>" readonly>
+              <div class="form-text text-muted">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-secondary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/></svg>
+                Kode gudang tidak dapat diubah karena telah memiliki riwayat mutasi stok fisik atau transaksi.
+              </div>
+            <?php else: ?>
+              <input type="text" name="code" class="form-control font-monospace" value="<?= esc(old('code', $item['code'] ?? '')) ?>" placeholder="Contoh: GUD-02" required autofocus>
+              <div class="form-text">Kode unik identifikasi gudang.</div>
+            <?php endif; ?>
           </div>
           <div class="mb-3">
             <label class="form-label required">Nama Gudang</label>
