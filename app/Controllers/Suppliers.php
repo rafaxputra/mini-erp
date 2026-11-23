@@ -6,7 +6,36 @@ class Suppliers extends BaseController
     public function index()
     {
         if ($r = $this->requireRole(['admin', 'purchasing', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar supplier.')) return $r;
-        return view('suppliers/index', ['title' => 'Pemasok', 'items' => (new SupplierModel())->orderBy('code', 'ASC')->findAll()]);
+        $db = \Config\Database::connect();
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $builder = $db->table('suppliers');
+        if ($q !== '') {
+            $builder->groupStart()
+                ->like('code', $q)
+                ->orLike('name', $q)
+                ->orLike('phone', $q)
+                ->orLike('email', $q)
+            ->groupEnd();
+        }
+        $total = $builder->countAllResults(false);
+        $perPage = 10;
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        if ($page < 1) $page = 1;
+        if ($page > $lastPage) $page = $lastPage;
+
+        $items = $builder->orderBy('code', 'ASC')->limit($perPage, ($page - 1) * $perPage)->get()->getResultArray();
+
+        $pager = [
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+            'to' => min($total, $page * $perPage),
+        ];
+
+        return view('suppliers/index', ['title' => 'Pemasok', 'items' => $items, 'q' => $q, 'pager' => $pager]);
     }
     public function create()
     {

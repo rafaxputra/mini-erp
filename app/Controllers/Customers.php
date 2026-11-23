@@ -6,7 +6,36 @@ class Customers extends BaseController
     public function index()
     {
         if ($r = $this->requireRole(['admin', 'sales', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar customer.')) return $r;
-        return view('customers/index', ['title' => 'Pelanggan', 'items' => (new CustomerModel())->orderBy('code', 'ASC')->findAll()]);
+        $db = \Config\Database::connect();
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $builder = $db->table('customers');
+        if ($q !== '') {
+            $builder->groupStart()
+                ->like('code', $q)
+                ->orLike('name', $q)
+                ->orLike('phone', $q)
+                ->orLike('email', $q)
+            ->groupEnd();
+        }
+        $total = $builder->countAllResults(false);
+        $perPage = 10;
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        if ($page < 1) $page = 1;
+        if ($page > $lastPage) $page = $lastPage;
+
+        $items = $builder->orderBy('code', 'ASC')->limit($perPage, ($page - 1) * $perPage)->get()->getResultArray();
+
+        $pager = [
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+            'to' => min($total, $page * $perPage),
+        ];
+
+        return view('customers/index', ['title' => 'Pelanggan', 'items' => $items, 'q' => $q, 'pager' => $pager]);
     }
     public function create()
     {

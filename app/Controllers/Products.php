@@ -7,8 +7,36 @@ class Products extends BaseController
     public function index()
     {
         $db = \Config\Database::connect();
-        $items = $db->table('products p')->select('p.*, c.name AS category_name')->join('categories c', 'c.id = p.category_id')->orderBy('p.code', 'ASC')->get()->getResultArray();
-        return view('products/index', ['title' => 'Produk', 'items' => $items]);
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $builder = $db->table('products p')->select('p.*, c.name AS category_name')->join('categories c', 'c.id = p.category_id');
+
+        if ($q !== '') {
+            $builder->groupStart()
+                ->like('p.code', $q)
+                ->orLike('p.name', $q)
+                ->orLike('c.name', $q)
+            ->groupEnd();
+        }
+
+        $total = $builder->countAllResults(false);
+        $perPage = 10;
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = (int) ($this->request->getGet('page') ?? 1);
+        if ($page < 1) $page = 1;
+        if ($page > $lastPage) $page = $lastPage;
+
+        $items = $builder->orderBy('p.code', 'ASC')->limit($perPage, ($page - 1) * $perPage)->get()->getResultArray();
+
+        $pager = [
+            'page' => $page,
+            'lastPage' => $lastPage,
+            'total' => $total,
+            'perPage' => $perPage,
+            'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+            'to' => min($total, $page * $perPage),
+        ];
+
+        return view('products/index', ['title' => 'Produk', 'items' => $items, 'q' => $q, 'pager' => $pager]);
     }
     public function create()
     {
