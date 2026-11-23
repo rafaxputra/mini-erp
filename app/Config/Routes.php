@@ -73,5 +73,10 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('inventory/movements', 'Inventory::movements');
     $routes->get('inventory/adjust', 'Inventory::adjust');
     $routes->post('inventory/adjust', 'Inventory::adjustPost');
+    $routes->get('reports', 'Reports::index');
+    $routes->get('reports/purchase', 'Reports::purchase');
+    $routes->get('reports/sales', 'Reports::sales');
+    $routes->get('reports/stock', 'Reports::stock');
+    $routes->get('reports/top-products', 'Reports::topProducts');
 });
 
