@@ -6,7 +6,7 @@ class CreateGoodsReceipts extends Migration
     public function up()
     {
         $this->db->query(<<<'SQL'
-CREATE TABLE goods_receipts (
+CREATE TABLE IF NOT EXISTS goods_receipts (
   id SERIAL PRIMARY KEY,
   gr_number VARCHAR(30) NOT NULL,
   purchase_order_id INT NOT NULL REFERENCES purchase_orders(id) ON DELETE RESTRICT,
@@ -19,7 +19,7 @@ CREATE TABLE goods_receipts (
   updated_at TIMESTAMP NULL,
   CONSTRAINT uq_gr_po_row UNIQUE (gr_number, purchase_order_id)
 );
-CREATE INDEX idx_gr_number ON goods_receipts(gr_number);
+CREATE INDEX IF NOT EXISTS idx_gr_number ON goods_receipts(gr_number);
 SQL);
     }
     public function down()

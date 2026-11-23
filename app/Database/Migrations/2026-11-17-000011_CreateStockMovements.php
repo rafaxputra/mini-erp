@@ -6,7 +6,7 @@ class CreateStockMovements extends Migration
     public function up()
     {
         $this->db->query(<<<'SQL'
-CREATE TABLE stock_movements (
+CREATE TABLE IF NOT EXISTS stock_movements (
   id SERIAL PRIMARY KEY,
   product_id INT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
   warehouse_id INT NOT NULL REFERENCES warehouses(id) ON DELETE RESTRICT,
@@ -20,7 +20,7 @@ CREATE TABLE stock_movements (
   created_by INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   created_at TIMESTAMP NULL
 );
-CREATE INDEX idx_sm_product_created ON stock_movements(product_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_sm_product_created ON stock_movements(product_id, created_at);
 SQL);
     }
     public function down()

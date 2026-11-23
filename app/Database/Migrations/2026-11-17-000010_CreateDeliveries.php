@@ -6,7 +6,7 @@ class CreateDeliveries extends Migration
     public function up()
     {
         $this->db->query(<<<'SQL'
-CREATE TABLE deliveries (
+CREATE TABLE IF NOT EXISTS deliveries (
   id SERIAL PRIMARY KEY,
   delivery_number VARCHAR(30) NOT NULL,
   sales_order_id INT NOT NULL REFERENCES sales_orders(id) ON DELETE RESTRICT,
@@ -19,7 +19,7 @@ CREATE TABLE deliveries (
   updated_at TIMESTAMP NULL,
   CONSTRAINT uq_do_so_row UNIQUE (delivery_number, sales_order_id)
 );
-CREATE INDEX idx_delivery_number ON deliveries(delivery_number);
+CREATE INDEX IF NOT EXISTS idx_delivery_number ON deliveries(delivery_number);
 SQL);
     }
     public function down()

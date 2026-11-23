@@ -6,7 +6,7 @@ class CreateSalesOrders extends Migration
     public function up()
     {
         $this->db->query(<<<'SQL'
-CREATE TABLE sales_orders (
+CREATE TABLE IF NOT EXISTS sales_orders (
   id SERIAL PRIMARY KEY,
   so_number VARCHAR(30) NOT NULL,
   customer_id INT NOT NULL REFERENCES customers(id) ON DELETE RESTRICT,
@@ -21,7 +21,7 @@ CREATE TABLE sales_orders (
   updated_at TIMESTAMP NULL,
   CONSTRAINT uq_so_product UNIQUE (so_number, product_id)
 );
-CREATE INDEX idx_so_number ON sales_orders(so_number);
+CREATE INDEX IF NOT EXISTS idx_so_number ON sales_orders(so_number);
 SQL);
     }
     public function down()
