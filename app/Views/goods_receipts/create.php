@@ -11,7 +11,7 @@
 <p><strong>PO:</strong> <code><?= esc($po['po_number']) ?></code> | <strong>Tanggal:</strong> <?= esc($po['order_date']) ?> | <strong>Status:</strong> <?= esc(status_label($po['status'])) ?></p>
 <form action="/goods-receipts/store" method="post">
   <input type="hidden" name="purchase_order_id" value="<?= esc($po['id']) ?>">
-  <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Tanggal Terima</label><input type="date" name="receipt_date" class="form-control" value="<?= date('Y-m-d') ?>" required></div></div>
+  <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Tanggal Terima</label><input type="date" name="receipt_date" class="form-control" value="<?= date('Y-m-d') ?>" required></div><div class="col-md-6 mb-3"><label class="form-label">Gudang</label><select name="warehouse_id" class="form-select" required><?php foreach ($warehouses as $w): ?><option value="<?= esc($w['id']) ?>" <?= (int) $po['warehouse_id'] === (int) $w['id'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option><?php endforeach; ?></select><small class="form-hint">Barang diterima masuk ke gudang ini.</small></div></div>
   <div class="mb-3"><label class="form-label">Catatan</label><textarea name="notes" class="form-control" placeholder="Contoh: Barang diterima lengkap, kondisi baik"></textarea></div>
   <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Kode</th><th>Produk</th><th>Jumlah Pesan</th><th>Sudah Diterima</th><th>Sisa Terima</th><th>Jumlah Diterima</th></tr></thead><tbody>
   <?php foreach ($items as $it): $sisa = (int) $it['qty'] - (int) $it['received_qty']; ?>

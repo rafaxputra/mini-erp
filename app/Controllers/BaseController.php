@@ -19,6 +19,16 @@ abstract class BaseController extends Controller
     {
         return (int) session()->get('user_id');
     }
+    // Gudang yang dipilih form; kalau tidak dikirim, pakai gudang utama.
+    protected function resolveWarehouseId(int $warehouseId): int
+    {
+        if ($warehouseId > 0) {
+            $row = \Config\Database::connect()->table('warehouses')->where('id', $warehouseId)->get()->getRowArray();
+            if ($row) return $warehouseId;
+        }
+        $row = \Config\Database::connect()->table('warehouses')->where('is_default', true)->get()->getRowArray();
+        return $row ? (int) $row['id'] : 1;
+    }
     protected function isAdmin(): bool
     {
         return session()->get('user_role') === 'admin';

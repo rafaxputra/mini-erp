@@ -9,4 +9,5 @@ class WarehouseModel extends Model
     protected $returnType = 'array';
     protected $useTimestamps = true;
     protected $allowedFields = ['code', 'name', 'location', 'is_default'];
+    protected array $casts = ['is_default' => 'boolean'];
 }

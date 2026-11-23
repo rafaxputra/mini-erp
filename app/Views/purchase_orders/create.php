@@ -5,6 +5,9 @@
     <div class="col-md-6 mb-3"><label class="form-label">Pemasok</label><select name="supplier_id" class="form-select" required><option value="">Pilih pemasok</option><?php foreach ($suppliers as $s): ?><option value="<?= esc($s['id']) ?>"><?= esc($s['code']) ?> - <?= esc($s['name']) ?></option><?php endforeach; ?></select><small class="form-hint">Pemasok yang memasok barang untuk pesanan ini.</small></div>
     <div class="col-md-6 mb-3"><label class="form-label">Tanggal PO</label><input type="date" name="order_date" class="form-control" value="<?= date('Y-m-d') ?>" required></div>
   </div>
+  <div class="row">
+    <div class="col-md-6 mb-3"><label class="form-label">Gudang</label><select name="warehouse_id" class="form-select" required><option value="">Pilih gudang</option><?php foreach ($warehouses as $w): ?><option value="<?= esc($w['id']) ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option><?php endforeach; ?></select><small class="form-hint">Barang pesanan ini akan masuk ke gudang ini.</small></div>
+  </div>
   <div class="mb-3"><label class="form-label">Catatan</label><textarea name="notes" class="form-control" placeholder="Contoh: Pesanan rutin bulanan, kirim ke gudang utama"></textarea></div>
   <h5>Detail Produk</h5>
   <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>Produk</th><th>Jumlah</th><th>Harga Satuan</th><th>Subtotal</th><th>Aksi</th></tr></thead>

@@ -28,6 +28,7 @@
         <tr>
           <th>Nomor GR</th>
           <th>Nomor Pesanan Beli</th>
+          <th>Gudang</th>
           <th>Tanggal Terima</th>
           <th>Diterima Oleh</th>
           <th>Catatan</th>
@@ -38,6 +39,7 @@
       <tr>
         <td><code><?= esc($it['gr_number']) ?></code></td>
         <td><code><?= esc($it['po_number']) ?></code></td>
+        <td><?= esc($it['warehouse_name'] ?? '-') ?></td>
         <td><?= esc($it['receipt_date']) ?></td>
         <td><?= esc($it['receiver_name']) ?></td>
         <td><?= esc($it['notes']) ?></td>

@@ -5,6 +5,7 @@
 <div class="mb-3">
 <p class="mb-1"><strong>Pemasok:</strong> <?= esc($po['supplier_code']) ?> - <?= esc($po['supplier_name']) ?></p>
 <p class="mb-1"><strong>Tanggal:</strong> <?= esc($po['order_date']) ?></p>
+<p class="mb-1"><strong>Gudang:</strong> <?= esc($po['warehouse_name'] ?? '-') ?></p>
 <p class="mb-1"><strong>Status:</strong> <span class="badge <?= $statusBadge[$po['status']] ?? 'bg-secondary-lt' ?>"><?= esc(status_label($po['status'])) ?></span></p>
 <p class="mb-1"><strong>Total:</strong> Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></p>
 <p class="mb-1"><strong>Dibuat oleh:</strong> <?= esc($po['creator_name']) ?></p>

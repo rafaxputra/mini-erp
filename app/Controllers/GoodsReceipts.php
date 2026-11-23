@@ -4,13 +4,14 @@ use App\Libraries\StockService;
 use App\Models\GoodsReceiptModel;
 use App\Models\ProductModel;
 use App\Models\PurchaseOrderModel;
+use App\Models\WarehouseModel;
 class GoodsReceipts extends BaseController
 {
     public function index()
     {
         if ($r = $this->requireRole(['admin', 'gudang', 'purchasing', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Barang Masuk.')) return $r;
         $db = \Config\Database::connect();
-        $items = $db->table('goods_receipts gr')->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MAX(gr.created_at) AS created_at')->join('purchase_orders po', 'po.id = gr.purchase_order_id')->join('users u', 'u.id = gr.received_by')->groupBy('gr.gr_number')->orderBy('created_at', 'DESC')->get()->getResultArray();
+        $items = $db->table('goods_receipts gr')->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')->join('purchase_orders po', 'po.id = gr.purchase_order_id')->join('users u', 'u.id = gr.received_by')->join('warehouses w', 'w.id = gr.warehouse_id')->groupBy('gr.gr_number')->orderBy('created_at', 'DESC')->get()->getResultArray();
         return view('goods_receipts/index', ['title' => 'Barang Masuk', 'items' => $items]);
     }
     public function create()
@@ -31,12 +32,13 @@ class GoodsReceipts extends BaseController
             }
             $items = $db->table('purchase_orders po')->select('po.id, po.product_id, po.qty, po.unit_price, p.code, p.name AS product_name, p.unit, COALESCE((SELECT SUM(gr.qty_received) FROM goods_receipts gr WHERE gr.purchase_order_id = po.id), 0) AS received_qty')->join('products p', 'p.id = po.product_id')->where('po.po_number', $po['po_number'])->orderBy('po.id', 'ASC')->get()->getResultArray();
         }
-        return view('goods_receipts/create', ['title' => 'Terima Barang', 'pos' => $pos, 'po' => $po, 'items' => $items]);
+        return view('goods_receipts/create', ['title' => 'Terima Barang', 'pos' => $pos, 'po' => $po, 'items' => $items, 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll()]);
     }
     public function store()
     {
         if ($r = $this->requireRole(['admin', 'gudang'], '/goods-receipts', 'Hanya Staff Gudang dan Admin yang bisa mencatat Barang Masuk.')) return $r;
         $poId = (int) $this->request->getPost('purchase_order_id');
+        $warehouseId = (int) $this->request->getPost('warehouse_id');
         $receiptDate = $this->request->getPost('receipt_date');
         $qtys = (array) $this->request->getPost('qty_received');
         $po = (new PurchaseOrderModel())->find($poId);
@@ -49,6 +51,7 @@ class GoodsReceipts extends BaseController
         if (! $receiptDate) {
             return redirect()->back()->withInput()->with('error', 'Tanggal terima wajib diisi.');
         }
+        $warehouseId = $this->resolveWarehouseId($warehouseId);
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
@@ -77,11 +80,11 @@ class GoodsReceipts extends BaseController
             foreach ($lines as $line) {
                 $grRowId = (new GoodsReceiptModel())->insert([
                     'gr_number' => $grNumber,
-                    'purchase_order_id' => $line['purchase_order_id'], 'product_id' => $line['product_id'],
+                    'purchase_order_id' => $line['purchase_order_id'], 'warehouse_id' => $warehouseId, 'product_id' => $line['product_id'],
                     'qty_received' => $line['qty_received'], 'receipt_date' => $receiptDate,
                     'notes' => $this->request->getPost('notes'), 'received_by' => $this->userId(),
                 ], true);
-                $stock->receiveStock($line['product_id'], $line['qty_received'], 'PURCHASE_RECEIPT', (int) $grRowId, $this->userId(), 'Terima PO ' . $po['po_number']);
+                $stock->receiveStock($line['product_id'], $line['qty_received'], 'PURCHASE_RECEIPT', (int) $grRowId, $this->userId(), 'Terima PO ' . $po['po_number'], $warehouseId);
             }
             $poRows = $db->table('purchase_orders')->select('id, qty')->where('po_number', $po['po_number'])->get()->getResultArray();
             $full = true;

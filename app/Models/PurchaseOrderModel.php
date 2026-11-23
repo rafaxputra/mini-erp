@@ -8,7 +8,7 @@ class PurchaseOrderModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['po_number', 'supplier_id', 'product_id', 'qty', 'unit_price', 'order_date', 'status', 'notes', 'created_by'];
+    protected $allowedFields = ['po_number', 'supplier_id', 'warehouse_id', 'product_id', 'qty', 'unit_price', 'order_date', 'status', 'notes', 'created_by'];
 
     public function totalAmount(string $poNumber): float
     {

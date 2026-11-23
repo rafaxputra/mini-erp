@@ -8,7 +8,7 @@ class SalesOrderModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['so_number', 'customer_id', 'product_id', 'qty', 'unit_price', 'order_date', 'status', 'notes', 'created_by'];
+    protected $allowedFields = ['so_number', 'customer_id', 'warehouse_id', 'product_id', 'qty', 'unit_price', 'order_date', 'status', 'notes', 'created_by'];
 
     public function totalAmount(string $soNumber): float
     {

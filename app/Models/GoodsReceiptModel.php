@@ -8,7 +8,7 @@ class GoodsReceiptModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['gr_number', 'purchase_order_id', 'product_id', 'qty_received', 'receipt_date', 'notes', 'received_by'];
+    protected $allowedFields = ['gr_number', 'purchase_order_id', 'warehouse_id', 'product_id', 'qty_received', 'receipt_date', 'notes', 'received_by'];
 
     public function receivedQtyForPoRow(int $purchaseOrderId): int
     {

@@ -21,6 +21,10 @@ class MainSeeder extends Seeder
             'code' => 'GUD-01', 'name' => 'Gudang Utama', 'location' => 'Kantor Pusat',
             'is_default' => true, 'created_at' => $now, 'updated_at' => $now,
         ]);
+        $this->db->table('warehouses')->insert([
+            'code' => 'GUD-02', 'name' => 'Gudang Cabang', 'location' => 'Sidoarjo',
+            'is_default' => false, 'created_at' => $now, 'updated_at' => $now,
+        ]);
         $this->db->table('roles')->insertBatch([
             ['id' => 1, 'name' => 'admin', 'description' => 'Admin (Super Admin)', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'name' => 'purchasing', 'description' => 'Staff Purchasing', 'created_at' => $now, 'updated_at' => $now],
@@ -82,8 +86,8 @@ class MainSeeder extends Seeder
 
         // PO 1 sudah diterima penuh: Stapler x2 dan Map Plastik x10.
         $po1Rows = [
-            ['po_number' => 'PO-' . $n3 . '-001', 'supplier_id' => 1, 'product_id' => 4, 'qty' => 2, 'unit_price' => 45000, 'order_date' => $d3, 'status' => 'received', 'notes' => 'Pesanan contoh, sudah diterima penuh', 'created_by' => 2, 'created_at' => $d3 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
-            ['po_number' => 'PO-' . $n3 . '-001', 'supplier_id' => 1, 'product_id' => 5, 'qty' => 10, 'unit_price' => 20000, 'order_date' => $d3, 'status' => 'received', 'notes' => 'Pesanan contoh, sudah diterima penuh', 'created_by' => 2, 'created_at' => $d3 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
+            ['po_number' => 'PO-' . $n3 . '-001', 'supplier_id' => 1, 'warehouse_id' => 1, 'product_id' => 4, 'qty' => 2, 'unit_price' => 45000, 'order_date' => $d3, 'status' => 'received', 'notes' => 'Pesanan contoh, sudah diterima penuh', 'created_by' => 2, 'created_at' => $d3 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
+            ['po_number' => 'PO-' . $n3 . '-001', 'supplier_id' => 1, 'warehouse_id' => 1, 'product_id' => 5, 'qty' => 10, 'unit_price' => 20000, 'order_date' => $d3, 'status' => 'received', 'notes' => 'Pesanan contoh, sudah diterima penuh', 'created_by' => 2, 'created_at' => $d3 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
         ];
         $po1RowIds = [];
         foreach ($po1Rows as $row) {
@@ -92,8 +96,8 @@ class MainSeeder extends Seeder
         }
         // Barang masuk untuk PO 1, stok naik sesuai jumlah yang diterima.
         $gr1Rows = [
-            ['gr_number' => 'GR-' . $n2 . '-001', 'purchase_order_id' => $po1RowIds[0], 'product_id' => 4, 'qty_received' => 2, 'receipt_date' => $d2, 'notes' => 'Terima PO PO-' . $n3 . '-001', 'received_by' => 3, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
-            ['gr_number' => 'GR-' . $n2 . '-001', 'purchase_order_id' => $po1RowIds[1], 'product_id' => 5, 'qty_received' => 10, 'receipt_date' => $d2, 'notes' => 'Terima PO PO-' . $n3 . '-001', 'received_by' => 3, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
+            ['gr_number' => 'GR-' . $n2 . '-001', 'purchase_order_id' => $po1RowIds[0], 'warehouse_id' => 1, 'product_id' => 4, 'qty_received' => 2, 'receipt_date' => $d2, 'notes' => 'Terima PO PO-' . $n3 . '-001', 'received_by' => 3, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
+            ['gr_number' => 'GR-' . $n2 . '-001', 'purchase_order_id' => $po1RowIds[1], 'warehouse_id' => 1, 'product_id' => 5, 'qty_received' => 10, 'receipt_date' => $d2, 'notes' => 'Terima PO PO-' . $n3 . '-001', 'received_by' => 3, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
         ];
         foreach ($gr1Rows as $row) {
             $this->db->table('goods_receipts')->insert($row);
@@ -111,8 +115,8 @@ class MainSeeder extends Seeder
         }
         // PO 2 sudah disetujui, tinggal tunggu barang masuk. PO 3 masih draf, menunggu persetujuan admin.
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => 'PO-' . $n2 . '-001', 'supplier_id' => 2, 'product_id' => 2, 'qty' => 3, 'unit_price' => 75000, 'order_date' => $d2, 'status' => 'approved', 'notes' => 'Pesanan contoh, menunggu barang masuk', 'created_by' => 2, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
-            ['po_number' => 'PO-' . $n1 . '-001', 'supplier_id' => 1, 'product_id' => 3, 'qty' => 5, 'unit_price' => 35000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Pesanan contoh, menunggu persetujuan admin', 'created_by' => 2, 'created_at' => $d1 . ' 09:00:00', 'updated_at' => $d1 . ' 09:00:00'],
+            ['po_number' => 'PO-' . $n2 . '-001', 'supplier_id' => 2, 'warehouse_id' => 2, 'product_id' => 2, 'qty' => 3, 'unit_price' => 75000, 'order_date' => $d2, 'status' => 'approved', 'notes' => 'Pesanan contoh, menunggu barang masuk', 'created_by' => 2, 'created_at' => $d2 . ' 09:00:00', 'updated_at' => $d2 . ' 09:00:00'],
+            ['po_number' => 'PO-' . $n1 . '-001', 'supplier_id' => 1, 'warehouse_id' => 1, 'product_id' => 3, 'qty' => 5, 'unit_price' => 35000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Pesanan contoh, menunggu persetujuan admin', 'created_by' => 2, 'created_at' => $d1 . ' 09:00:00', 'updated_at' => $d1 . ' 09:00:00'],
         ]);
     }
 }

@@ -33,6 +33,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('customers/edit/(:num)', 'Customers::edit/$1');
     $routes->post('customers/update/(:num)', 'Customers::update/$1');
     $routes->post('customers/delete/(:num)', 'Customers::delete/$1');
+    $routes->get('warehouses', 'Warehouses::index');
+    $routes->get('warehouses/create', 'Warehouses::create');
+    $routes->post('warehouses/store', 'Warehouses::store');
+    $routes->get('warehouses/edit/(:num)', 'Warehouses::edit/$1');
+    $routes->post('warehouses/update/(:num)', 'Warehouses::update/$1');
+    $routes->post('warehouses/delete/(:num)', 'Warehouses::delete/$1');
     $routes->get('users', 'Users::index');
     $routes->get('users/create', 'Users::create');
     $routes->post('users/store', 'Users::store');

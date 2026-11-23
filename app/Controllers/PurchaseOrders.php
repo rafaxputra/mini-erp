@@ -3,6 +3,7 @@ namespace App\Controllers;
 use App\Models\ProductModel;
 use App\Models\PurchaseOrderModel;
 use App\Models\SupplierModel;
+use App\Models\WarehouseModel;
 class PurchaseOrders extends BaseController
 {
     public function index()
@@ -40,18 +41,20 @@ class PurchaseOrders extends BaseController
     public function create()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
-        return view('purchase_orders/create', ['title' => 'Buat Pesanan Beli', 'suppliers' => (new SupplierModel())->orderBy('name', 'ASC')->findAll(), 'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll()]);
+        return view('purchase_orders/create', ['title' => 'Buat Pesanan Beli', 'suppliers' => (new SupplierModel())->orderBy('name', 'ASC')->findAll(), 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(), 'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll()]);
     }
     public function store()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
         $supplierId = (int) $this->request->getPost('supplier_id');
+        $warehouseId = (int) $this->request->getPost('warehouse_id');
         $orderDate = $this->request->getPost('order_date');
         $productIds = (array) $this->request->getPost('product_id');
         $qtys = (array) $this->request->getPost('qty');
         $prices = (array) $this->request->getPost('unit_price');
         $errors = [];
         if (! $supplierId) $errors[] = 'Pemasok wajib dipilih.';
+        $warehouseId = $this->resolveWarehouseId($warehouseId);
         if (! $orderDate) $errors[] = 'Tanggal pesanan wajib diisi.';
         if (empty($productIds)) $errors[] = 'Minimal satu detail produk wajib diisi.';
         if ($errors) {
@@ -95,7 +98,7 @@ class PurchaseOrders extends BaseController
             foreach ($lines as $line) {
                 $id = (new PurchaseOrderModel())->insert([
                     'po_number' => $poNumber,
-                    'supplier_id' => $supplierId, 'product_id' => $line['product_id'],
+                    'supplier_id' => $supplierId, 'warehouse_id' => $warehouseId, 'product_id' => $line['product_id'],
                     'qty' => $line['qty'], 'unit_price' => $line['unit_price'],
                     'order_date' => $orderDate, 'status' => 'draft',
                     'notes' => $this->request->getPost('notes'), 'created_by' => $this->userId(),
@@ -112,7 +115,7 @@ class PurchaseOrders extends BaseController
     protected function poById(int $id): ?array
     {
         $db = \Config\Database::connect();
-        $row = $db->table('purchase_orders po')->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name')->join('suppliers s', 's.id = po.supplier_id')->join('users u', 'u.id = po.created_by')->where('po.id', $id)->get()->getRowArray();
+        $row = $db->table('purchase_orders po')->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name, w.name AS warehouse_name')->join('suppliers s', 's.id = po.supplier_id')->join('users u', 'u.id = po.created_by')->join('warehouses w', 'w.id = po.warehouse_id')->where('po.id', $id)->get()->getRowArray();
         if (! $row) return null;
         $row['total_amount'] = (new PurchaseOrderModel())->totalAmount($row['po_number']);
         return $row;
