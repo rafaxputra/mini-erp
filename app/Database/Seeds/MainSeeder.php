@@ -5,6 +5,17 @@ class MainSeeder extends Seeder
 {
     public function run()
     {
+        $tables = [
+            'stock_movements', 'deliveries', 'sales_orders', 'goods_receipts',
+            'purchase_orders', 'products', 'customers', 'suppliers',
+            'categories', 'users', 'roles', 'warehouses',
+        ];
+        foreach ($tables as $t) {
+            if ($this->db->tableExists($t)) {
+                $this->db->query("TRUNCATE TABLE {$t} RESTART IDENTITY CASCADE");
+            }
+        }
+
         $now = date('Y-m-d H:i:s');
         $this->db->table('warehouses')->insert([
             'code' => 'GUD-01', 'name' => 'Gudang Utama', 'location' => 'Kantor Pusat',
