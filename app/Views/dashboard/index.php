@@ -8,7 +8,7 @@
 <!-- 1. DASHBOARD KHUSUS STAFF GUDANG & LOGISTIK (BEBAS DATA FINANSIAL) -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none mt-0 mb-3">
   <div class="row align-items-center">
     <div class="col">
       <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Operasional Pergudangan & Logistik</div>
@@ -263,7 +263,7 @@
 <!-- 2. DASHBOARD KHUSUS STAFF SALES (PENJUALAN & PELANGGAN) -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none mt-0 mb-3">
   <div class="row align-items-center">
     <div class="col">
       <div class="page-pretitle text-uppercase font-monospace text-success fw-semibold" style="letter-spacing: 0.5px;">Divisi Penjualan & Komersial</div>
@@ -474,7 +474,7 @@
 <!-- 3. DASHBOARD KHUSUS STAFF PURCHASING (PENGADAAN & PEMASOK) -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none mt-0 mb-3">
   <div class="row align-items-center">
     <div class="col">
       <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Divisi Pengadaan & Hubungan Pemasok</div>
@@ -718,7 +718,7 @@
 <!-- 4. DASHBOARD KHUSUS MANAJEMEN (EKSEKUTIF / DIREKSI) -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none mt-0 mb-3">
   <div class="row align-items-center">
     <div class="col">
       <div class="page-pretitle text-uppercase font-monospace text-indigo fw-semibold" style="letter-spacing: 0.5px;">Ringkasan Eksekutif & Direksi</div>
@@ -912,7 +912,7 @@
 <!-- 5. DASHBOARD KHUSUS ADMINISTRATOR (SUPER ADMIN) -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mb-3">
+<div class="page-header d-print-none mt-0 mb-3">
   <div class="row align-items-center">
     <div class="col">
       <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Pusat Kendali Sistem & Pengaturan</div>

@@ -211,6 +211,7 @@ if ($initials === '') {
     </div>
   </aside>
   <div class="page-wrapper">
+    <?php if ($currentPath !== '' && $currentPath !== 'dashboard'): ?>
     <div class="page-header d-print-none mb-3">
       <div class="container-xl">
         <div class="row g-2 align-items-center">
@@ -231,6 +232,7 @@ if ($initials === '') {
         </div>
       </div>
     </div>
+    <?php endif; ?>
     <div class="page-body">
       <div class="container-xl">
         <?= $this->renderSection('content') ?>
