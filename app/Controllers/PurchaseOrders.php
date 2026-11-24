@@ -40,7 +40,7 @@ class PurchaseOrders extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['purchasing'], '/purchase-orders', 'Hanya Staff Purchasing yang bisa membuat Pesanan Beli.')) return $r;
         $selectedProductId = (int) ($this->request->getGet('product_id') ?? 0);
         $suggestedQty = max(1, (int) ($this->request->getGet('qty') ?? 1));
 
@@ -79,7 +79,7 @@ class PurchaseOrders extends BaseController
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['purchasing'], '/purchase-orders', 'Hanya Staff Purchasing yang bisa membuat Pesanan Beli.')) return $r;
         $supplierId = (int) $this->request->getPost('supplier_id');
         $orderDate = $this->request->getPost('order_date');
         $productIds = (array) $this->request->getPost('product_id');
@@ -100,7 +100,8 @@ class PurchaseOrders extends BaseController
             foreach ($productIds as $i => $pid) {
                 $pid = (int) $pid;
                 $qty = (int) ($qtys[$i] ?? 0);
-                $price = (float) ($prices[$i] ?? 0);
+                $rawPrice = (string) ($prices[$i] ?? '0');
+                $price = (float) str_replace(['.', ','], ['', '.'], $rawPrice);
                 $row = $i + 1;
                 if ($pid <= 0) {
                     throw new \RuntimeException('Baris ' . $row . ': produk wajib dipilih.');
@@ -154,7 +155,6 @@ class PurchaseOrders extends BaseController
                 $id = (new PurchaseOrderModel())->insert([
                     'po_number' => $poNumber,
                     'supplier_id' => $supplierId,
-                    'warehouse_id' => null,
                     'product_id' => $line['product_id'],
                     'qty' => $line['qty'],
                     'unit_price' => $line['unit_price'],
@@ -176,10 +176,9 @@ class PurchaseOrders extends BaseController
     {
         $db = \Config\Database::connect();
         $row = $db->table('purchase_orders po')
-            ->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name, w.name AS warehouse_name')
+            ->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name')
             ->join('suppliers s', 's.id = po.supplier_id')
             ->join('users u', 'u.id = po.created_by')
-            ->join('warehouses w', 'w.id = po.warehouse_id', 'left')
             ->where('po.id', $id)
             ->get()
             ->getRowArray();
@@ -199,7 +198,7 @@ class PurchaseOrders extends BaseController
     }
     public function approve($id)
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/purchase-orders', 'Hanya Manajer atau Admin yang berhak menyetujui (ACC) Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['manajemen'], '/purchase-orders', 'Hanya Manajer yang berhak menyetujui (ACC) Pesanan Beli (Sistem Approval 1 Pintu).')) return $r;
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] !== 'draft') {
@@ -218,7 +217,7 @@ class PurchaseOrders extends BaseController
     }
     public function cancel($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membatalkan Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['purchasing'], '/purchase-orders', 'Hanya Staff Purchasing yang bisa membatalkan Pesanan Beli.')) return $r;
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] === 'received') {

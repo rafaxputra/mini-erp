@@ -78,7 +78,7 @@
             <label class="form-label required">Gudang Penyimpanan</label>
             <select name="warehouse_id" class="form-select" required>
               <?php foreach ($warehouses as $w): ?>
-                <option value="<?= esc($w['id']) ?>" <?= (! empty($po['warehouse_id']) && (int) $po['warehouse_id'] === (int) $w['id']) || (empty($po['warehouse_id']) && ! empty($w['is_default'])) ? 'selected' : '' ?>>
+                <option value="<?= esc($w['id']) ?>" <?= ! empty($w['is_default']) ? 'selected' : '' ?>>
                   <?= esc($w['name']) ?> (<?= esc($w['code']) ?>)
                 </option>
               <?php endforeach; ?>
@@ -134,9 +134,9 @@
                 <?php endif; ?>
               </td>
               <td>
-                <div class="input-group">
-                  <input type="number" name="qty_received[<?= esc($it['id']) ?>]" class="form-control text-center received-input" min="0" max="<?= esc($sisa) ?>" value="<?= $sisa > 0 ? $sisa : 0 ?>" data-max="<?= esc($sisa) ?>" <?= $sisa === 0 ? 'readonly' : '' ?>>
-                  <span class="input-group-text small text-secondary">unit</span>
+                <div class="input-group" style="min-width: 150px;">
+                  <input type="number" name="qty_received[<?= esc($it['id']) ?>]" class="form-control text-center received-input px-2" min="0" max="<?= esc($sisa) ?>" value="<?= $sisa > 0 ? $sisa : 0 ?>" data-max="<?= esc($sisa) ?>" style="min-width: 75px; font-weight: 600; font-size: 0.95rem;" <?= $sisa === 0 ? 'readonly' : '' ?>>
+                  <span class="input-group-text small text-secondary px-2"><?= esc($it['unit'] ?? 'unit') ?></span>
                 </div>
               </td>
             </tr>

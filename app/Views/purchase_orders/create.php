@@ -81,7 +81,7 @@
         <thead class="table-light">
           <tr>
             <th>Pilih Produk</th>
-            <th style="width: 130px;">Jumlah</th>
+            <th style="width: 180px;">Jumlah</th>
             <th style="width: 220px;">Harga Satuan Beli</th>
             <th class="text-end" style="width: 200px;">Subtotal</th>
             <th style="width: 60px;" class="text-center">Aksi</th>
@@ -108,7 +108,7 @@
                 <option value="">-- Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
                   <option value="<?= esc($p['id']) ?>" 
-                    data-price="<?= esc($p['purchase_price']) ?>"
+                    data-price="<?= (int) $p['purchase_price'] ?>"
                     data-unit="<?= esc($p['unit']) ?>"
                     data-stock="<?= (int) $p['stock_qty'] ?>"
                     data-min-stock="<?= (int) $p['min_stock'] ?>"
@@ -122,9 +122,9 @@
               <div class="product-info-note small mt-1 text-muted"></div>
             </td>
             <td style="vertical-align: top;">
-              <div class="input-group">
-                <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="<?= esc($initQty) ?>" required>
-                <span class="input-group-text unit-label text-muted small">unit</span>
+              <div class="input-group" style="min-width: 165px;">
+                <input type="number" name="qty[]" class="form-control qty text-center px-2" min="1" value="<?= esc($initQty) ?>" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required>
+                <span class="input-group-text unit-label text-muted small px-2">unit</span>
               </div>
               <div class="qty-warning small text-danger mt-1 fw-semibold" style="display:none;"></div>
             </td>
@@ -166,11 +166,18 @@
 
 <?= $this->section('scripts') ?>
 <script>
-const products = <?= json_encode(array_map(function ($p) { return ['id' => $p['id'], 'code' => $p['code'], 'name' => $p['name'], 'price' => (float) $p['purchase_price']]; }, $products)) ?>;
+const products = <?= json_encode(array_map(function ($p) { return ['id' => $p['id'], 'code' => $p['code'], 'name' => $p['name'], 'price' => (int) $p['purchase_price']]; }, $products)) ?>;
 
 function formatRupiahInput(el) {
-  const digits = el.value.replace(/\D/g, '');
-  el.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  let val = (el.value || '').toString().trim();
+  if (val.indexOf('.') !== -1 && val.indexOf(',') === -1) {
+    const parts = val.split('.');
+    if (parts.length === 2 && (parts[1] === '00' || parts[1] === '0')) {
+      val = parts[0];
+    }
+  }
+  const digits = val.replace(/\D/g, '');
+  el.value = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
 }
 
 function priceValue(el) {

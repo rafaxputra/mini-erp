@@ -76,7 +76,6 @@
           <td><code class="text-dark font-monospace fw-bold"><?= esc($it['code']) ?></code></td>
           <td>
             <div class="fw-semibold text-dark"><?= esc($it['name']) ?></div>
-            <div class="text-secondary small">Satuan: <?= esc($it['unit']) ?></div>
           </td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['category_name']) ?></span></td>
           <td>
@@ -91,7 +90,7 @@
               ?>
                 <span class="badge <?= $isFilteredWh ? 'bg-primary text-white fw-bold' : 'bg-azure-lt' ?> px-2 py-1" title="<?= esc($wh['name']) ?>: <?= esc($qtyInWh) ?> <?= esc($it['unit']) ?>">
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-inline me-1" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21v-13l9 -4l9 4v13"/><path d="M13 13h4v8h-10v-6h6"/></svg>
-                  <?= esc($wh['name']) ?>: <strong><?= esc($qtyInWh) ?></strong>
+                  <?= esc($wh['name']) ?>: <strong><?= esc($qtyInWh) ?></strong> <?= esc($it['unit']) ?>
                 </span>
               <?php 
                 endif;
@@ -102,10 +101,12 @@
             </div>
           </td>
           <td class="text-center">
-            <?php if ($activeWhStock <= (int) $it['min_stock']): ?>
-              <span class="badge bg-danger-lt fw-bold" title="Stok berada di bawah atau sama dengan batas minimum!"><?= esc($activeWhStock) ?></span>
+            <?php if ($activeWhStock <= 0): ?>
+              <span class="badge bg-danger-lt fw-bold">0</span>
+            <?php elseif ($activeWhStock <= (int) $it['min_stock']): ?>
+              <span class="badge bg-danger-lt fw-bold" title="Stok berada di bawah atau sama dengan batas minimum!"><?= esc($activeWhStock) ?> <span class="fw-normal"><?= esc($it['unit']) ?></span></span>
             <?php else: ?>
-              <span class="badge bg-success-lt fw-bold"><?= esc($activeWhStock) ?></span>
+              <span class="badge bg-success-lt fw-bold"><?= esc($activeWhStock) ?> <span class="fw-normal"><?= esc($it['unit']) ?></span></span>
             <?php endif; ?>
           </td>
           <td class="text-center text-muted"><?= esc($it['min_stock']) ?></td>

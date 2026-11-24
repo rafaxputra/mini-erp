@@ -51,6 +51,15 @@ class Products extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        
+        // Bersihkan format titik ribuan pada harga beli dan harga jual
+        $cleanBuyPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('purchase_price'));
+        $cleanSellPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('selling_price'));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), [
+            'purchase_price' => $cleanBuyPrice,
+            'selling_price' => $cleanSellPrice,
+        ]));
+
         $rules = [
             'code' => 'required|max_length[20]|is_unique[products.code]',
             'name' => 'required|min_length[2]|max_length[150]',
@@ -147,6 +156,14 @@ class Products extends BaseController
         if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
         $item = (new ProductModel())->find($id);
         if (! $item) return redirect()->to('/products')->with('error', 'Produk tidak ditemukan.');
+
+        // Bersihkan format titik ribuan pada harga beli dan harga jual
+        $cleanBuyPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('purchase_price'));
+        $cleanSellPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('selling_price'));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), [
+            'purchase_price' => $cleanBuyPrice,
+            'selling_price' => $cleanSellPrice,
+        ]));
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0

@@ -40,9 +40,8 @@ class Dashboard extends BaseController
                 ->getResultArray();
 
             $pendingReceipts = $db->table('purchase_orders po')
-                ->select('MIN(po.id) AS id, po.po_number, MIN(s.name) AS supplier_name, MIN(w.name) AS warehouse_name, MIN(po.order_date) AS order_date, COUNT(po.id) AS item_count, SUM(po.qty) AS total_qty')
+                ->select("MIN(po.id) AS id, po.po_number, MIN(s.name) AS supplier_name, 'Ditentukan saat GR' AS warehouse_name, MIN(po.order_date) AS order_date, COUNT(po.id) AS item_count, SUM(po.qty) AS total_qty")
                 ->join('suppliers s', 's.id = po.supplier_id')
-                ->join('warehouses w', 'w.id = po.warehouse_id')
                 ->where('po.status', 'approved')
                 ->groupBy('po.po_number')
                 ->orderBy('MIN(po.order_date)', 'ASC')

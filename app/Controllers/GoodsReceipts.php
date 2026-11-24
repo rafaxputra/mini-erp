@@ -51,7 +51,7 @@ class GoodsReceipts extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'gudang'], '/goods-receipts', 'Hanya Staff Gudang dan Admin yang bisa mencatat Barang Masuk.')) return $r;
+        if ($r = $this->requireRole(['gudang'], '/goods-receipts', 'Hanya Staff Gudang yang bisa mencatat Barang Masuk.')) return $r;
         $db = \Config\Database::connect();
         $poId = (int) ($this->request->getGet('purchase_order_id') ?? 0);
         $pos = $db->table('purchase_orders')->select('MIN(id) AS id, po_number, MIN(order_date) AS order_date')->where('status', 'approved')->groupBy('po_number')->orderBy('order_date', 'DESC')->get()->getResultArray();
@@ -71,7 +71,7 @@ class GoodsReceipts extends BaseController
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'gudang'], '/goods-receipts', 'Hanya Staff Gudang dan Admin yang bisa mencatat Barang Masuk.')) return $r;
+        if ($r = $this->requireRole(['gudang'], '/goods-receipts', 'Hanya Staff Gudang yang bisa mencatat Barang Masuk.')) return $r;
         $poId = (int) $this->request->getPost('purchase_order_id');
         $warehouseId = (int) $this->request->getPost('warehouse_id');
         $receiptDate = $this->request->getPost('receipt_date');

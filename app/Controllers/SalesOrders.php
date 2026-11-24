@@ -40,12 +40,24 @@ class SalesOrders extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/sales-orders', 'Hanya Staff Sales dan Admin yang bisa membuat Pesanan Jual.')) return $r;
-        return view('sales_orders/create', ['title' => 'Buat Pesanan Jual', 'customers' => (new CustomerModel())->orderBy('name', 'ASC')->findAll(), 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(), 'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll()]);
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa membuat Pesanan Jual.')) return $r;
+        $db = \Config\Database::connect();
+        $stockRows = $db->query('SELECT DISTINCT ON (warehouse_id, product_id) warehouse_id, product_id, qty_after FROM stock_movements ORDER BY warehouse_id, product_id, created_at DESC, id DESC')->getResultArray();
+        $warehouseStocks = [];
+        foreach ($stockRows as $sr) {
+            $warehouseStocks[(int) $sr['warehouse_id']][(int) $sr['product_id']] = (int) $sr['qty_after'];
+        }
+        return view('sales_orders/create', [
+            'title' => 'Buat Pesanan Jual',
+            'customers' => (new CustomerModel())->orderBy('name', 'ASC')->findAll(),
+            'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(),
+            'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll(),
+            'warehouseStocks' => $warehouseStocks,
+        ]);
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/sales-orders', 'Hanya Staff Sales dan Admin yang bisa membuat Pesanan Jual.')) return $r;
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa membuat Pesanan Jual.')) return $r;
         $customerId = (int) $this->request->getPost('customer_id');
         $warehouseId = (int) $this->request->getPost('warehouse_id');
         $orderDate = $this->request->getPost('order_date');
@@ -68,7 +80,8 @@ class SalesOrders extends BaseController
             foreach ($productIds as $i => $pid) {
                 $pid = (int) $pid;
                 $qty = (int) ($qtys[$i] ?? 0);
-                $price = (float) ($prices[$i] ?? 0);
+                $rawPrice = (string) ($prices[$i] ?? '0');
+                $price = (float) str_replace(['.', ','], ['', '.'], $rawPrice);
                 $row = $i + 1;
                 if ($pid <= 0) {
                     throw new \RuntimeException('Baris ' . $row . ': produk wajib dipilih.');
@@ -83,6 +96,13 @@ class SalesOrders extends BaseController
                 }
                 if ($price < 0) {
                     throw new \RuntimeException($prodName . ': harga satuan tidak boleh negatif, diisi ' . $price . '.');
+                }
+                $stockSvc = new \App\Libraries\StockService();
+                $availInWh = $stockSvc->stockInWarehouse($pid, $warehouseId);
+                if ($qty > $availInWh) {
+                    $whRow = (new WarehouseModel())->find($warehouseId);
+                    $whName = $whRow['name'] ?? 'Gudang Terpilih';
+                    throw new \RuntimeException("Stok {$prodName} di {$whName} tidak mencukupi (Tersedia: {$availInWh}, Diminta: {$qty}).");
                 }
                 if (isset($seen[$pid])) {
                     throw new \RuntimeException($prodName . ' hanya boleh sekali dalam satu SO.');
@@ -132,7 +152,7 @@ class SalesOrders extends BaseController
     }
     public function confirm($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/sales-orders', 'Hanya Staff Sales dan Admin yang bisa confirm Pesanan Jual.')) return $r;
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa confirm Pesanan Jual.')) return $r;
         $so = (new SalesOrderModel())->find((int) $id);
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         if ($so['status'] !== 'draft') {
@@ -151,7 +171,7 @@ class SalesOrders extends BaseController
     }
     public function cancel($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/sales-orders', 'Hanya Staff Sales dan Admin yang bisa membatalkan Pesanan Jual.')) return $r;
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa membatalkan Pesanan Jual.')) return $r;
         $so = (new SalesOrderModel())->find((int) $id);
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         if ($so['status'] === 'delivered') {

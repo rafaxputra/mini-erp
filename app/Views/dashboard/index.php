@@ -179,7 +179,9 @@
                   <div class="fw-semibold text-dark"><?= esc($pr['supplier_name']) ?></div>
                   <div class="small text-muted"><?= date('d/m/Y', strtotime($pr['order_date'])) ?></div>
                 </td>
-                <td class="text-secondary small"><?= esc($pr['warehouse_name']) ?></td>
+                <td class="text-secondary small">
+                  <span class="badge bg-secondary-lt fw-normal"><?= esc($pr['warehouse_name']) ?></span>
+                </td>
                 <td class="text-center font-monospace fw-bold text-dark"><?= esc($pr['total_qty']) ?> unit</td>
                 <td class="text-end">
                   <a href="/goods-receipts/create?purchase_order_id=<?= (int) $pr['id'] ?>" class="btn btn-sm btn-outline-primary">

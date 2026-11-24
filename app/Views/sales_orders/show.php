@@ -15,7 +15,7 @@
         <div class="text-secondary small">Dibuat oleh: <strong class="text-dark"><?= esc($so['creator_name']) ?></strong></div>
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <?php if ($so['status'] === 'draft' && in_array(session()->get('user_role'), ['admin', 'sales'], true)): ?>
+        <?php if ($so['status'] === 'draft' && session()->get('user_role') === 'sales'): ?>
           <form action="/sales-orders/confirm/<?= esc($so['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin mengonfirmasi Pesanan Jual <strong><?= esc($so['so_number']) ?></strong>?" data-confirm-title="Konfirmasi Pesanan Jual" data-confirm-btn="Ya, Konfirmasi" data-confirm-type="primary">
             <button class="btn btn-success" type="submit">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
@@ -24,14 +24,14 @@
           </form>
         <?php endif; ?>
 
-        <?php if ($so['status'] === 'confirmed' && in_array(session()->get('user_role'), ['admin', 'gudang'], true)): ?>
+        <?php if ($so['status'] === 'confirmed' && session()->get('user_role') === 'gudang'): ?>
           <a class="btn btn-primary" href="/deliveries/create?sales_order_id=<?= esc($so['id']) ?>">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
             Proses Pengiriman Barang
           </a>
         <?php endif; ?>
 
-        <?php if (($so['status'] === 'draft' || $so['status'] === 'confirmed') && in_array(session()->get('user_role'), ['admin', 'sales'], true)): ?>
+        <?php if (($so['status'] === 'draft' || $so['status'] === 'confirmed') && session()->get('user_role') === 'sales'): ?>
           <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelSO">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
             Batalkan Pesanan
@@ -110,13 +110,14 @@
           <td class="text-secondary"><?= $idx + 1 ?></td>
           <td><code class="text-dark"><?= esc($it['code']) ?></code></td>
           <td>
-            <div class="fw-bold"><?= esc($it['product_name']) ?></div>
-            <div class="text-secondary small">Satuan: <?= esc($it['unit']) ?></div>
+            <div class="fw-bold text-dark"><?= esc($it['product_name']) ?></div>
           </td>
-          <td class="text-center fw-medium"><?= esc($it['qty']) ?></td>
+          <td class="text-center fw-medium">
+            <?= esc($it['qty']) ?> <span class="text-secondary small"><?= esc($it['unit']) ?></span>
+          </td>
           <td class="text-center">
             <?php if ((int) $it['delivered_qty'] > 0): ?>
-              <span class="badge bg-green-lt fw-bold"><?= esc($it['delivered_qty']) ?></span>
+              <span class="badge bg-green-lt fw-bold"><?= esc($it['delivered_qty']) ?> <span class="fw-normal"><?= esc($it['unit']) ?></span></span>
             <?php else: ?>
               <span class="text-secondary">0</span>
             <?php endif; ?>
@@ -125,10 +126,16 @@
             <?php if ($sisa === 0): ?>
               <span class="badge bg-success-lt">Lengkap</span>
             <?php else: ?>
-              <span class="badge bg-warning-lt"><?= esc($sisa) ?></span>
+              <span class="badge bg-warning-lt fw-bold"><?= esc($sisa) ?> <span class="fw-normal"><?= esc($it['unit']) ?></span></span>
             <?php endif; ?>
           </td>
-          <td class="text-center"><?= esc($it['stock_qty']) ?></td>
+          <td class="text-center">
+            <?php if ((int) $it['stock_qty'] > 0): ?>
+              <span class="fw-medium text-dark"><?= esc($it['stock_qty']) ?></span> <span class="text-secondary small"><?= esc($it['unit']) ?></span>
+            <?php else: ?>
+              <span class="badge bg-danger-lt fw-bold">0</span>
+            <?php endif; ?>
+          </td>
           <td class="text-end">Rp <?= number_format((float) $it['unit_price'], 0, ',', '.') ?></td>
           <td class="text-end fw-bold text-dark">Rp <?= number_format((float) $it['subtotal'], 0, ',', '.') ?></td>
         </tr>

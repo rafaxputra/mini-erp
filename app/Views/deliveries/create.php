@@ -106,12 +106,14 @@
           </div>
           <div class="col-md-6">
             <label class="form-label required">Gudang Pengirim</label>
-            <select name="warehouse_id" class="form-select" required>
-              <?php foreach ($warehouses as $w): ?>
-                <option value="<?= esc($w['id']) ?>" <?= (int) $so['warehouse_id'] === (int) $w['id'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option>
-              <?php endforeach; ?>
-            </select>
-            <div class="form-text">Barang dikirim dari gudang ini, stok diperiksa di gudang ini.</div>
+            <input type="hidden" name="warehouse_id" value="<?= esc($so['warehouse_id']) ?>">
+            <div class="input-group">
+              <span class="input-group-text bg-light">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon text-secondary" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21v-13l9 -4l9 4v13"/><path d="M13 13h4v8h-10v-6h6"/></svg>
+              </span>
+              <input type="text" class="form-control bg-light fw-bold text-dark" value="<?= esc($so['warehouse_name'] ?? 'Gudang Utama') ?>" readonly>
+            </div>
+            <div class="form-text">Gudang asal pengiriman otomatis terkunci mengikuti alokasi Pesanan Jual (SO).</div>
           </div>
           <div class="col-12">
             <label class="form-label">Catatan Pengiriman</label>
@@ -128,12 +130,12 @@
                 <th class="text-center" style="width: 110px;">Jumlah Pesan</th>
                 <th class="text-center" style="width: 120px;">Sudah Dikirim</th>
                 <th class="text-center" style="width: 100px;">Sisa Kirim</th>
-                <th class="text-center" style="width: 110px;">Stok Saat Ini</th>
-                <th class="text-center" style="width: 130px;">Jumlah Dikirim</th>
+                <th class="text-center" style="width: 130px;">Stok di Gudang Ini</th>
+                <th class="text-center" style="width: 160px;">Jumlah Dikirim</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($items as $it): $sisa = (int) $it['qty'] - (int) $it['delivered_qty']; ?>
+              <?php foreach ($items as $it): $sisa = (int) $it['qty'] - (int) $it['delivered_qty']; $whStock = (int) ($it['warehouse_stock'] ?? $it['stock_qty']); ?>
               <tr>
                 <td><code class="text-dark"><?= esc($it['code']) ?></code></td>
                 <td class="fw-semibold text-dark"><?= esc($it['product_name']) ?></td>
@@ -146,8 +148,13 @@
                     <span class="badge bg-warning-lt"><?= esc($sisa) ?></span>
                   <?php endif; ?>
                 </td>
-                <td class="text-center"><?= esc($it['stock_qty']) ?></td>
-                <td><input type="number" name="qty_delivered[<?= esc($it['id']) ?>]" class="form-control text-center" min="0" max="<?= esc($sisa) ?>" value="0"></td>
+                <td class="text-center font-monospace fw-bold <?= ($whStock < $sisa) ? 'text-danger' : 'text-dark' ?>">
+                  <?= esc($whStock) ?> <?= esc($it['unit']) ?>
+                  <?php if ($whStock < $sisa): ?>
+                    <div class="small text-danger fw-normal" style="font-size: 0.72rem;">Stok kurang</div>
+                  <?php endif; ?>
+                </td>
+                <td><input type="number" name="qty_delivered[<?= esc($it['id']) ?>]" class="form-control text-center" min="0" max="<?= esc($sisa) ?>" value="0" style="min-width: 85px; font-weight: 600; font-size: 0.95rem;"></td>
               </tr>
               <?php endforeach; ?>
             </tbody>

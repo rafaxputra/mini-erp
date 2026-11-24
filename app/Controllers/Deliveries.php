@@ -51,7 +51,7 @@ class Deliveries extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'gudang'], '/deliveries', 'Hanya Staff Gudang dan Admin yang bisa mencatat Pengiriman.')) return $r;
+        if ($r = $this->requireRole(['gudang'], '/deliveries', 'Hanya Staff Gudang yang bisa mencatat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
         $soId = (int) ($this->request->getGet('sales_order_id') ?? 0);
         $sos = $db->table('sales_orders')->select('MIN(id) AS id, so_number, MIN(order_date) AS order_date')->where('status', 'confirmed')->groupBy('so_number')->orderBy('order_date', 'DESC')->get()->getResultArray();
@@ -66,14 +66,20 @@ class Deliveries extends BaseController
                 return redirect()->to('/deliveries/create')->with('error', 'Pengiriman hanya bisa dibuat untuk SO berstatus Confirmed. SO ini berstatus ' . $so['status'] . '.');
             }
             $items = $db->table('sales_orders so')->select('so.id, so.product_id, so.qty, so.unit_price, p.code, p.name AS product_name, p.unit, p.stock_qty, COALESCE((SELECT SUM(d.qty_delivered) FROM deliveries d WHERE d.sales_order_id = so.id), 0) AS delivered_qty')->join('products p', 'p.id = so.product_id')->where('so.so_number', $so['so_number'])->orderBy('so.id', 'ASC')->get()->getResultArray();
+            
+            // Hitung stok fisik aktual spesifik di gudang asal pengiriman SO
+            $stockSvc = new \App\Libraries\StockService();
+            foreach ($items as &$it) {
+                $it['warehouse_stock'] = $stockSvc->stockInWarehouse((int) $it['product_id'], (int) $so['warehouse_id']);
+            }
+            unset($it);
         }
         return view('deliveries/create', ['title' => 'Buat Pengiriman', 'sos' => $sos, 'so' => $so, 'items' => $items, 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll()]);
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'gudang'], '/deliveries', 'Hanya Staff Gudang dan Admin yang bisa mencatat Pengiriman.')) return $r;
+        if ($r = $this->requireRole(['gudang'], '/deliveries', 'Hanya Staff Gudang yang bisa mencatat Pengiriman.')) return $r;
         $soId = (int) $this->request->getPost('sales_order_id');
-        $warehouseId = (int) $this->request->getPost('warehouse_id');
         $deliveryDate = $this->request->getPost('delivery_date');
         $qtys = (array) $this->request->getPost('qty_delivered');
         $so = (new SalesOrderModel())->find($soId);
@@ -86,7 +92,8 @@ class Deliveries extends BaseController
         if (! $deliveryDate) {
             return redirect()->back()->withInput()->with('error', 'Tanggal kirim wajib diisi.');
         }
-        $warehouseId = $this->resolveWarehouseId($warehouseId);
+        // Kunci gudang pengiriman strictly mengikuti alokasi gudang pada Pesanan Jual (SO)
+        $warehouseId = (int) $so['warehouse_id'];
         $db = \Config\Database::connect();
         $db->transBegin();
         try {

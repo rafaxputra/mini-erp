@@ -343,8 +343,8 @@ class MainSeeder extends Seeder
         // PO 1: Diterima Penuh di GUDANG UTAMA (Pulpen Hitam x20 & Kertas A4 PaperOne x30)
         $po1Num = 'PO-' . $n8 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => null, 'product_id' => 1, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => null, 'product_id' => 8, 'qty' => 30, 'unit_price' => 32000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
+            ['po_number' => $po1Num, 'supplier_id' => 1, 'product_id' => 1, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
+            ['po_number' => $po1Num, 'supplier_id' => 1, 'product_id' => 8, 'qty' => 30, 'unit_price' => 32000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
         ]);
         $po1Items = $this->db->table('purchase_orders')->where('po_number', $po1Num)->get()->getResultArray();
         $gr1Num = 'GR-' . date('Ymd', strtotime('-7 days')) . '-001';
@@ -362,8 +362,8 @@ class MainSeeder extends Seeder
         // PO 2: Diterima Penuh di GUDANG CABANG SIDOARJO (Kertas A4 SiDU x25 & Stapler Kangaro x10)
         $po2Num = 'PO-' . $n6 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => null, 'product_id' => 9, 'qty' => 25, 'unit_price' => 36000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => null, 'product_id' => 13, 'qty' => 10, 'unit_price' => 45000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
+            ['po_number' => $po2Num, 'supplier_id' => 2, 'product_id' => 9, 'qty' => 25, 'unit_price' => 36000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
+            ['po_number' => $po2Num, 'supplier_id' => 2, 'product_id' => 13, 'qty' => 10, 'unit_price' => 45000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
         ]);
         $po2Items = $this->db->table('purchase_orders')->where('po_number', $po2Num)->get()->getResultArray();
         $gr2Num = 'GR-' . date('Ymd', strtotime('-5 days')) . '-001';
@@ -381,21 +381,21 @@ class MainSeeder extends Seeder
         // PO 3: Status APPROVED (Menunggu Barang Datang - Gudang Ditentukan saat GR)
         $po3Num = 'PO-' . $n3 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => null, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => null, 'product_id' => 24, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 24, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
         ]);
 
         // PO 4: Status DRAFT (Menunggu Persetujuan Admin / Manajemen)
         $po4Num = 'PO-' . $n1 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => null, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard besar kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => null, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
+            ['po_number' => $po4Num, 'supplier_id' => 3, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard besar kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
+            ['po_number' => $po4Num, 'supplier_id' => 3, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
         ]);
 
         // PO 5: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
         $po5Num = 'PO-' . $n8 . '-002';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po5Num, 'supplier_id' => 6, 'warehouse_id' => null, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier Sentral ATK kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
+            ['po_number' => $po5Num, 'supplier_id' => 6, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier Sentral ATK kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
         ]);
 
         // -------------------------------------------------------------
@@ -520,12 +520,12 @@ class MainSeeder extends Seeder
             ['so_number' => $so7Num, 'customer_id' => 3, 'warehouse_id' => 3, 'product_id' => 2, 'qty' => 20, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Pulpen biru pesanan toko', 'created_by' => 4, 'created_at' => $d1 . ' 14:00:00', 'updated_at' => $d1 . ' 15:00:00'],
         ]);
 
-        // SO 8: Status DRAFT (Draft Order Hari Ini)
-        $so8Num = 'SO-' . date('Ymd') . '-001';
+        // SO 8: Status DRAFT (Draft Order Kemarin / Menunggu Konfirmasi Pelanggan)
+        $so8Num = 'SO-' . $n1 . '-003';
         $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 12, 'qty' => 15, 'unit_price' => 30000, 'order_date' => date('Y-m-d'), 'status' => 'draft', 'notes' => 'Pesanan buku kas koperasi tahunan', 'created_by' => 4, 'created_at' => date('Y-m-d 08:30:00'), 'updated_at' => date('Y-m-d 08:30:00')],
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 14, 'qty' => 20, 'unit_price' => 24000, 'order_date' => date('Y-m-d'), 'status' => 'draft', 'notes' => 'Isi staples', 'created_by' => 4, 'created_at' => date('Y-m-d 08:30:00'), 'updated_at' => date('Y-m-d 08:30:00')],
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 19, 'qty' => 10, 'unit_price' => 32000, 'order_date' => date('Y-m-d'), 'status' => 'draft', 'notes' => 'Gunting kantor', 'created_by' => 4, 'created_at' => date('Y-m-d 08:30:00'), 'updated_at' => date('Y-m-d 08:30:00')],
+            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 12, 'qty' => 15, 'unit_price' => 30000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Pesanan buku kas koperasi tahunan', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 14, 'qty' => 20, 'unit_price' => 24000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Isi staples', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 19, 'qty' => 10, 'unit_price' => 32000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Gunting kantor', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
         ]);
 
         // SO 9: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)

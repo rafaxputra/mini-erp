@@ -387,7 +387,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   function formatRupiah(val) {
-    const clean = String(val).replace(/\D/g, '');
+    let str = String(val || '').trim();
+    if (str.indexOf('.') !== -1 && str.indexOf(',') === -1) {
+      const parts = str.split('.');
+      if (parts.length === 2 && (parts[1] === '00' || parts[1] === '0')) {
+        str = parts[0];
+      }
+    }
+    const clean = str.replace(/\D/g, '');
     return clean ? clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
   }
 

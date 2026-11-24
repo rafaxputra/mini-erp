@@ -43,7 +43,7 @@ class Warehouses extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('warehouse_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('warehouse_id', $id)->countAllResults() > 0
+            || $db->table('goods_receipts')->where('warehouse_id', $id)->countAllResults() > 0
             || $db->table('sales_orders')->where('warehouse_id', $id)->countAllResults() > 0;
 
         return view('warehouses/form', [
@@ -60,7 +60,7 @@ class Warehouses extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('warehouse_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('warehouse_id', $id)->countAllResults() > 0
+            || $db->table('goods_receipts')->where('warehouse_id', $id)->countAllResults() > 0
             || $db->table('sales_orders')->where('warehouse_id', $id)->countAllResults() > 0;
 
         $rules = [
@@ -112,7 +112,7 @@ class Warehouses extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('warehouse_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('warehouse_id', $id)->countAllResults() > 0
+            || $db->table('goods_receipts')->where('warehouse_id', $id)->countAllResults() > 0
             || $db->table('sales_orders')->where('warehouse_id', $id)->countAllResults() > 0;
 
         if ($hasTransactions) {

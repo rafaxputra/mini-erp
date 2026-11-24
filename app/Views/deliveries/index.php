@@ -14,7 +14,7 @@
         <a href="/deliveries" class="btn btn-sm btn-outline-secondary" title="Reset filter pencarian">Reset</a>
       <?php endif; ?>
     </form>
-    <?php if (in_array(session()->get('user_role'), ['admin', 'gudang'], true)): ?>
+    <?php if (session()->get('user_role') === 'gudang'): ?>
       <a class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" href="/deliveries/create">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
         Buat Pengiriman

@@ -46,12 +46,12 @@
         </div>
         <div class="col-md-3">
           <label class="form-label required">Gudang Pengirim</label>
-          <select name="warehouse_id" class="form-select" required>
+          <select name="warehouse_id" id="warehouseSelect" class="form-select" required>
             <?php foreach ($warehouses as $w): ?>
               <option value="<?= esc($w['id']) ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option>
             <?php endforeach; ?>
           </select>
-          <div class="form-text">Gudang asal barang saat dikirim.</div>
+          <div class="form-text">Gudang asal barang saat dikirim. Stok produk akan disesuaikan otomatis dengan gudang ini.</div>
         </div>
         <div class="col-12">
           <label class="form-label">Catatan Tambahan</label>
@@ -75,7 +75,7 @@
         <thead class="table-light">
           <tr>
             <th>Pilih Produk</th>
-            <th style="width: 130px;">Jumlah</th>
+            <th style="width: 170px;">Jumlah</th>
             <th style="width: 220px;">Harga Satuan Jual</th>
             <th class="text-end" style="width: 200px;">Subtotal</th>
             <th style="width: 60px;" class="text-center">Aksi</th>
@@ -87,11 +87,11 @@
               <select name="product_id[]" class="form-select product-select" required>
                 <option value="">-- Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
-                  <option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['selling_price']) ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?> (stok <?= esc($p['stock_qty']) ?>)</option>
+                  <option value="<?= esc($p['id']) ?>" data-price="<?= (int) $p['selling_price'] ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?> (stok <?= esc($p['stock_qty']) ?>)</option>
                 <?php endforeach; ?>
               </select>
             </td>
-            <td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" required></td>
+            <td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required></td>
             <td>
               <div class="input-group">
                 <span class="input-group-text">Rp</span>
@@ -125,10 +125,89 @@
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script>
-const products = <?= json_encode(array_map(function ($p) { return ['id' => $p['id'], 'code' => $p['code'], 'name' => $p['name'], 'price' => (float) $p['selling_price'], 'stock' => (int) $p['stock_qty']]; }, $products)) ?>;
+const products = <?= json_encode(array_map(function ($p) { return ['id' => (int) $p['id'], 'code' => $p['code'], 'name' => $p['name'], 'price' => (int) $p['selling_price'], 'stock' => (int) $p['stock_qty']]; }, $products)) ?>;
+const warehouseStocks = <?= json_encode($warehouseStocks ?? []) ?>;
+
+function getWarehouseStock(whId, prodId) {
+  if (warehouseStocks[whId] && warehouseStocks[whId][prodId] !== undefined) {
+    return parseInt(warehouseStocks[whId][prodId]) || 0;
+  }
+  return 0;
+}
+
+function getSelectedWarehouseInfo() {
+  const whSelect = document.getElementById('warehouseSelect');
+  const whId = parseInt(whSelect.value) || 0;
+  const opt = whSelect.options[whSelect.selectedIndex];
+  const whName = opt ? opt.text.split('(')[0].trim() : 'Gudang Terpilih';
+  return { id: whId, name: whName };
+}
+
+function buildProductOptionText(p, wh) {
+  const whStock = getWarehouseStock(wh.id, p.id);
+  if (whStock > 0) {
+    return `${p.code} - ${p.name} (Stok di ${wh.name}: ${whStock} | Total: ${p.stock})`;
+  } else {
+    return `${p.code} - ${p.name} (STOK KOSONG di ${wh.name} | Total: ${p.stock})`;
+  }
+}
+
+function checkQtyStockWarning(row) {
+  const sel = row.querySelector('.product-select');
+  const qtyInput = row.querySelector('.qty');
+  if (!sel || !qtyInput || !sel.value) return;
+  const wh = getSelectedWarehouseInfo();
+  const pid = parseInt(sel.value);
+  const whStock = getWarehouseStock(wh.id, pid);
+  const qty = parseFloat(qtyInput.value) || 0;
+
+  let warnEl = row.querySelector('.stock-warning');
+  if (!warnEl) {
+    warnEl = document.createElement('div');
+    warnEl.className = 'stock-warning text-danger small mt-1';
+    qtyInput.parentNode.appendChild(warnEl);
+  }
+
+  if (qty > whStock) {
+    warnEl.textContent = `Melebihi stok di ${wh.name} (tersedia: ${whStock})`;
+    qtyInput.classList.add('is-invalid');
+  } else {
+    warnEl.textContent = '';
+    qtyInput.classList.remove('is-invalid');
+  }
+}
+
+function syncAllProductStockLabels() {
+  const wh = getSelectedWarehouseInfo();
+  document.querySelectorAll('#detailRows .product-select').forEach(function (sel) {
+    const curVal = sel.value;
+    Array.from(sel.options).forEach(function (opt) {
+      if (!opt.value) return;
+      const pid = parseInt(opt.value);
+      const prod = products.find(p => p.id === pid);
+      if (!prod) return;
+      const whStock = getWarehouseStock(wh.id, pid);
+      opt.text = buildProductOptionText(prod, wh);
+      opt.setAttribute('data-stock', whStock);
+    });
+
+    const row = sel.closest('tr');
+    if (row) {
+      checkQtyStockWarning(row);
+    }
+  });
+}
+
 function formatRupiahInput(el) {
-  const digits = el.value.replace(/\D/g, '');
-  el.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  let val = (el.value || '').toString().trim();
+  if (val.indexOf('.') !== -1 && val.indexOf(',') === -1) {
+    const parts = val.split('.');
+    if (parts.length === 2 && (parts[1] === '00' || parts[1] === '0')) {
+      val = parts[0];
+    }
+  }
+  const digits = val.replace(/\D/g, '');
+  el.value = digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
 }
 function priceValue(el) {
   return parseFloat((el.value || '').replace(/\./g, '')) || 0;
@@ -141,6 +220,7 @@ function recalc() {
     const sub = qty * price;
     row.querySelector('.subtotal').textContent = 'Rp ' + sub.toLocaleString('id-ID');
     total += sub;
+    checkQtyStockWarning(row);
   });
   document.getElementById('totalAmount').textContent = 'Rp ' + total.toLocaleString('id-ID');
 }
@@ -166,7 +246,6 @@ function updateProductDropdowns() {
         return;
       }
 
-      // Sembunyikan dan matikan opsi yang sudah dipilih di baris lain
       if (selectedValues.includes(opt.value) && opt.value !== currentVal) {
         opt.disabled = true;
         opt.hidden = true;
@@ -177,7 +256,6 @@ function updateProductDropdowns() {
     });
   });
 
-  // Kunci tombol tambah jika seluruh produk katalog sudah dimasukkan
   const addBtn = document.getElementById('addRowBtn');
   if (addBtn) {
     const totalCatalogProducts = products.length;
@@ -205,10 +283,15 @@ function removeRow(btn) {
 function addRow() {
   const tbody = document.getElementById('detailRows');
   const row = document.createElement('tr');
+  const wh = getSelectedWarehouseInfo();
   let opts = '<option value="">-- Pilih Produk --</option>';
-  products.forEach(function (p) { opts += '<option value="' + p.id + '" data-price="' + p.price + '">' + p.code + ' - ' + p.name + ' (stok ' + p.stock + ')</option>'; });
+  products.forEach(function (p) {
+    const whStock = getWarehouseStock(wh.id, p.id);
+    const label = buildProductOptionText(p, wh);
+    opts += '<option value="' + p.id + '" data-price="' + Math.round(p.price) + '" data-stock="' + whStock + '">' + label + '</option>';
+  });
   row.innerHTML = '<td><select name="product_id[]" class="form-select product-select" required>' + opts + '</select></td>'
-    + '<td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" required></td>'
+    + '<td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required></td>'
     + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" placeholder="0" required></div></td>'
     + '<td class="subtotal text-end font-monospace">Rp 0</td>'
     + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button></td>';
@@ -216,15 +299,24 @@ function addRow() {
   row.querySelector('.product-select').addEventListener('change', function () {
     const sel = this.options[this.selectedIndex];
     const priceEl = row.querySelector('.price');
-    priceEl.value = sel.getAttribute('data-price') || '';
+    const rawPrice = sel ? (sel.getAttribute('data-price') || '0') : '0';
+    priceEl.value = parseInt(rawPrice, 10) || 0;
     formatRupiahInput(priceEl);
     updateProductDropdowns();
     recalc();
   });
   row.querySelectorAll('.qty').forEach(function (el) { el.addEventListener('input', recalc); });
   bindPrice(row.querySelector('.price'));
+  updateProductDropdowns();
   recalc();
 }
+
+document.getElementById('warehouseSelect').addEventListener('change', function () {
+  syncAllProductStockLabels();
+  updateProductDropdowns();
+  recalc();
+});
+
 document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.querySelectorAll('#detailRows .qty').forEach(function (el) { el.addEventListener('input', recalc); });
 document.querySelectorAll('#detailRows .price').forEach(function (el) { bindPrice(el); });
@@ -233,12 +325,14 @@ document.querySelectorAll('#detailRows .product-select').forEach(function (sel) 
     const row = this.closest('tr');
     const opt = this.options[this.selectedIndex];
     const priceEl = row.querySelector('.price');
-    priceEl.value = opt.getAttribute('data-price') || '';
+    const rawPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
+    priceEl.value = parseInt(rawPrice, 10) || 0;
     formatRupiahInput(priceEl);
     updateProductDropdowns();
     recalc();
   });
 });
+syncAllProductStockLabels();
 updateProductDropdowns();
 recalc();
 </script>
