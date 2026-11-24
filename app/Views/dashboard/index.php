@@ -1175,17 +1175,12 @@
                       : max(1, (int)$p['min_stock'] - (int)$p['stock_qty']);
                   ?>
                   <?php if (! empty($p['active_po_number'])): ?>
-                    <div class="d-inline-flex align-items-center gap-1">
-                      <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
-                        Lihat PO
-                      </a>
-                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
-                    </div>
-                  <?php else: ?>
-                    <a class="btn btn-sm btn-outline-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">
-                      Restock
+                    <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
+                      Lihat PO
                     </a>
+                  <?php else: ?>
+                    <span class="badge bg-secondary-lt fw-normal text-muted" title="Pemesanan ulang menjadi wewenang tim Purchasing">Perlu PO Purchasing</span>
                   <?php endif; ?>
                 </td>
               </tr>
