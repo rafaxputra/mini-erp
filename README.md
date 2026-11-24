@@ -1,106 +1,89 @@
-<p align="center">
-  <img src="app/public/img/logo.png" alt="Logo PT Nusantara Distribusi" width="120">
-</p>
+# Mini ERP: Inventory and Sales Management System
 
-<h1 align="center">Mini ERP: Inventory and Sales Management System</h1>
+Aplikasi internal PT Nusantara Distribusi, distributor alat tulis kantor dan kebutuhan kantor, untuk mencatat pembelian, penjualan, dan persediaan dalam satu tempat.
 
-<p align="center">
-  Aplikasi internal PT Nusantara Distribusi, distributor alat tulis kantor dan kebutuhan kantor, untuk mencatat pembelian, penjualan, dan persediaan dalam satu tempat.
-</p>
-
----
-
-## Daftar Isi
-
-1. [Tentang Aplikasi](#tentang-aplikasi)
-2. [Fitur](#fitur)
-3. [Teknologi](#teknologi)
-4. [Kebutuhan Sistem](#kebutuhan-sistem)
-5. [Instalasi](#instalasi)
-6. [Akun Demo](#akun-demo)
-7. [Hak Akses per Peran](#hak-akses-per-peran)
-8. [Aturan Bisnis Penting](#aturan-bisnis-penting)
-9. [Menguji Ulang Alurnya](#menguji-ulang-alurnya)
-10. [Struktur Proyek](#struktur-proyek)
-11. [Dokumen](#dokumen)
-12. [Backup dan Restore Database](#backup-dan-restore-database)
-13. [Pemecahan Masalah](#pemecahan-masalah)
-14. [Catatan Desain](#catatan-desain)
-15. [Lisensi](#lisensi)
-
----
-
-## Tentang Aplikasi
-
-Mini ERP mengelola alur barang dari pembelian ke supplier sampai pengiriman ke customer, dengan stok yang selalu dapat ditelusuri lewat histori mutasi. Pengembangannya mengacu pada dokumen SRS Mini ERP (Inventory and Sales Management System).
-
-Alur utama:
-
-```
-Purchase Order (Draft -> Approved) -> Goods Receipt -> stok bertambah
-Sales Order (Draft -> Confirmed)   -> Delivery      -> stok berkurang
-```
+Teknologi: CodeIgniter 4.7.6, PHP 8.5.12, PostgreSQL 16, Bootstrap 5, Git.
+Arsitektur: server rendered MVC.
+Database: 13 tabel, tanpa tabel items dan tanpa kolom total_amount. Satu nomor transaksi bisa punya banyak baris, tiap baris satu produk, dan total dihitung di query.
 
 ## Fitur
 
-| Modul | Isi |
-|---|---|
-| Autentikasi | Login dan logout, lima peran, session dan hak akses sesuai peran |
-| Master Data | Kategori, satuan, gudang, produk, supplier, customer. Kode unik, satuan produk yang sudah punya riwayat transaksi tidak bisa diubah, harga jual tidak boleh di bawah harga modal beli |
-| Purchasing | Purchase Order Draft dan Approved tanpa gudang, Goods Receipt dengan gudang dipilih petugas, guard batas stok maksimum, Double Order Guard, penolakan PO oleh Manajemen, tab status dengan angka jumlah |
-| Sales | Sales Order dengan cek stok per gudang, Delivery dengan gudang terkunci mengikuti SO, harga satuan tidak boleh di bawah harga modal beli, tab status dengan angka jumlah, tombol isi sesuai sisa dan kosongkan di form pengiriman |
-| Inventory | Stok per produk dan per gudang, histori stock movement, penyesuaian stok dengan alasan, filter status stok, kategori, jenis mutasi, dan gudang |
-| Laporan | Pembelian, penjualan, stok, dan 10 produk terlaris, semua dengan filter periode tanggal |
-| Dashboard | Lima versi dashboard sesuai peran, lengkap dengan antrean ACC untuk Manajemen (maksimal 5 PO teratas) dan antrean barang masuk untuk Gudang |
+1. Login dan logout dengan lima peran: Admin (Super Admin, kelola master data, pengguna, dan peran, tanpa transaksi operasional), Staff Purchasing, Staff Gudang, Staff Sales, dan Manajemen (lihat laporan dan setujui PO).
+2. Master data: kategori, satuan, dan gudang (Admin), produk dan supplier (Staff Purchasing dan Admin), customer (Staff Sales dan Admin). Harga jual produk tidak boleh di bawah harga modal beli, dan satuan produk yang sudah punya riwayat transaksi tidak bisa diubah.
+3. Pembelian: Purchase Order Draft dan Approved tanpa gudang, Goods Receipt dengan gudang dipilih petugas, stok bertambah hanya saat barang diterima. Guard batas stok maksimum menolak PO yang melebihi kapasitas. Double Order Guard memberi peringatan kalau produk sudah punya PO aktif. Manajemen bisa menolak PO dengan alasan wajib. Daftar PO menampilkan tab status dengan angka jumlah.
+4. Penjualan: Sales Order dengan cek stok per gudang, Delivery dengan gudang terkunci mengikuti SO, stok berkurang hanya saat barang dikirim. Harga satuan SO tidak boleh di bawah harga modal beli produk. Daftar SO menampilkan tab status dengan angka jumlah, dan pill Dikonfirmasi disorot kalau ada SO menunggu kirim. Form pengiriman punya tombol isi sesuai sisa dan kosongkan.
+5. Inventory: stok per produk dan per gudang, histori stock movement, dan penyesuaian stok dengan alasan. Daftar stok bisa difilter status stok dan kategori, riwayat mutasi bisa difilter jenis mutasi dan gudang, daftar Barang Masuk dan Pengiriman bisa difilter gudang dan rentang tanggal.
+6. Laporan: pembelian, penjualan, stok, dan 10 produk terlaris, semua dengan filter periode tanggal.
+7. Dashboard: lima versi dashboard sesuai peran, lengkap dengan antrean ACC untuk Manajemen dan antrean barang masuk untuk Gudang. Antrean ACC menampilkan maksimal 5 PO teratas.
 
-## Teknologi
+## Aturan bisnis yang dijaga
 
-- **Framework:** CodeIgniter 4.7.6, pola MVC, server rendered
-- **Database:** PostgreSQL 16, 13 tabel, tanpa tabel items dan tanpa kolom total_amount. Satu nomor transaksi bisa punya banyak baris, tiap baris satu produk, dan total dihitung di query
-- **Tampilan:** Bootstrap 5 dan Tabler 1.7.5, dimuat dari CDN, jadi perlu koneksi internet saat membuka halaman
-- **Bahasa:** PHP 8.5.12
+1. PO Draft tidak mengubah stok.
+2. Stok bertambah hanya dari Goods Receipt.
+3. Delivery ditolak jika stok tidak mencukupi.
+4. Stok berkurang hanya dari Delivery yang berhasil.
+5. Setiap perubahan stok mencatat stock movement.
+6. Stok tidak boleh negatif, dijaga di aplikasi dan di database.
+7. Header dan detail transaksi disimpan dalam satu database transaction.
+8. Transaksi yang sudah diproses tidak dihapus, hanya dibatalkan dengan status.
+9. Total transaksi dihitung dari kuantitas dikalikan harga satuan pada setiap detail, lalu dijumlahkan.
+10. Purchase Order tidak punya gudang. Gudang ditentukan petugas saat Goods Receipt.
+11. Sales Order adalah alokasi stok dari satu gudang tertentu. Gudang pengiriman terkunci mengikuti gudang SO.
+12. Satu peran satu tugas untuk transaksi operasional. Admin tidak mencatat transaksi operasional. Hanya Manajemen yang bisa menyetujui PO.
+13. Batas stok maksimum adalah batas global per produk. PO ditolak kalau stok fisik tambah pesanan berjalan sudah mencapai batas, atau kalau kuantitas baru melewati sisa kuota.
+14. Sales Order bukan reservasi stok. Dua SO bisa sama-sama lolos cek stok, dan pengiriman kedua ditolak kalau stok habis.
+15. Harga yang diketik dengan pemisah ribuan dibersihkan server sebelum disimpan.
+16. Harga jual tidak boleh lebih rendah dari harga modal beli. Produk dengan harga jual di bawah harga modal ditolak, dan SO dengan harga satuan di bawah harga modal ditolak seluruhnya.
+17. Penolakan PO oleh Manajemen adalah pembatalan dengan label penolakan, bukan status baru. Status tetap Cancelled dan alasan wajib diisi.
+18. Satuan produk yang sudah punya riwayat transaksi tidak bisa diubah.
 
-## Kebutuhan Sistem
+## Hak akses per peran
 
-| Komponen | Versi / Keterangan |
-|---|---|
-| PHP | 8.5.12 |
-| Ekstensi PHP | `pgsql`, `intl`, `mbstring`, `xml`, `curl`, dan `zip` |
-| PostgreSQL | 16 |
-| Composer | 2 |
-| Browser | Edge, Chrome, atau Firefox versi terbaru |
-| Git | Untuk clone dan riwayat perubahan |
+Ya berarti bisa melihat dan memproses. L berarti hanya melihat. Strip berarti tidak ada akses.
 
-> Ubuntu 24.04 hanya menyediakan PHP 8.3, jadi PHP 8.5 diambil dari PPA Ondrej Sury. Lihat `scripts/setup-env.sh` untuk langkah instalasinya. Untuk Windows 11, lihat `docs/SETUP_WINDOWS.md`.
+| Fitur | Admin | Staff Purchasing | Staff Gudang | Staff Sales | Manajemen |
+| --- | --- | --- | --- | --- | --- |
+| Dashboard | Ya | Ya | Ya | Ya | Ya |
+| Kelola Kategori | Ya | - | - | - | - |
+| Kelola Produk | Ya | Ya | L | L | L |
+| Kelola Supplier | Ya | Ya | - | - | L |
+| Kelola Customer | Ya | - | - | Ya | L |
+| Kelola Gudang | Ya | - | L | - | L |
+| Kelola Satuan | Ya | - | - | - | L |
+| Kelola Pengguna | Ya | - | - | - | - |
+| Buat Purchase Order | L | Ya | - | - | L |
+| Approve Purchase Order | - | - | - | - | Ya |
+| Batalkan Purchase Order | - | Ya | - | - | Ya |
+| Batalkan Sales Order | - | - | - | Ya | - |
+| Catat Goods Receipt | - | - | Ya | - | - |
+| Buat Sales Order | L | - | - | Ya | L |
+| Konfirmasi Sales Order | - | - | - | Ya | - |
+| Catat Delivery | - | - | Ya | - | - |
+| Lihat Stok dan Mutasi | Ya | Ya | Ya | Ya | Ya |
+| Penyesuaian Stok | Ya | - | - | - | - |
+| Lihat Laporan | Ya | - | - | - | Ya |
 
-## Instalasi
+Daftar Goods Receipt masih bisa dibuka Admin, Staff Purchasing, dan Manajemen, dan daftar Delivery masih bisa dibuka Admin, Staff Sales, dan Manajemen, karena daftar itu hanya menampilkan data. Yang dibatasi adalah siapa yang boleh mencatat.
 
-### 1. Ambil kode dan pasang dependensi
+## Cara menjalankan
 
-```bash
-git clone https://github.com/rafaxputra/mini-erp.git
-cd mini-erp
+### Syarat
+
+PHP 8.5.12 dengan ekstensi pgsql, intl, mbstring, xml, curl, dan zip. PostgreSQL 16. Composer 2. Ubuntu 24.04 hanya menyediakan PHP 8.3, jadi PHP 8.5 diambil dari PPA Ondrej Sury.
+
+### Langkah
+
+1. Buat database dan pengguna PostgreSQL.
+
+```sql
+CREATE USER minierp WITH PASSWORD 'isi-password-sendiri'
+CREATE DATABASE minierp_dev OWNER minierp
 ```
 
-Masuk ke folder `app`, lalu instal dependensi:
+2. Masuk ke folder `app`, salin `env` menjadi `.env`, lalu isi koneksi database dan baseURL.
 
 ```bash
 cd app
-composer install
-```
-
-### 2. Buat database PostgreSQL
-
-```sql
-CREATE USER minierp WITH PASSWORD 'isi-password-sendiri';
-CREATE DATABASE minierp_dev OWNER minierp;
-```
-
-### 3. Buat file `.env`
-
-Salin `env` menjadi `.env`, lalu isi koneksi database dan baseURL:
-
-```bash
 cp env .env
 ```
 
@@ -116,71 +99,33 @@ database.default.DBDriver = PostgreSQL
 database.default.port = 5432
 ```
 
-### 4. Jalankan migrasi dan seeder
+3. Instal dependensi, migration, dan seeder.
 
 ```bash
+composer install
 php spark migrate --all
 php spark db:seed MainSeeder
 ```
 
-### 5. Jalankan aplikasi
+4. Jalankan server.
 
 ```bash
 php spark serve --port 8080
 ```
 
-Buka `http://localhost:8080` di browser, lalu login dengan salah satu akun di bawah.
+5. Buka `http://localhost:8080` di browser.
 
-## Akun Demo
+### Akun demo
 
 Akun ini hanya untuk demo lokal. Ganti passwordnya sebelum dipakai di tempat lain.
 
-| Email | Password | Peran |
-|---|---|---|
-| `admin@nusantara.test` | `admin123` | Admin. Kelola master data, pengguna, dan peran, penyesuaian stok, dan laporan. Tidak bisa mencatat transaksi operasional dan tidak bisa menyetujui PO |
-| `purchasing@nusantara.test` | `purchasing123` | Staff Purchasing. Membuat PO, mengelola produk dan supplier |
-| `gudang@nusantara.test` | `gudang123` | Staff Gudang. Mencatat Goods Receipt dan Delivery |
-| `sales@nusantara.test` | `sales123` | Staff Sales. Membuat dan mengonfirmasi SO, mengelola customer |
-| `manajemen@nusantara.test` | `manajemen123` | Manajemen. Melihat laporan dan stok, serta menyetujui PO lewat antrean ACC |
+1. Admin: `admin@nusantara.test` dengan password `admin123`. Kelola master data, pengguna, dan peran, penyesuaian stok, dan laporan. Tidak bisa mencatat transaksi operasional dan tidak bisa menyetujui PO.
+2. Staff Purchasing: `purchasing@nusantara.test` dengan password `purchasing123`. Membuat PO, mengelola produk dan supplier.
+3. Staff Gudang: `gudang@nusantara.test` dengan password `gudang123`. Mencatat Goods Receipt dan Delivery.
+4. Staff Sales: `sales@nusantara.test` dengan password `sales123`. Membuat dan mengonfirmasi SO, mengelola customer.
+5. Manajemen: `manajemen@nusantara.test` dengan password `manajemen123`. Melihat laporan dan stok, serta menyetujui PO lewat antrean ACC.
 
-## Hak Akses per Peran
-
-| Fitur | Admin | Staff Purchasing | Staff Gudang | Staff Sales | Manajemen |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Kategori | Ubah | - | - | - | - |
-| Satuan | Ubah | - | - | - | Lihat |
-| Gudang | Ubah | - | Lihat | - | Lihat |
-| Produk | Ubah | Ubah | Lihat | Lihat | Lihat |
-| Supplier | Ubah | Ubah | - | - | Lihat |
-| Customer | Ubah | - | - | Ubah | Lihat |
-| Pengguna dan peran | Ubah | - | - | - | - |
-| Purchase Order | Lihat | Ubah | - | - | Ubah |
-| Goods Receipt | Lihat | Lihat | Ubah | - | Lihat |
-| Sales Order | Lihat | - | - | Ubah | Lihat |
-| Delivery | Lihat | - | Ubah | Lihat | Lihat |
-| Stok dan mutasi | Ubah | Lihat | Lihat | Lihat | Lihat |
-| Laporan | Lihat | - | - | - | Lihat |
-
-Hak akses diperiksa di sisi server pada setiap permintaan, bukan hanya dengan menyembunyikan menu. Satu peran satu tugas untuk transaksi operasional. Admin tidak mencatat transaksi operasional. Hanya Manajemen yang bisa menyetujui dan menolak PO.
-
-## Aturan Bisnis Penting
-
-- **PO Draft tidak mengubah stok.** Stok bertambah hanya dari Goods Receipt.
-- **Delivery ditolak jika stok tidak mencukupi.** Stok berkurang hanya dari Delivery yang berhasil.
-- **Setiap perubahan stok mencatat stock movement.** Stok tidak boleh negatif, dijaga di aplikasi dan di database.
-- **Header dan detail transaksi disimpan dalam satu database transaction.**
-- **Transaksi yang sudah diproses tidak dihapus, hanya dibatalkan dengan status.** Pembatalan wajib alasan.
-- **Total transaksi dihitung dari kuantitas dikalikan harga satuan pada setiap detail, lalu dijumlahkan.**
-- **Purchase Order tidak punya gudang.** Gudang ditentukan petugas saat Goods Receipt.
-- **Sales Order adalah alokasi stok dari satu gudang tertentu.** Gudang pengiriman terkunci mengikuti gudang SO.
-- **Batas stok maksimum adalah batas global per produk.** PO ditolak kalau stok fisik tambah pesanan berjalan sudah mencapai batas, atau kalau kuantitas baru melewati sisa kuota.
-- **Sales Order bukan reservasi stok.** Dua SO bisa sama-sama lolos cek stok, dan pengiriman kedua ditolak kalau stok habis.
-- **Harga yang diketik dengan pemisah ribuan dibersihkan server sebelum disimpan.**
-- **Harga jual tidak boleh lebih rendah dari harga modal beli.** Produk dengan harga jual di bawah harga modal ditolak, dan SO dengan harga satuan di bawah harga modal ditolak seluruhnya.
-- **Penolakan PO oleh Manajemen adalah pembatalan dengan label penolakan, bukan status baru.** Status tetap Cancelled dan alasan wajib diisi.
-- **Satuan produk yang sudah punya riwayat transaksi tidak bisa diubah.**
-
-## Menguji Ulang Alurnya
+### Menguji ulang alurnya
 
 Skrip `scripts/test_flow.sh` menjalankan alur penuh lewat HTTP dan memeriksa stok di database. Password database dibaca otomatis dari `app/.env`, jadi jalankan saja dari folder root proyek saat server jalan. Skrip ini memakai akun peran yang benar untuk tiap transaksi.
 
@@ -188,98 +133,53 @@ Skrip `scripts/test_flow.sh` menjalankan alur penuh lewat HTTP dan memeriksa sto
 bash scripts/test_flow.sh
 ```
 
-Dua skrip lain menguji hak akses dan pengelolaan akun:
+Dua skrip lain menguji hak akses dan akun pengguna.
 
 ```bash
 bash scripts/test_roles.sh
 bash scripts/test_users.sh
 ```
 
-Skrip uji tidak idempotent. Selalu kembalikan database ke kondisi awal dulu sebelum menjalankan ulang:
+Skrip tes tidak idempotent. Jalankan `php spark db:reset` dari folder `app` dulu sebelum menjalankan skrip tes, supaya database kembali ke kondisi seeder.
+
+### Mengembalikan database ke kondisi awal
 
 ```bash
 cd app
 php spark db:reset
 ```
 
-Perintah `db:reset` menghapus dan membuat ulang skema, menjalankan semua migrasi, lalu mengisi data awal. Cara manualnya:
+Perintah ini menghapus skema public, menjalankan semua migrasi, lalu mengisi data seeder. Cara manualnya:
 
 ```bash
+cd app
 php spark migrate:refresh --all
 php spark db:seed MainSeeder
 ```
 
-## Struktur Proyek
+## Masalah yang sering muncul
+
+1. PHP 8.5 tidak ada di Ubuntu 24.04. Ubuntu 24.04 hanya menyediakan PHP 8.3. Ambil PHP 8.5 dari PPA Ondrej Sury, lalu pasang ekstensi pgsql, intl, mbstring, xml, curl, dan zip.
+2. Koneksi database ditolak. Periksa isi `.env`, pastikan pengguna dan database `minierp_dev` sudah dibuat, dan PostgreSQL sudah jalan. Lihat langkah 1 dan 2 di atas.
+3. Tabel tidak ditemukan. Migrasi belum dijalankan. Jalankan `php spark migrate --all` dari folder `app`.
+4. Login gagal dengan akun demo. Seeder belum dijalankan. Jalankan `php spark db:seed MainSeeder` dari folder `app`, atau `php spark db:reset` untuk mengulang dari awal.
+5. Skrip tes gagal di tengah jalan. Skrip tes tidak idempotent. Jalankan `php spark db:reset` dulu sebelum menjalankan skrip tes.
+6. Server tidak mau jalan, port 8080 sudah dipakai. Matikan proses `spark serve` yang lama, atau jalankan dengan port lain: `php spark serve --port 8081`.
+7. Tanggal di laporan bergeser. Timezone aplikasi sudah Asia/Jakarta. Kalau tanggal tetap bergeser, periksa timezone di `.env` dan di PostgreSQL.
+
+## Struktur proyek
 
 ```text
 mini-erp/
   app/                  Kode CodeIgniter 4 (Controllers, Models, Views, Migrations, Seeds)
-  docs/
-    BRD.md              Business Requirements Document
-    SRS.md              Software Requirements Specification
-    ERD.md              ERD dan data dictionary
-    DFD.md              Data Flow Diagram, konteks, Level 1, dan Level 2
-    TEST_CASES.md       Test case, hasil aktual, dan bug log
-    pdf/                Versi PDF dari BRD, SRS, ERD, dan DFD
-    activity/           Activity diagram satu per use case (uc01 sampai uc10)
-    dfd/                Gambar DFD dan file sumber draw.io
-  presentation/
-    Mini-ERP-PT-Nusantara-Distribusi.pptx
-  scripts/
-    setup-env.sh        Instalasi PHP, PostgreSQL, dan Composer di VM Ubuntu 24.04
-    test_flow.sh        Uji alur penuh lewat HTTP
-    test_roles.sh       Uji hak akses tiap peran
-    test_users.sh       Uji pengelolaan pengguna dan peran
-    make_google_docs.py Generator dokumen Word dari file .md
-    gen.py              Generator file aplikasi (dipakai saat pembangunan awal)
+  diagram/              Diagram DFD dan ERD dalam format Mermaid (.mmd)
+  tests/                Tes bawaan CodeIgniter
+  composer.json         Daftar dependensi
+  spark                 Perintah CodeIgniter
+  writable/             Cache, log, dan upload
 ```
 
-## Dokumen
-
-1. `docs/BRD.md`: masalah bisnis, aktor, proses, kebutuhan, dan kriteria penerimaan.
-2. `docs/SRS.md`: use case, validasi, kebutuhan nonfungsional, dan pemetaan requirement ke test case. Diagram use case gabungan ada di `docs/usecase-combined.png` (sumber draw.io di `docs/usecase-combined.drawio`), dan activity diagram satu per use case di `docs/activity/` (uc01.png sampai uc10.png, sumber draw.io di `docs/activity/uc01.drawio` sampai `uc10.drawio`), dibuat lewat draw.io web.
-3. `docs/ERD.md`: diagram relasi, alasan desain, data dictionary, dan query produk terlaris.
-4. `docs/DFD.md`: Data Flow Diagram, diagram konteks, Level 1 (8 proses, 7 store), dan Level 2 Kelola Purchase Order, Catat Goods Receipt, Kelola Sales Order, Proses Delivery, dan Kelola Stok dan Penyesuaian, beserta gambar PNG dan file sumber di `docs/dfd/`.
-5. `docs/TEST_CASES.md`: 48 test case dengan hasil aktual dan bug log.
-6. `docs/SETUP.md`: panduan setup dari nol di Ubuntu, composer create-project dan pgAdmin 4.
-7. `docs/SETUP_WINDOWS.md`: panduan setup dari nol di Windows 11.
-
-## Backup dan Restore Database
-
-Cadangan berkala dianjurkan karena data transaksi tidak pernah dihapus.
-
-**Backup:**
-
-```bash
-pg_dump -U minierp -h localhost -F c -f minierp_backup.dump minierp_dev
-```
-
-**Restore ke database kosong:**
-
-```bash
-createdb -U postgres -O minierp minierp_restore
-pg_restore -U minierp -h localhost -d minierp_restore minierp_backup.dump
-```
-
-Setelah restore, arahkan `database.default.database` di `.env` ke database yang dipulihkan, lalu bandingkan jumlah data dan saldo stok dengan database asal.
-
-## Pemecahan Masalah
-
-| Masalah | Penyebab dan solusi |
-|---|---|
-| `could not find driver` | Ekstensi `pgsql` belum aktif di `php.ini` |
-| Composer: `zip extension and unzip/7z commands are both missing` | Aktifkan `extension=zip` di `php.ini`, buka terminal baru, lalu ulangi `composer install` |
-| Error `intl` saat `composer install` atau `spark` | Aktifkan `extension=intl` di `php.ini` |
-| PHP 8.3 di Ubuntu 24.04 | Ubuntu 24.04 hanya menyediakan PHP 8.3. Instal PHP 8.5 dari PPA Ondrej Sury, atau jalankan `scripts/setup-env.sh` |
-| `password authentication failed` | Periksa `username` dan `password` di `.env` |
-| Tabel tidak ditemukan | Jalankan `php spark migrate --all` |
-| Tidak bisa login | Jalankan `php spark db:seed MainSeeder`, atau `php spark db:reset` untuk mengulang dari awal |
-| Port 8080 sudah dipakai | Jalankan `php spark serve --port 8081`, lalu buka alamat dengan port itu |
-| Uji alur gagal setelah data berubah | Skrip uji tidak idempotent. Jalankan `php spark db:reset` dulu, lalu ulangi |
-| Ingin login dua akun di dua tab | Cookie sesi dipakai bersama satu browser. Pakai jendela incognito, browser lain, atau host berbeda (`localhost` dan `127.0.0.1`, tambahkan keduanya di `$allowedHostnames` pada `App.php`) |
-| Tanggal di laporan bergeser sehari | Periksa `public string $appTimezone = 'Asia/Jakarta';` di `app/Config/App.php` |
-
-## Catatan Desain
+## Catatan desain
 
 1. Stok disimpan di `products.stock_qty` agar halaman stok cepat dibaca. `stock_movements` adalah jejak audit. Saldo stok harus selalu sama dengan jumlah movement.
 2. PO tidak langsung menambah stok karena barang belum tentu datang sesuai pesanan.
@@ -287,7 +187,3 @@ Setelah restore, arahkan `database.default.database` di `.env` ke database yang 
 4. Perubahan stok memakai kunci baris `SELECT ... FOR UPDATE` di dalam transaction, agar dua pengguna yang mengeluarkan stok yang sama secara bersamaan tidak membuat stok negatif.
 5. Sistem memakai tiga gudang dan stok dicatat per gudang lewat `stock_movements`. Purchase Order tidak punya gudang karena gudang tujuan belum ditentukan sampai barang sampai. Sales Order tetap punya gudang karena SO adalah alokasi stok dari satu gudang tertentu dan pengiriman wajib keluar dari gudang itu.
 6. Timezone aplikasi Asia/Jakarta, supaya tanggal di laporan dan penomoran tidak bergeser.
-
-## Lisensi
-
-Proyek internal PT Nusantara Distribusi. Hak penggunaan mengikuti kebijakan perusahaan.
