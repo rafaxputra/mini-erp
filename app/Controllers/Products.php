@@ -144,8 +144,8 @@ class Products extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
 
         return view('products/form', [
             'title' => 'Ubah Produk',
@@ -171,8 +171,8 @@ class Products extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
 
         $rules = [
             'name' => 'required|min_length[2]|max_length[150]',
@@ -248,8 +248,8 @@ class Products extends BaseController
         $db = \Config\Database::connect();
         // 1. Cek riwayat transaksi / mutasi terlebih dahulu
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
 
         if ($hasTransactions) {
             return redirect()->to('/products')->with('error', 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi atau mutasi stok fisik. Data ini harus dipertahankan untuk jejak audit pembukuan.');

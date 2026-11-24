@@ -3,6 +3,49 @@
 <?php $filterQuery = array_filter(['q' => $q, 'status' => $status, 'start_date' => $start_date, 'end_date' => $end_date], static fn ($v) => $v !== ''); ?>
 <?php $filterActive = $q !== '' || $status !== '' || $start_date !== '' || $end_date !== ''; ?>
 
+<!-- Quick Status Tabs (Pills) & Tombol Tambah SO -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <ul class="nav nav-pills gap-1">
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === '' ? 'active fw-bold' : 'text-secondary' ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Semua
+        <span class="badge ms-1 <?= $status === '' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['all'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === 'draft' ? 'active fw-bold' : 'text-secondary' ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'draft', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Draf
+        <span class="badge ms-1 <?= $status === 'draft' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['draft'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === 'confirmed' ? 'active bg-primary text-white fw-bold' : (! empty($statusCounts['confirmed']) ? 'text-primary fw-bold border border-primary-subtle' : 'text-secondary') ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'confirmed', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Dikonfirmasi
+        <span class="badge ms-1 <?= $status === 'confirmed' ? 'bg-white text-primary' : (! empty($statusCounts['confirmed']) ? 'bg-primary text-white' : 'bg-secondary-lt') ?>"><?= esc($statusCounts['confirmed'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === 'delivered' ? 'active fw-bold' : 'text-secondary' ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'delivered', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Terkirim
+        <span class="badge ms-1 <?= $status === 'delivered' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['delivered'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === 'cancelled' ? 'active fw-bold' : 'text-secondary' ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'cancelled', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Dibatalkan
+        <span class="badge ms-1 <?= $status === 'cancelled' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['cancelled'] ?? 0) ?></span>
+      </a>
+    </li>
+  </ul>
+
+  <?php if (session()->get('user_role') === 'sales'): ?>
+    <a class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm px-3" href="/sales-orders/create">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+      Buat SO Baru
+    </a>
+  <?php endif; ?>
+</div>
+
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-3">
     <form action="/sales-orders" method="get">
@@ -38,12 +81,6 @@
           </button>
           <?php if ($filterActive): ?>
             <a class="btn btn-sm btn-outline-secondary" href="/sales-orders">Reset</a>
-          <?php endif; ?>
-          <?php if (session()->get('user_role') === 'sales'): ?>
-            <a class="btn btn-sm btn-success d-inline-flex align-items-center gap-1" href="/sales-orders/create">
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-              Buat SO
-            </a>
           <?php endif; ?>
         </div>
       </div>

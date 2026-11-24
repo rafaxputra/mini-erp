@@ -94,8 +94,17 @@
 
     <!-- Kartu Detail Pengiriman -->
     <div class="card mb-3 border-0 shadow-sm">
-      <div class="card-header bg-transparent py-3">
-        <h3 class="card-title m-0 fw-bold">Detail Pengiriman</h3>
+      <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h3 class="card-title m-0 fw-bold">Konfirmasi Jumlah Barang yang Dikirim</h3>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" onclick="fillAllRemaining()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+            Isi Sesuai Sisa / Stok
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllDelivery()">
+            Kosongkan
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <div class="row g-3 mb-3">
@@ -117,7 +126,7 @@
           </div>
           <div class="col-12">
             <label class="form-label">Catatan Pengiriman</label>
-            <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Dikirim via kurir, resi menyusul"></textarea>
+            <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Dikirim via kurir ekspedisi, armada truk #1, resi menyusul"></textarea>
           </div>
         </div>
 
@@ -131,11 +140,16 @@
                 <th class="text-center" style="width: 120px;">Sudah Dikirim</th>
                 <th class="text-center" style="width: 100px;">Sisa Kirim</th>
                 <th class="text-center" style="width: 130px;">Stok di Gudang Ini</th>
-                <th class="text-center" style="width: 160px;">Jumlah Dikirim</th>
+                <th class="text-center" style="width: 160px;">Jumlah Dikirim Kali Ini</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($items as $it): $sisa = (int) $it['qty'] - (int) $it['delivered_qty']; $whStock = (int) ($it['warehouse_stock'] ?? $it['stock_qty']); ?>
+              <?php foreach ($items as $it): 
+                $sisa = max(0, (int) $it['qty'] - (int) $it['delivered_qty']); 
+                $whStock = (int) ($it['warehouse_stock'] ?? $it['stock_qty']); 
+                // Best practice ERP: Otomatis isi sejumlah sisa pesanan, maksimal sebanyak stok fisik yang tersedia
+                $defaultQty = max(0, min($sisa, $whStock));
+              ?>
               <tr>
                 <td><code class="text-dark"><?= esc($it['code']) ?></code></td>
                 <td class="fw-semibold text-dark"><?= esc($it['product_name']) ?></td>
@@ -145,16 +159,32 @@
                   <?php if ($sisa === 0): ?>
                     <span class="badge bg-success-lt">Lengkap</span>
                   <?php else: ?>
-                    <span class="badge bg-warning-lt"><?= esc($sisa) ?></span>
+                    <span class="badge bg-warning-lt fw-bold"><?= esc($sisa) ?></span>
                   <?php endif; ?>
                 </td>
                 <td class="text-center font-monospace fw-bold <?= ($whStock < $sisa) ? 'text-danger' : 'text-dark' ?>">
                   <?= esc($whStock) ?> <?= esc($it['unit']) ?>
                   <?php if ($whStock < $sisa): ?>
-                    <div class="small text-danger fw-normal" style="font-size: 0.72rem;">Stok kurang</div>
+                    <div class="small text-danger fw-normal" style="font-size: 0.72rem;">
+                      <?= $whStock <= 0 ? 'Stok habis' : 'Stok kurang (' . $whStock . ')' ?>
+                    </div>
                   <?php endif; ?>
                 </td>
-                <td><input type="number" name="qty_delivered[<?= esc($it['id']) ?>]" class="form-control text-center" min="0" max="<?= esc($sisa) ?>" value="0" style="min-width: 85px; font-weight: 600; font-size: 0.95rem;"></td>
+                <td>
+                  <div class="input-group">
+                    <input type="number" 
+                           name="qty_delivered[<?= esc($it['id']) ?>]" 
+                           class="form-control text-center delivery-qty-input" 
+                           min="0" 
+                           max="<?= esc(min($sisa, $whStock)) ?>" 
+                           value="0" 
+                           data-default="<?= esc($defaultQty) ?>"
+                           data-max="<?= esc(min($sisa, $whStock)) ?>"
+                           style="min-width: 85px; font-weight: 600; font-size: 0.95rem;"
+                           <?= $sisa === 0 || $whStock <= 0 ? 'readonly' : '' ?>>
+                    <span class="input-group-text small text-secondary px-2"><?= esc($it['unit'] ?? 'unit') ?></span>
+                  </div>
+                </td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -171,5 +201,22 @@
     </div>
   </form>
 <?php endif; ?>
+
+<script>
+function fillAllRemaining() {
+  document.querySelectorAll('.delivery-qty-input').forEach(function(inp) {
+    if (!inp.readOnly) {
+      inp.value = inp.getAttribute('data-default') || 0;
+    }
+  });
+}
+function clearAllDelivery() {
+  document.querySelectorAll('.delivery-qty-input').forEach(function(inp) {
+    if (!inp.readOnly) {
+      inp.value = 0;
+    }
+  });
+}
+</script>
 
 <?= $this->endSection() ?>

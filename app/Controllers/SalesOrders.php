@@ -24,7 +24,34 @@ class SalesOrders extends BaseController
         if ($page < 1) $page = 1;
         if ($page > $lastPage) $page = $lastPage;
         $items = $this->soListBuilder($q, $status, $start, $end)->limit($perPage, ($page - 1) * $perPage)->get()->getResultArray();
-        return view('sales_orders/index', ['title' => 'Pesanan Jual', 'items' => $items, 'q' => $q, 'status' => $status, 'statuses' => $statuses, 'start_date' => $start, 'end_date' => $end, 'pager' => ['page' => $page, 'lastPage' => $lastPage, 'total' => $total, 'perPage' => $perPage, 'from' => $total ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)]]);
+
+        $db = \Config\Database::connect();
+        $statusCounts = [
+            'all' => (int) $db->table('sales_orders')->select('so_number')->distinct()->countAllResults(),
+            'draft' => (int) $db->table('sales_orders')->where('status', 'draft')->select('so_number')->distinct()->countAllResults(),
+            'confirmed' => (int) $db->table('sales_orders')->where('status', 'confirmed')->select('so_number')->distinct()->countAllResults(),
+            'delivered' => (int) $db->table('sales_orders')->where('status', 'delivered')->select('so_number')->distinct()->countAllResults(),
+            'cancelled' => (int) $db->table('sales_orders')->where('status', 'cancelled')->select('so_number')->distinct()->countAllResults(),
+        ];
+
+        return view('sales_orders/index', [
+            'title' => 'Pesanan Jual',
+            'items' => $items,
+            'q' => $q,
+            'status' => $status,
+            'statuses' => $statuses,
+            'start_date' => $start,
+            'end_date' => $end,
+            'statusCounts' => $statusCounts,
+            'pager' => [
+                'page' => $page,
+                'lastPage' => $lastPage,
+                'total' => $total,
+                'perPage' => $perPage,
+                'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+                'to' => min($total, $page * $perPage),
+            ],
+        ]);
     }
     protected function soListBuilder(string $q, string $status, string $start, string $end)
     {
