@@ -52,11 +52,16 @@
       if ($rawNotes !== '') {
           foreach (explode("\n", $rawNotes) as $line) {
               $trimmed = trim($line);
-              if (str_starts_with($trimmed, '[Ditolak') || str_starts_with($trimmed, '[Dibatalkan')) {
+              $clean = ltrim($trimmed, '[');
+              if (str_starts_with($clean, 'Ditolak') || str_starts_with($clean, 'Dibatalkan') || stripos($clean, 'alasan') !== false) {
                   $cancelNote .= ($cancelNote !== '' ? "\n" : '') . $trimmed;
               } elseif ($trimmed !== '') {
                   $initialNotes[] = $trimmed;
               }
+          }
+          if ($po['status'] === 'cancelled' && $cancelNote === '') {
+              $cancelNote = $rawNotes;
+              $initialNotes = [];
           }
       }
       $initialNotesStr = implode("\n", $initialNotes);
