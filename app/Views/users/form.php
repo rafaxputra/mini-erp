@@ -30,7 +30,7 @@
               <option value="">-- Pilih Peran --</option>
               <?php foreach ($roles as $role): ?>
                 <option value="<?= esc($role['id']) ?>" <?= (int) old('role_id', $item['role_id'] ?? 0) === (int) $role['id'] ? 'selected' : '' ?>>
-                  <?= esc(ucfirst($role['name'])) ?> - <?= esc($role['description'] ?: 'Akses modul') ?>
+                  <?= esc(ucfirst($role['name'])) ?><?= ! empty($role['description']) ? ' - ' . esc($role['description']) : '' ?>
                 </option>
               <?php endforeach; ?>
             </select>

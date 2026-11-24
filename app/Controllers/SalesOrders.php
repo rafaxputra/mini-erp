@@ -8,7 +8,7 @@ class SalesOrders extends BaseController
 {
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'sales', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Jual.')) return $r;
+        if ($r = $this->requireRole(['admin', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Jual.')) return $r;
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $status = (string) ($this->request->getGet('status') ?? '');
         $start = (string) ($this->request->getGet('start_date') ?? '');
@@ -122,7 +122,7 @@ class SalesOrders extends BaseController
     }
     public function show($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Jual.')) return $r;
+        if ($r = $this->requireRole(['admin', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Jual.')) return $r;
         $so = $this->soById((int) $id);
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         $db = \Config\Database::connect();

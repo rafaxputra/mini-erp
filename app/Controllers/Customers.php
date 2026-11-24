@@ -5,7 +5,7 @@ class Customers extends BaseController
 {
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'sales', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar customer.')) return $r;
+        if ($r = $this->requireRole(['admin', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar customer.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $builder = $db->table('customers');

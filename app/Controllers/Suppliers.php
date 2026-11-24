@@ -5,7 +5,7 @@ class Suppliers extends BaseController
 {
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar supplier.')) return $r;
+        if ($r = $this->requireRole(['admin', 'purchasing', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar supplier.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $builder = $db->table('suppliers');

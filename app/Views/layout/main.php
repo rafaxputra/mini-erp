@@ -125,8 +125,8 @@ if ($initials === '') {
             <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
               <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
+              <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
+              <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('warehouses') ?>" href="/warehouses">Gudang</a><?php endif; ?>
             </div>
           </li>
@@ -137,7 +137,9 @@ if ($initials === '') {
               <span class="nav-link-title">Pembelian</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
-              <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Pembelian (PO)</a>
+              <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
+                <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Pembelian (PO)</a>
+              <?php endif; ?>
               <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
             </div>
           </li>
@@ -149,7 +151,9 @@ if ($initials === '') {
               <span class="nav-link-title">Penjualan</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
-              <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Penjualan (SO)</a>
+              <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
+                <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Penjualan (SO)</a>
+              <?php endif; ?>
               <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman Barang (DO)</a>
             </div>
           </li>
@@ -229,11 +233,6 @@ if ($initials === '') {
     </div>
     <div class="page-body">
       <div class="container-xl">
-        <?php if (session()->getFlashdata('success')): ?><div class="alert alert-important alert-success alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></div><div><?= esc(session()->getFlashdata('success')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
-        <?php if (session()->getFlashdata('error')): ?><div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><?= esc(session()->getFlashdata('error')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
-        <?php $verrors = session()->getFlashdata('errors') ?? \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
-        <div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>
-        <?php endif; ?>
         <?= $this->renderSection('content') ?>
       </div>
     </div>
@@ -247,16 +246,7 @@ if ($initials === '') {
       <div class="mt-2 h3 mb-0">PT Nusantara Distribusi</div>
       <div class="text-secondary">Mini ERP</div>
     </div>
-<div class="row justify-content-center">
-      <div class="col-md-6">
-    <?php if (session()->getFlashdata('success')): ?><div class="alert alert-important alert-success alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></div><div><?= esc(session()->getFlashdata('success')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
-    <?php if (session()->getFlashdata('error')): ?><div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><?= esc(session()->getFlashdata('error')) ?></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div><?php endif; ?>
-    <?php $verrors = session()->getFlashdata('errors') ?? \Config\Services::validation()->getErrors(); if (! empty($verrors)): ?>
-    <div class="alert alert-important alert-danger alert-dismissible" role="alert"><div class="d-flex"><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon alert-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg></div><div><ul class="mb-0"><?php foreach ($verrors as $e): ?><li><?= esc($e) ?></li><?php endforeach; ?></ul></div></div><a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a></div>
-    <?php endif; ?>
-      </div>
-    </div>
-        <?= $this->renderSection('content') ?>
+    <?= $this->renderSection('content') ?>
   </div>
 </div>
 <?php endif; ?>
@@ -283,6 +273,7 @@ window.alert = function (message) {
 
 document.addEventListener('DOMContentLoaded', function () {
   // Notifikasi Flash message via Toast jika ada
+  <?php $verrors = session()->getFlashdata('errors') ?? \Config\Services::validation()->getErrors(); ?>
   <?php if (session()->getFlashdata('success')): ?>
   Swal.fire({
     toast: true,
@@ -301,6 +292,16 @@ document.addEventListener('DOMContentLoaded', function () {
     title: <?= json_encode(session()->getFlashdata('error')) ?>,
     showConfirmButton: false,
     timer: 4500,
+    timerProgressBar: true
+  });
+  <?php elseif (! empty($verrors)): ?>
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'error',
+    html: <?= json_encode(implode('<br>', array_map('esc', $verrors))) ?>,
+    showConfirmButton: false,
+    timer: 5000,
     timerProgressBar: true
   });
   <?php endif; ?>

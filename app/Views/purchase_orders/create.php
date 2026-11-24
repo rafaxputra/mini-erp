@@ -1,6 +1,20 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
+<?php if (! empty($existingActivePo)): ?>
+  <div class="alert alert-warning mb-3 border-warning shadow-sm">
+    <div class="d-flex align-items-center">
+      <div class="me-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon text-warning" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+      </div>
+      <div>
+        <div class="fw-bold">Peringatan: Produk Ini Sudah Ada Pesanan Berjalan (Double Order Guard)</div>
+        <div class="small">Produk yang Anda pilih sudah terdaftar di pesanan <strong><?= esc($existingActivePo['po_number']) ?></strong> (Status: <span class="badge bg-warning-lt fw-bold"><?= esc(ucfirst($existingActivePo['status'])) ?></span>, Jumlah: <strong><?= esc($existingActivePo['ordered_qty']) ?> unit</strong>). Pastikan pesanan tambahan ini memang diperlukan. <a href="/purchase-orders/show/<?= esc($existingActivePo['id']) ?>" class="fw-semibold text-primary" target="_blank">Buka PO Terkait &rarr;</a></div>
+      </div>
+    </div>
+  </div>
+<?php endif; ?>
+
 <?php if (empty($suppliers) || empty($products)): ?>
   <div class="alert alert-warning mb-3">
     <div class="d-flex">
@@ -82,25 +96,39 @@
           </tr>
         </thead>
         <tbody id="detailRows">
+          <?php
+            $initProductId = $selectedProductId ?? 0;
+            $initQty = $suggestedQty ?? 1;
+            $initPrice = 0;
+            if ($initProductId) {
+                foreach ($products as $p) {
+                    if ((int)$p['id'] === (int)$initProductId) {
+                        $initPrice = (float) $p['purchase_price'];
+                        break;
+                    }
+                }
+            }
+            $initSubtotal = $initPrice * $initQty;
+          ?>
           <tr>
             <td>
               <select name="product_id[]" class="form-select product-select" required>
                 <option value="">-- Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
-                  <option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['purchase_price']) ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
+                  <option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['purchase_price']) ?>" <?= ($initProductId && (int)$p['id'] === (int)$initProductId) ? 'selected' : '' ?>><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
                 <?php endforeach; ?>
               </select>
             </td>
             <td>
-              <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" required>
+              <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="<?= esc($initQty) ?>" required>
             </td>
             <td>
               <div class="input-group">
                 <span class="input-group-text">Rp</span>
-                <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="0" required>
+                <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="0" value="<?= $initPrice > 0 ? number_format($initPrice, 0, ',', '.') : '' ?>" required>
               </div>
             </td>
-            <td class="text-end fw-bold subtotal text-dark">Rp 0</td>
+            <td class="text-end fw-bold subtotal text-dark"><?= $initSubtotal > 0 ? 'Rp ' . number_format($initSubtotal, 0, ',', '.') : 'Rp 0' ?></td>
             <td class="text-center">
               <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus baris" onclick="removeRow(this)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
@@ -111,7 +139,7 @@
         <tfoot class="table-light">
           <tr>
             <td colspan="3" class="text-end fw-bold fs-3">Total Estimasi Nilai PO:</td>
-            <td class="text-end fw-bold fs-2 text-primary" id="totalAmount">Rp 0</td>
+            <td class="text-end fw-bold fs-2 text-primary" id="totalAmount"><?= $initSubtotal > 0 ? 'Rp ' . number_format($initSubtotal, 0, ',', '.') : 'Rp 0' ?></td>
             <td></td>
           </tr>
         </tfoot>
@@ -234,6 +262,7 @@ function removeRow(btn) {
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('#detailRows tr').forEach(bindRowEvents);
   updateProductDropdowns();
+  recalc();
 
   document.getElementById('addRowBtn').addEventListener('click', function () {
     const tbody = document.getElementById('detailRows');

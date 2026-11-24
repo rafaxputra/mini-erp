@@ -6,7 +6,9 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('auth/login', 'Auth::login');
 $routes->post('auth/login', 'Auth::loginPost');
 $routes->get('auth/logout', 'Auth::logout');
-$routes->get('/', 'Dashboard::index', ['filter' => 'auth']);
+$routes->get('/', static function () {
+    return session()->get('user_id') ? redirect()->to('/dashboard') : redirect()->to('/auth/login');
+});
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
     $routes->get('categories', 'Categories::index');

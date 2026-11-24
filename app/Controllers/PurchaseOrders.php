@@ -8,7 +8,7 @@ class PurchaseOrders extends BaseController
 {
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['admin', 'purchasing', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Beli.')) return $r;
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $status = (string) ($this->request->getGet('status') ?? '');
         $start = (string) ($this->request->getGet('start_date') ?? '');
@@ -41,7 +41,30 @@ class PurchaseOrders extends BaseController
     public function create()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
-        return view('purchase_orders/create', ['title' => 'Buat Pesanan Beli', 'suppliers' => (new SupplierModel())->orderBy('name', 'ASC')->findAll(), 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(), 'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll()]);
+        $selectedProductId = (int) ($this->request->getGet('product_id') ?? 0);
+        $suggestedQty = max(1, (int) ($this->request->getGet('qty') ?? 1));
+
+        $existingActivePo = null;
+        if ($selectedProductId > 0) {
+            $existingActivePo = \Config\Database::connect()->table('purchase_orders')
+                ->select('MIN(id) AS id, po_number, status, SUM(qty) AS ordered_qty')
+                ->where('product_id', $selectedProductId)
+                ->whereIn('status', ['draft', 'approved'])
+                ->groupBy('po_number, status')
+                ->orderBy('MIN(order_date)', 'DESC')
+                ->get()
+                ->getRowArray();
+        }
+
+        return view('purchase_orders/create', [
+            'title' => 'Buat Pesanan Beli',
+            'suppliers' => (new SupplierModel())->orderBy('name', 'ASC')->findAll(),
+            'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(),
+            'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll(),
+            'selectedProductId' => $selectedProductId,
+            'suggestedQty' => $suggestedQty,
+            'existingActivePo' => $existingActivePo,
+        ]);
     }
     public function store()
     {
@@ -122,7 +145,7 @@ class PurchaseOrders extends BaseController
     }
     public function show($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['admin', 'purchasing', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pesanan Beli.')) return $r;
         $po = $this->poById((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         $db = \Config\Database::connect();

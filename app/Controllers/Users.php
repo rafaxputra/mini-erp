@@ -96,6 +96,6 @@ class Users extends BaseController
     }
     private function roles(): array
     {
-        return \Config\Database::connect()->table('roles')->select('id, name')->orderBy('id', 'ASC')->get()->getResultArray();
+        return \Config\Database::connect()->table('roles')->select('id, name, description')->orderBy('id', 'ASC')->get()->getResultArray();
     }
 }
