@@ -12,14 +12,30 @@ class GoodsReceipts extends BaseController
         if ($r = $this->requireRole(['admin', 'gudang', 'purchasing', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Barang Masuk.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
+        $start = trim((string) ($this->request->getGet('start_date') ?? ''));
+        $end = trim((string) ($this->request->getGet('end_date') ?? ''));
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
 
         $subQuery = $db->table('goods_receipts gr')
             ->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(s.name) AS supplier_name, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')
             ->join('purchase_orders po', 'po.id = gr.purchase_order_id')
             ->join('suppliers s', 's.id = po.supplier_id', 'left')
             ->join('users u', 'u.id = gr.received_by')
-            ->join('warehouses w', 'w.id = gr.warehouse_id')
-            ->groupBy('gr.gr_number');
+            ->join('warehouses w', 'w.id = gr.warehouse_id');
+
+        if ($warehouseId > 0) {
+            $subQuery->where('gr.warehouse_id', $warehouseId);
+        }
+        if ($start !== '') {
+            $subQuery->where('gr.receipt_date >=', $start);
+        }
+        if ($end !== '') {
+            $subQuery->where('gr.receipt_date <=', $end);
+        }
+
+        $subQuery->groupBy('gr.gr_number');
 
         if ($q !== '') {
             $subQuery->havingLike('gr.gr_number', $q, 'both', null, true)
@@ -37,6 +53,7 @@ class GoodsReceipts extends BaseController
         if ($page > $lastPage) $page = $lastPage;
 
         $items = array_slice($allRows, ($page - 1) * $perPage, $perPage);
+        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
 
         $pager = [
             'page' => $page,
@@ -47,7 +64,16 @@ class GoodsReceipts extends BaseController
             'to' => min($total, $page * $perPage),
         ];
 
-        return view('goods_receipts/index', ['title' => 'Barang Masuk', 'items' => $items, 'q' => $q, 'pager' => $pager]);
+        return view('goods_receipts/index', [
+            'title' => 'Barang Masuk',
+            'items' => $items,
+            'q' => $q,
+            'warehouses' => $warehouses,
+            'warehouseId' => $warehouseId,
+            'start_date' => $start,
+            'end_date' => $end,
+            'pager' => $pager,
+        ]);
     }
     public function create()
     {

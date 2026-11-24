@@ -734,12 +734,6 @@
     </div>
     <div class="col-auto ms-auto d-print-none">
       <div class="btn-list">
-        <?php if (! empty($pendingPoCount)): ?>
-          <a href="#pendingPoSection" class="btn btn-warning d-inline-flex align-items-center gap-1 shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.76 2.75"/></svg>
-            <span class="badge bg-white text-dark me-1"><?= esc($pendingPoCount) ?></span> Butuh ACC PO
-          </a>
-        <?php endif; ?>
         <a href="/reports/purchase" class="btn btn-outline-primary">
           <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/></svg>
           Laporan Pembelian
@@ -837,7 +831,9 @@
       <?php else: ?>
         <span class="badge bg-success-lt fw-bold px-2 py-1">Semua PO Sudah Disetujui</span>
       <?php endif; ?>
-      <a href="/purchase-orders?status=draft" class="btn btn-sm btn-link text-decoration-none">Semua Draft &rarr;</a>
+      <a href="/purchase-orders?status=draft" class="btn btn-sm btn-link text-decoration-none fw-semibold">
+        <?= $pendingPoCount > 5 ? 'Lihat Semua (' . esc($pendingPoCount) . ' Draft) &rarr;' : 'Lihat Semua Draft &rarr;' ?>
+      </a>
     </div>
   </div>
 
@@ -899,6 +895,37 @@
                     Setujui (ACC)
                   </button>
                 </form>
+                <button type="button" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalRejectPO_<?= esc($po['id']) ?>" title="Tolak pengajuan pembelian ini">
+                  Tolak
+                </button>
+              </div>
+
+              <!-- Modal Tolak PO dari Dashboard -->
+              <div class="modal modal-blur fade text-start" id="modalRejectPO_<?= esc($po['id']) ?>" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                  <div class="modal-content">
+                    <form action="/purchase-orders/cancel/<?= esc($po['id']) ?>" method="post">
+                      <div class="modal-header">
+                        <h5 class="modal-title text-danger">Tolak Pengajuan PO <?= esc($po['po_number']) ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                      </div>
+                      <div class="modal-body">
+                        <p class="text-secondary mb-3">
+                          Apakah Anda yakin ingin menolak pengajuan pesanan beli <strong><?= esc($po['po_number']) ?></strong> senilai <strong>Rp <?= number_format((float)$po['total_amount'], 0, ',', '.') ?></strong>?
+                        </p>
+                        <div class="mb-3">
+                          <label class="form-label required">Alasan Penolakan</label>
+                          <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Sebutkan alasan penolakan (misal: Anggaran operasional dialihkan, harga kemahalan, dsb.)" required></textarea>
+                          <div class="form-text">Alasan penolakan akan dicatat permanen dan dapat ditinjau oleh staf purchasing.</div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-danger">Ya, Tolak PO Ini</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
             </td>
           </tr>
@@ -906,6 +933,12 @@
         </tbody>
       </table>
     </div>
+    <?php if ($pendingPoCount > 5): ?>
+      <div class="card-footer bg-transparent py-2 text-center text-secondary small">
+        Menampilkan 5 dari <strong><?= esc($pendingPoCount) ?></strong> pesanan beli yang menunggu persetujuan Direktur. 
+        <a href="/purchase-orders?status=draft" class="fw-semibold text-primary">Buka semua antrean draft (<?= esc($pendingPoCount) ?> PO) &rarr;</a>
+      </div>
+    <?php endif; ?>
   <?php endif; ?>
 </div>
 

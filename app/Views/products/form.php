@@ -43,15 +43,33 @@
             </div>
             <div class="col-md-6">
               <label class="form-label required">Satuan</label>
-              <select name="unit_id" class="form-select" id="unitSelect" required>
-                <option value="">-- Pilih Satuan --</option>
-                <?php foreach ($units as $u): ?>
-                  <option value="<?= esc($u['id']) ?>" data-code="<?= esc($u['code']) ?>" <?= (string) old('unit_id', $item['unit_id'] ?? '') === (string) $u['id'] || (empty($item['unit_id']) && strtolower($item['unit'] ?? '') === strtolower($u['code'])) ? 'selected' : '' ?>>
-                    <?= esc($u['name']) ?> (<?= esc($u['code']) ?>)
-                  </option>
-                <?php endforeach; ?>
-              </select>
-              <div class="form-text">Satuan fisik produk (kelola di menu Data Master &rarr; Satuan).</div>
+              <?php if (!empty($hasTransactions)): ?>
+                <?php 
+                  $currentUnitText = $item['unit'] ?? 'unit';
+                  foreach ($units as $u) {
+                    if ((string)$u['id'] === (string)($item['unit_id'] ?? '') || strtolower($u['code']) === strtolower($item['unit'] ?? '')) {
+                      $currentUnitText = $u['name'];
+                      break;
+                    }
+                  }
+                ?>
+                <input type="hidden" name="unit_id" value="<?= esc($item['unit_id']) ?>">
+                <input type="text" class="form-control bg-light fw-bold text-dark" value="<?= esc($currentUnitText) ?>" readonly>
+                <div class="form-text text-muted">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon text-secondary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/></svg>
+                  Satuan tidak dapat diubah karena produk telah memiliki riwayat transaksi/mutasi gudang.
+                </div>
+              <?php else: ?>
+                <select name="unit_id" class="form-select" id="unitSelect" required>
+                  <option value="">-- Pilih Satuan --</option>
+                  <?php foreach ($units as $u): ?>
+                    <option value="<?= esc($u['id']) ?>" data-code="<?= esc($u['code']) ?>" <?= (string) old('unit_id', $item['unit_id'] ?? '') === (string) $u['id'] || (empty($item['unit_id']) && strtolower($item['unit'] ?? '') === strtolower($u['code'])) ? 'selected' : '' ?>>
+                      <?= esc($u['name']) ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <div class="form-text">Satuan fisik produk (kelola di menu Data Master &rarr; Satuan).</div>
+              <?php endif; ?>
             </div>
           </div>
 
@@ -78,11 +96,8 @@
             <div class="col-md-12">
               <?php if (isset($item)): ?>
                 <label class="form-label">Stok Saat Ini (Terkonsolidasi Seluruh Gudang)</label>
-                <div class="input-group">
-                  <input type="text" class="form-control bg-light font-monospace fw-semibold" value="<?= esc($item['stock_qty']) ?> <?= esc($item['unit'] ?? 'unit') ?>" readonly>
-                  <a href="/inventory/adjust" class="btn btn-outline-secondary" title="Buka Penyesuaian Stok">Koreksi Stok</a>
-                </div>
-                <div class="form-text text-muted">Stok fisik tidak dapat diedit langsung di master produk. Gunakan <a href="/inventory/adjust" class="text-decoration-none fw-medium">Penyesuaian Stok</a> untuk koreksi fisik di gudang.</div>
+                <input type="text" class="form-control bg-light font-monospace fw-bold text-dark" value="<?= esc($item['stock_qty']) ?> <?= esc($item['unit'] ?? 'unit') ?>" readonly>
+                <div class="form-text text-muted">Stok fisik adalah hasil akumulasi transaksi riil dan tidak dapat diedit langsung di master produk.</div>
               <?php else: ?>
                 <label class="form-label required">Stok Awal Fisik</label>
                 <input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', 0)) ?>" required>

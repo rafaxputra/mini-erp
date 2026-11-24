@@ -1,20 +1,31 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
+<?php $filterActive = $q !== '' || ! empty($warehouseId) || ! empty($categoryId) || $stockStatus !== ''; ?>
+
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-3">
     <form action="/inventory" method="get">
       <div class="row g-2 align-items-end">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small text-secondary mb-1">Pencarian Produk</label>
           <div class="input-icon">
             <span class="input-icon-addon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
-            <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nama, kode, kategori..." value="<?= esc($q) ?>">
+            <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nama atau kode..." value="<?= esc($q) ?>">
           </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <label class="form-label small text-secondary mb-1">Kategori</label>
+          <select name="category_id" class="form-select form-select-sm">
+            <option value="0">Semua Kategori</option>
+            <?php foreach ($categories as $cat): ?>
+              <option value="<?= esc($cat['id']) ?>" <?= (int) ($categoryId ?? 0) === (int) $cat['id'] ? 'selected' : '' ?>><?= esc($cat['name']) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-2">
           <label class="form-label small text-secondary mb-1">Lokasi Gudang</label>
-          <select name="warehouse_id" class="form-select form-select-sm" onchange="this.form.submit()">
+          <select name="warehouse_id" class="form-select form-select-sm">
             <option value="0">Semua Gudang (Konsolidasi)</option>
             <?php foreach ($warehouses as $wh): ?>
               <option value="<?= esc($wh['id']) ?>" <?= (int) ($warehouseId ?? 0) === (int) $wh['id'] ? 'selected' : '' ?>><?= esc($wh['name']) ?> (<?= esc($wh['code']) ?>)</option>
@@ -22,18 +33,27 @@
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label small text-secondary mb-1">Nilai Persediaan</label>
-          <div class="fw-bold text-dark font-monospace text-truncate">Rp <?= number_format((float) $totalValue, 0, ',', '.') ?></div>
+          <label class="form-label small text-secondary mb-1">Status Stok</label>
+          <select name="stock_status" class="form-select form-select-sm">
+            <option value="">Semua Status</option>
+            <option value="low" <?= ($stockStatus ?? '') === 'low' ? 'selected' : '' ?>>⚠️ Menipis (≤ Min)</option>
+            <option value="out" <?= ($stockStatus ?? '') === 'out' ? 'selected' : '' ?>>❌ Habis (0)</option>
+            <option value="safe" <?= ($stockStatus ?? '') === 'safe' ? 'selected' : '' ?>>✅ Aman (> Min)</option>
+          </select>
         </div>
-        <div class="col-md-3 d-flex gap-2 justify-content-end">
+        <div class="col-md-3 d-flex gap-2 justify-content-end align-items-center">
+          <div class="text-end me-2 d-none d-lg-block">
+            <div class="text-secondary" style="font-size: 0.72rem;">Nilai Persediaan</div>
+            <div class="fw-bold text-primary font-monospace" style="font-size: 0.95rem;">Rp <?= number_format((float) $totalValue, 0, ',', '.') ?></div>
+          </div>
           <button class="btn btn-sm btn-primary" type="submit">Filter</button>
-          <?php if ($q !== '' || ! empty($warehouseId)): ?>
+          <?php if ($filterActive): ?>
             <a class="btn btn-sm btn-outline-secondary" href="/inventory">Reset</a>
           <?php endif; ?>
           <?php if (session()->get('user_role') === 'admin'): ?>
             <a class="btn btn-sm btn-success d-inline-flex align-items-center gap-1" href="/inventory/adjust">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-              Koreksi Stok
+              Koreksi
             </a>
           <?php endif; ?>
         </div>

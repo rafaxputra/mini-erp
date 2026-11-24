@@ -93,6 +93,10 @@ class Products extends BaseController
             return redirect()->back()->withInput()->with('error', 'Batas stok maksimum (' . $maxStock . ') tidak boleh lebih kecil dari stok minimum (' . $minStock . ').');
         }
 
+        if ($cleanSellPrice < $cleanBuyPrice) {
+            return redirect()->back()->withInput()->with('error', 'Harga jual standar (Rp ' . number_format($cleanSellPrice, 0, ',', '.') . ') tidak boleh lebih rendah dari harga modal beli (Rp ' . number_format($cleanBuyPrice, 0, ',', '.') . ').');
+        }
+
         $unitId = (int) $this->request->getPost('unit_id');
         $unitRow = (new \App\Models\UnitModel())->find($unitId);
         $unitCode = $unitRow ? $unitRow['code'] : 'pcs';
@@ -140,8 +144,8 @@ class Products extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
 
         return view('products/form', [
             'title' => 'Ubah Produk',
@@ -167,8 +171,8 @@ class Products extends BaseController
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
 
         $rules = [
             'name' => 'required|min_length[2]|max_length[150]',
@@ -205,9 +209,18 @@ class Products extends BaseController
             return redirect()->back()->withInput()->with('error', 'Batas stok maksimum (' . $maxStock . ') tidak boleh lebih kecil dari stok minimum (' . $minStock . ').');
         }
 
-        $unitId = (int) $this->request->getPost('unit_id');
-        $unitRow = (new \App\Models\UnitModel())->find($unitId);
-        $unitCode = $unitRow ? $unitRow['code'] : 'pcs';
+        if ($cleanSellPrice < $cleanBuyPrice) {
+            return redirect()->back()->withInput()->with('error', 'Harga jual standar (Rp ' . number_format($cleanSellPrice, 0, ',', '.') . ') tidak boleh lebih rendah dari harga modal beli (Rp ' . number_format($cleanBuyPrice, 0, ',', '.') . ').');
+        }
+
+        if ($hasTransactions) {
+            $unitId = (int) ($item['unit_id'] ?: 0);
+            $unitCode = ! empty($item['unit']) ? $item['unit'] : 'pcs';
+        } else {
+            $unitId = (int) $this->request->getPost('unit_id');
+            $unitRow = (new \App\Models\UnitModel())->find($unitId);
+            $unitCode = $unitRow ? $unitRow['code'] : 'pcs';
+        }
 
         $updateData = [
             'name' => $this->request->getPost('name'),
@@ -235,8 +248,8 @@ class Products extends BaseController
         $db = \Config\Database::connect();
         // 1. Cek riwayat transaksi / mutasi terlebih dahulu
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('purchase_orders')->where('product_id', $id)->countAllResults() > 0
-            || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
+            || $db->table('purchase_order_items')->where('product_id', $id)->countAllResults() > 0
+            || $db->table('sales_order_items')->where('product_id', $id)->countAllResults() > 0;
 
         if ($hasTransactions) {
             return redirect()->to('/products')->with('error', 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi atau mutasi stok fisik. Data ini harus dipertahankan untuk jejak audit pembukuan.');

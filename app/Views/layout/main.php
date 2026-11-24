@@ -263,12 +263,9 @@ window.alert = function (message) {
     Swal.fire({
       icon: 'warning',
       title: 'Perhatian',
-      text: message,
+      html: '<div style="font-size: 1.05rem; color: #1e293b; font-weight: 500; line-height: 1.65;">' + message + '</div>',
       confirmButtonText: 'Mengerti',
-      confirmButtonColor: '#1d4ed8',
-      customClass: {
-        popup: 'rounded-4 shadow-lg'
-      }
+      confirmButtonColor: '#1d4ed8'
     });
   } else {
     window.originalAlert ? window.originalAlert(message) : console.warn(message);
@@ -276,37 +273,39 @@ window.alert = function (message) {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Notifikasi Flash message via Toast jika ada
+  // Notifikasi Flash message
   <?php $verrors = session()->getFlashdata('errors') ?? \Config\Services::validation()->getErrors(); ?>
   <?php if (session()->getFlashdata('success')): ?>
-  Swal.fire({
+  const Toast = Swal.mixin({
     toast: true,
     position: 'top',
-    icon: 'success',
-    title: <?= json_encode(session()->getFlashdata('success')) ?>,
     showConfirmButton: false,
-    timer: 3500,
-    timerProgressBar: true
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer);
+      toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+  });
+  Toast.fire({
+    icon: 'success',
+    title: <?= json_encode(session()->getFlashdata('success')) ?>
   });
   <?php elseif (session()->getFlashdata('error')): ?>
   Swal.fire({
-    toast: true,
-    position: 'top',
     icon: 'error',
-    title: <?= json_encode(session()->getFlashdata('error')) ?>,
-    showConfirmButton: false,
-    timer: 4500,
-    timerProgressBar: true
+    title: 'Tindakan Ditolak',
+    html: '<div style="font-size: 1.05rem; color: #1e293b; font-weight: 500; line-height: 1.65; padding: 4px 0;">' + <?= json_encode(session()->getFlashdata('error')) ?> + '</div>',
+    confirmButtonText: 'Saya Mengerti',
+    confirmButtonColor: '#1d4ed8'
   });
   <?php elseif (! empty($verrors)): ?>
   Swal.fire({
-    toast: true,
-    position: 'top',
-    icon: 'error',
-    html: <?= json_encode(implode('<br>', array_map('esc', $verrors))) ?>,
-    showConfirmButton: false,
-    timer: 5000,
-    timerProgressBar: true
+    icon: 'warning',
+    title: 'Periksa Kembali Input Form',
+    html: '<div class="text-start px-2 py-1" style="font-size: 1.02rem; color: #1e293b; line-height: 1.7;"><ul class="mb-0 ps-3">' + <?= json_encode(implode('', array_map(static fn($e) => '<li>' . esc($e) . '</li>', $verrors))) ?> + '</ul></div>',
+    confirmButtonText: 'Perbaiki',
+    confirmButtonColor: '#f59e0b'
   });
   <?php endif; ?>
 
@@ -332,17 +331,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
       Swal.fire({
         title: title,
-        html: confirmMsg,
+        html: '<div style="font-size: 1.05rem; color: #1e293b; font-weight: 500; line-height: 1.65;">' + confirmMsg + '</div>',
         icon: icon,
         showCancelButton: true,
         confirmButtonText: btnText,
         cancelButtonText: 'Batal',
         confirmButtonColor: confirmColor,
         cancelButtonColor: '#6c757d',
-        reverseButtons: true,
-        customClass: {
-          popup: 'rounded-4 shadow-lg p-3'
-        }
+        reverseButtons: true
       }).then(function (result) {
         if (result.isConfirmed) {
           form.dataset.confirmed = 'true';

@@ -1,11 +1,13 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
+<?php $filterActive = (int) ($product_id ?? 0) !== 0 || (int) ($warehouse_id ?? 0) !== 0 || ! empty($movement_type) || ! empty($start_date) || ! empty($end_date); ?>
+
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-3">
     <form action="/inventory/movements" method="get">
       <div class="row g-2 align-items-end">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label small text-secondary mb-1">Produk</label>
           <select name="product_id" class="form-select form-select-sm">
             <option value="0">Semua Produk</option>
@@ -14,18 +16,36 @@
             <?php endforeach; ?>
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <label class="form-label small text-secondary mb-1">Jenis Mutasi</label>
+          <select name="movement_type" class="form-select form-select-sm">
+            <option value="">Semua Jenis</option>
+            <option value="IN" <?= ($movement_type ?? '') === 'IN' ? 'selected' : '' ?>>⬇️ Masuk (IN)</option>
+            <option value="OUT" <?= ($movement_type ?? '') === 'OUT' ? 'selected' : '' ?>>⬆️ Keluar (OUT)</option>
+            <option value="ADJUSTMENT" <?= ($movement_type ?? '') === 'ADJUSTMENT' ? 'selected' : '' ?>>⚙️ Koreksi (ADJUST)</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-secondary mb-1">Lokasi Gudang</label>
+          <select name="warehouse_id" class="form-select form-select-sm">
+            <option value="0">Semua Gudang</option>
+            <?php foreach ($warehouses as $wh): ?>
+              <option value="<?= esc($wh['id']) ?>" <?= (int) ($warehouse_id ?? 0) === (int) $wh['id'] ? 'selected' : '' ?>><?= esc($wh['name']) ?> (<?= esc($wh['code']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-2">
           <label class="form-label small text-secondary mb-1">Dari Tanggal</label>
           <input type="date" name="start_date" class="form-control form-control-sm" value="<?= esc($start_date) ?>">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label small text-secondary mb-1">Sampai Tanggal</label>
           <input type="date" name="end_date" class="form-control form-control-sm" value="<?= esc($end_date) ?>">
         </div>
-        <div class="col-md-2 d-flex gap-2 justify-content-end">
-          <button class="btn btn-sm btn-primary" type="submit">Filter</button>
-          <?php if ((int) $product_id !== 0 || $start_date !== '' || $end_date !== ''): ?>
-            <a class="btn btn-sm btn-outline-secondary" href="/inventory/movements">Reset</a>
+        <div class="col-md-1 d-flex gap-1 justify-content-end">
+          <button class="btn btn-sm btn-primary w-100" type="submit">Filter</button>
+          <?php if ($filterActive): ?>
+            <a class="btn btn-sm btn-outline-secondary" href="/inventory/movements" title="Reset filter">✕</a>
           <?php endif; ?>
         </div>
       </div>

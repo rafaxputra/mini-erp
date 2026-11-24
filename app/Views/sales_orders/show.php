@@ -40,13 +40,31 @@
       </div>
     </div>
 
+    <!-- Parsing Catatan: Pisahkan Catatan SO dengan Alasan Pembatalan agar tidak dobel -->
+    <?php
+      $rawNotes = (string) ($so['notes'] ?? '');
+      $cancelNote = '';
+      $initialNotes = [];
+      if ($rawNotes !== '') {
+          foreach (explode("\n", $rawNotes) as $line) {
+              $trimmed = trim($line);
+              if (str_starts_with($trimmed, '[Ditolak') || str_starts_with($trimmed, '[Dibatalkan')) {
+                  $cancelNote .= ($cancelNote !== '' ? "\n" : '') . $trimmed;
+              } elseif ($trimmed !== '') {
+                  $initialNotes[] = $trimmed;
+              }
+          }
+      }
+      $initialNotesStr = implode("\n", $initialNotes);
+    ?>
+
     <!-- Banner Peringatan Jika Pesanan Dibatalkan -->
     <?php if ($so['status'] === 'cancelled'): ?>
       <div class="alert alert-danger mb-3 d-flex align-items-start gap-2" role="alert">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon text-danger" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg>
         <div>
           <div class="fw-bold">Pesanan Jual Ini Telah Dibatalkan</div>
-          <div class="small mt-1 text-danger-emphasis" style="white-space: pre-line;"><?= esc($so['notes'] ?: 'Tidak ada catatan alasan pembatalan.') ?></div>
+          <div class="small mt-1 text-danger-emphasis" style="white-space: pre-line;"><?= esc($cancelNote ?: ($rawNotes ?: 'Tidak ada catatan alasan pembatalan.')) ?></div>
         </div>
       </div>
     <?php endif; ?>
@@ -74,10 +92,11 @@
       </div>
     </div>
 
-    <?php if (! empty($so['notes'])): ?>
+    <!-- Kotak Catatan SO (Hanya tampil jika ada catatan awal pemesanan) -->
+    <?php if ($initialNotesStr !== ''): ?>
     <div class="mt-3 p-2 px-3 rounded bg-light border text-secondary small">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1 text-secondary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 21v-13a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v6a3 3 0 0 1 -3 3h-9l-4 4"/></svg>
-      <strong>Catatan:</strong> <?= esc($so['notes']) ?>
+      <strong>Catatan SO:</strong> <span style="white-space: pre-line;"><?= esc($initialNotesStr) ?></span>
     </div>
     <?php endif; ?>
   </div>

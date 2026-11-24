@@ -24,7 +24,36 @@ class PurchaseOrders extends BaseController
         if ($page < 1) $page = 1;
         if ($page > $lastPage) $page = $lastPage;
         $items = $this->poListBuilder($q, $status, $start, $end)->limit($perPage, ($page - 1) * $perPage)->get()->getResultArray();
-        return view('purchase_orders/index', ['title' => 'Pesanan Beli', 'items' => $items, 'q' => $q, 'status' => $status, 'statuses' => $statuses, 'start_date' => $start, 'end_date' => $end, 'pager' => ['page' => $page, 'lastPage' => $lastPage, 'total' => $total, 'perPage' => $perPage, 'from' => $total ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)]]);
+
+        $db = \Config\Database::connect();
+        $statusCounts = [
+            'all' => (int) $db->table('purchase_orders')->select('po_number')->distinct()->countAllResults(),
+            'draft' => (int) $db->table('purchase_orders')->where('status', 'draft')->select('po_number')->distinct()->countAllResults(),
+            'approved' => (int) $db->table('purchase_orders')->where('status', 'approved')->select('po_number')->distinct()->countAllResults(),
+            'received' => (int) $db->table('purchase_orders')->where('status', 'received')->select('po_number')->distinct()->countAllResults(),
+            'cancelled' => (int) $db->table('purchase_orders')->where('status', 'cancelled')->select('po_number')->distinct()->countAllResults(),
+        ];
+        $pendingDraftCount = $statusCounts['draft'];
+
+        return view('purchase_orders/index', [
+            'title' => 'Pesanan Beli',
+            'items' => $items,
+            'q' => $q,
+            'status' => $status,
+            'statuses' => $statuses,
+            'start_date' => $start,
+            'end_date' => $end,
+            'statusCounts' => $statusCounts,
+            'pendingDraftCount' => $pendingDraftCount,
+            'pager' => [
+                'page' => $page,
+                'lastPage' => $lastPage,
+                'total' => $total,
+                'perPage' => $perPage,
+                'from' => $total ? ($page - 1) * $perPage + 1 : 0,
+                'to' => min($total, $page * $perPage),
+            ],
+        ]);
     }
     protected function poListBuilder(string $q, string $status, string $start, string $end)
     {
@@ -36,7 +65,12 @@ class PurchaseOrders extends BaseController
         if ($status !== '') $builder->where('po.status', $status);
         if ($start !== '') $builder->where('po.order_date >=', $start);
         if ($end !== '') $builder->where('po.order_date <=', $end);
-        return $builder->groupBy('po.po_number, po.supplier_id, s.name')->orderBy('order_date', 'DESC')->orderBy('created_at', 'DESC')->orderBy('po.po_number', 'DESC');
+        
+        $builder->groupBy('po.po_number, po.supplier_id, s.name');
+        if (session()->get('user_role') === 'manajemen' && $status === '') {
+            $builder->orderBy("CASE WHEN MIN(po.status) = 'draft' THEN 0 ELSE 1 END", 'ASC', false);
+        }
+        return $builder->orderBy('order_date', 'DESC')->orderBy('created_at', 'DESC')->orderBy('po.po_number', 'DESC');
     }
     public function create()
     {
@@ -217,24 +251,26 @@ class PurchaseOrders extends BaseController
     }
     public function cancel($id)
     {
-        if ($r = $this->requireRole(['purchasing'], '/purchase-orders', 'Hanya Staff Purchasing yang bisa membatalkan Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['purchasing', 'manajemen'], '/purchase-orders', 'Hanya Staff Purchasing dan Manajemen yang bisa membatalkan atau menolak Pesanan Beli.')) return $r;
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] === 'received') {
             return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO yang sudah diterima penuh tidak bisa dibatalkan.');
         }
         if ($po['status'] === 'cancelled') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO sudah dibatalkan.');
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO sudah dibatalkan/ditolak.');
         }
 
         $reason = trim((string) $this->request->getPost('cancel_reason'));
         if ($reason === '') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Wajib menyertakan alasan pembatalan pesanan.');
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Wajib menyertakan alasan pembatalan/penolakan pesanan.');
         }
 
-        $existingNotes = $po['notes'] ? trim($po['notes']) : '';
+        $userRole = session()->get('user_role');
         $canceller = session()->get('user_name') ?: 'User';
-        $cancelNote = "[Dibatalkan oleh {$canceller} pada " . date('d/m/Y H:i') . "]: " . $reason;
+        $label = $userRole === 'manajemen' ? 'Ditolak oleh Manajemen' : 'Dibatalkan oleh Purchasing';
+        $cancelNote = "[{$label} ({$canceller}) pada " . date('d/m/Y H:i') . "]: " . $reason;
+        $existingNotes = $po['notes'] ? trim($po['notes']) : '';
         $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 
         $db = \Config\Database::connect();
@@ -251,8 +287,11 @@ class PurchaseOrders extends BaseController
             $db->transCommit();
         } catch (\Throwable $e) {
             $db->transRollback();
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal membatalkan Pesanan Beli.');
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal membatalkan/menolak Pesanan Beli.');
         }
-        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil dibatalkan beserta alasannya.');
+        $successMsg = $userRole === 'manajemen' 
+            ? 'Pesanan Beli berhasil ditolak beserta alasan penolakannya.' 
+            : 'Pesanan Beli berhasil dibatalkan beserta alasannya.';
+        return redirect()->to('/purchase-orders/show/' . $id)->with('success', $successMsg);
     }
 }

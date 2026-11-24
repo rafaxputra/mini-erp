@@ -22,6 +22,10 @@
               Setujui Pesanan (ACC)
             </button>
           </form>
+          <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelPO">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+            Tolak Pengajuan
+          </button>
         <?php endif; ?>
 
         <?php if ($po['status'] === 'approved' && session()->get('user_role') === 'gudang'): ?>
@@ -40,13 +44,31 @@
       </div>
     </div>
 
+    <!-- Parsing Catatan: Pisahkan Catatan PO dengan Alasan Pembatalan / Penolakan agar tidak dobel -->
+    <?php
+      $rawNotes = (string) ($po['notes'] ?? '');
+      $cancelNote = '';
+      $initialNotes = [];
+      if ($rawNotes !== '') {
+          foreach (explode("\n", $rawNotes) as $line) {
+              $trimmed = trim($line);
+              if (str_starts_with($trimmed, '[Ditolak') || str_starts_with($trimmed, '[Dibatalkan')) {
+                  $cancelNote .= ($cancelNote !== '' ? "\n" : '') . $trimmed;
+              } elseif ($trimmed !== '') {
+                  $initialNotes[] = $trimmed;
+              }
+          }
+      }
+      $initialNotesStr = implode("\n", $initialNotes);
+    ?>
+
     <!-- Banner Peringatan Jika Pesanan Dibatalkan -->
     <?php if ($po['status'] === 'cancelled'): ?>
       <div class="alert alert-danger mb-3 d-flex align-items-start gap-2" role="alert">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon text-danger" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 8l0 4"/><path d="M12 16l0 .01"/></svg>
         <div>
-          <div class="fw-bold">Pesanan Beli Ini Telah Dibatalkan</div>
-          <div class="small mt-1 text-danger-emphasis" style="white-space: pre-line;"><?= esc($po['notes'] ?: 'Tidak ada catatan alasan pembatalan.') ?></div>
+          <div class="fw-bold">Pesanan Beli Ini Telah Dibatalkan / Ditolak</div>
+          <div class="small mt-1 text-danger-emphasis" style="white-space: pre-line;"><?= esc($cancelNote ?: ($rawNotes ?: 'Tidak ada catatan alasan pembatalan.')) ?></div>
         </div>
       </div>
     <?php endif; ?>
@@ -69,10 +91,11 @@
       </div>
     </div>
 
-    <?php if (! empty($po['notes'])): ?>
+    <!-- Kotak Catatan PO (Hanya tampil jika ada catatan awal pemesanan) -->
+    <?php if ($initialNotesStr !== ''): ?>
     <div class="mt-3 p-2 px-3 rounded bg-light border text-secondary small">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1 text-secondary" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 21v-13a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v6a3 3 0 0 1 -3 3h-9l-4 4"/></svg>
-      <strong>Catatan:</strong> <?= esc($po['notes']) ?>
+      <strong>Catatan PO:</strong> <span style="white-space: pre-line;"><?= esc($initialNotesStr) ?></span>
     </div>
     <?php endif; ?>
   </div>
@@ -175,7 +198,7 @@
 </div>
 <?php endif; ?>
 
-<!-- Modal Konfirmasi & Catatan Pembatalan Pesanan Beli -->
+<!-- Modal Konfirmasi & Catatan Pembatalan/Penolakan Pesanan Beli -->
 <div class="modal modal-blur fade" id="modalCancelPO" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -183,25 +206,25 @@
         <div class="modal-header">
           <h5 class="modal-title text-danger">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1 text-danger" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-            Konfirmasi Pembatalan Pesanan
+            <?= session()->get('user_role') === 'manajemen' ? 'Konfirmasi Penolakan Pesanan Beli' : 'Konfirmasi Pembatalan Pesanan' ?>
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
           <p class="text-secondary mb-3">
-            Apakah Anda yakin ingin membatalkan pesanan beli <strong><?= esc($po['po_number']) ?></strong>? Tindakan ini akan menghentikan proses pengadaan dan tidak dapat diubah kembali.
+            Apakah Anda yakin ingin <?= session()->get('user_role') === 'manajemen' ? 'menolak pengajuan' : 'membatalkan' ?> pesanan beli <strong><?= esc($po['po_number']) ?></strong>? Tindakan ini akan menghentikan proses pengadaan dan tidak dapat diubah kembali.
           </p>
           <div class="mb-3">
-            <label class="form-label required">Alasan Pembatalan</label>
-            <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Sebutkan alasan pembatalan (misal: Supplier kehabisan stok barang, harga tidak sesuai, dsb.)" required></textarea>
-            <div class="form-text">Alasan pembatalan dan nama staf akan tersimpan secara permanen pada catatan pesanan.</div>
+            <label class="form-label required">Alasan <?= session()->get('user_role') === 'manajemen' ? 'Penolakan' : 'Pembatalan' ?></label>
+            <textarea name="cancel_reason" class="form-control" rows="3" placeholder="<?= session()->get('user_role') === 'manajemen' ? 'Sebutkan alasan penolakan (misal: Anggaran operasional dialihkan, harga vendor kemahalan, dsb.)' : 'Sebutkan alasan pembatalan (misal: Supplier kehabisan stok barang, harga tidak sesuai, dsb.)' ?>" required></textarea>
+            <div class="form-text">Alasan ini beserta nama akun Anda akan tercatat secara permanen di riwayat pesanan.</div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Kembali</button>
           <button type="submit" class="btn btn-danger">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
-            Ya, Batalkan Pesanan
+            <?= session()->get('user_role') === 'manajemen' ? 'Ya, Tolak Pengajuan PO' : 'Ya, Batalkan Pesanan' ?>
           </button>
         </div>
       </form>

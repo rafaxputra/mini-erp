@@ -12,14 +12,30 @@ class Deliveries extends BaseController
         if ($r = $this->requireRole(['admin', 'gudang', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
+        $start = trim((string) ($this->request->getGet('start_date') ?? ''));
+        $end = trim((string) ($this->request->getGet('end_date') ?? ''));
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
 
         $subQuery = $db->table('deliveries d')
             ->select('MIN(d.id) AS id, d.delivery_number, MIN(so.so_number) AS so_number, MIN(c.name) AS customer_name, MIN(d.delivery_date) AS delivery_date, MIN(d.notes) AS notes, MIN(u.name) AS deliverer_name, MIN(w.name) AS warehouse_name, MAX(d.created_at) AS created_at')
             ->join('sales_orders so', 'so.id = d.sales_order_id')
             ->join('customers c', 'c.id = so.customer_id', 'left')
             ->join('users u', 'u.id = d.delivered_by')
-            ->join('warehouses w', 'w.id = d.warehouse_id')
-            ->groupBy('d.delivery_number');
+            ->join('warehouses w', 'w.id = d.warehouse_id');
+
+        if ($warehouseId > 0) {
+            $subQuery->where('d.warehouse_id', $warehouseId);
+        }
+        if ($start !== '') {
+            $subQuery->where('d.delivery_date >=', $start);
+        }
+        if ($end !== '') {
+            $subQuery->where('d.delivery_date <=', $end);
+        }
+
+        $subQuery->groupBy('d.delivery_number');
 
         if ($q !== '') {
             $subQuery->havingLike('d.delivery_number', $q, 'both', null, true)
@@ -37,6 +53,7 @@ class Deliveries extends BaseController
         if ($page > $lastPage) $page = $lastPage;
 
         $items = array_slice($allRows, ($page - 1) * $perPage, $perPage);
+        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
 
         $pager = [
             'page' => $page,
@@ -47,7 +64,16 @@ class Deliveries extends BaseController
             'to' => min($total, $page * $perPage),
         ];
 
-        return view('deliveries/index', ['title' => 'Pengiriman', 'items' => $items, 'q' => $q, 'pager' => $pager]);
+        return view('deliveries/index', [
+            'title' => 'Pengiriman',
+            'items' => $items,
+            'q' => $q,
+            'warehouses' => $warehouses,
+            'warehouseId' => $warehouseId,
+            'start_date' => $start,
+            'end_date' => $end,
+            'pager' => $pager,
+        ]);
     }
     public function create()
     {

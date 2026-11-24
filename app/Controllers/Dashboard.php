@@ -242,6 +242,8 @@ class Dashboard extends BaseController
                 ->get()
                 ->getResultArray();
             $pendingPoCount = count($pendingApprovalPOs);
+            // Batasi tampilan tabel di dashboard eksekutif maksimal 5 PO teratas agar ringkas & fokus
+            $pendingApprovalPOs = array_slice($pendingApprovalPOs, 0, 5);
 
             $data = [
                 'title' => 'Dashboard Eksekutif',

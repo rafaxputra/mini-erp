@@ -10,8 +10,11 @@ class Inventory extends BaseController
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
+        $categoryId = (int) ($this->request->getGet('category_id') ?? 0);
+        $stockStatus = trim((string) ($this->request->getGet('stock_status') ?? ''));
 
         $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
+        $categories = (new \App\Models\CategoryModel())->orderBy('name', 'ASC')->findAll();
 
         $builder = $db->table('products p')->select('p.*, c.name AS category_name')->join('categories c', 'c.id = p.category_id');
         if ($q !== '') {
@@ -21,6 +24,9 @@ class Inventory extends BaseController
                 ->orLike('c.name', $q, 'both', null, true)
             ->groupEnd();
         }
+        if ($categoryId > 0) {
+            $builder->where('p.category_id', $categoryId);
+        }
         $items = $builder->orderBy('p.code', 'ASC')->get()->getResultArray();
 
         // Saldo terkini per (product_id, warehouse_id) dari mutasi stok terakhir
@@ -28,6 +34,24 @@ class Inventory extends BaseController
         $stocksMap = [];
         foreach ($stockRows as $sr) {
             $stocksMap[(int) $sr['product_id']][(int) $sr['warehouse_id']] = (int) $sr['qty_after'];
+        }
+
+        // Filter berdasarkan Status Stok (Aman / Menipis / Habis)
+        if ($stockStatus !== '') {
+            $items = array_values(array_filter($items, function ($it) use ($warehouseId, $stocksMap, $stockStatus) {
+                $qty = $warehouseId > 0 ? ($stocksMap[$it['id']][$warehouseId] ?? 0) : (int) $it['stock_qty'];
+                $min = (int) $it['min_stock'];
+                if ($stockStatus === 'out') {
+                    return $qty <= 0;
+                }
+                if ($stockStatus === 'low') {
+                    return $qty > 0 && $qty <= $min;
+                }
+                if ($stockStatus === 'safe') {
+                    return $qty > $min;
+                }
+                return true;
+            }));
         }
 
         $total = 0;
@@ -43,6 +67,9 @@ class Inventory extends BaseController
             'q' => $q,
             'warehouses' => $warehouses,
             'warehouseId' => $warehouseId,
+            'categories' => $categories,
+            'categoryId' => $categoryId,
+            'stockStatus' => $stockStatus,
             'stocksMap' => $stocksMap,
         ]);
     }
@@ -50,14 +77,37 @@ class Inventory extends BaseController
     {
         $db = \Config\Database::connect();
         $productId = (int) ($this->request->getGet('product_id') ?? 0);
-        $start = $this->request->getGet('start_date') ?? '';
-        $end = $this->request->getGet('end_date') ?? '';
-        $builder = $db->table('stock_movements sm')->select('sm.*, p.code, p.name AS product_name, u.name AS user_name, w.name AS warehouse_name')->join('products p', 'p.id = sm.product_id')->join('users u', 'u.id = sm.created_by')->join('warehouses w', 'w.id = sm.warehouse_id');
+        $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
+        $movementType = strtoupper(trim((string) ($this->request->getGet('movement_type') ?? '')));
+        $start = (string) ($this->request->getGet('start_date') ?? '');
+        $end = (string) ($this->request->getGet('end_date') ?? '');
+
+        $builder = $db->table('stock_movements sm')
+            ->select('sm.*, p.code, p.name AS product_name, u.name AS user_name, w.name AS warehouse_name')
+            ->join('products p', 'p.id = sm.product_id')
+            ->join('users u', 'u.id = sm.created_by')
+            ->join('warehouses w', 'w.id = sm.warehouse_id');
+
         if ($productId > 0) $builder->where('sm.product_id', $productId);
+        if ($warehouseId > 0) $builder->where('sm.warehouse_id', $warehouseId);
+        if (in_array($movementType, ['IN', 'OUT', 'ADJUSTMENT'], true)) $builder->where('sm.movement_type', $movementType);
         if ($start !== '') $builder->where('DATE(sm.created_at) >=', $start);
         if ($end !== '') $builder->where('DATE(sm.created_at) <=', $end);
+
         $items = $builder->orderBy('sm.created_at', 'DESC')->orderBy('sm.id', 'DESC')->limit(200)->get()->getResultArray();
-        return view('inventory/movements', ['title' => 'Riwayat Stok', 'items' => $items, 'products' => (new ProductModel())->orderBy('code', 'ASC')->findAll(), 'product_id' => $productId, 'start_date' => $start, 'end_date' => $end]);
+        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
+
+        return view('inventory/movements', [
+            'title' => 'Riwayat Stok',
+            'items' => $items,
+            'products' => (new ProductModel())->orderBy('code', 'ASC')->findAll(),
+            'warehouses' => $warehouses,
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+            'movement_type' => $movementType,
+            'start_date' => $start,
+            'end_date' => $end,
+        ]);
     }
     public function adjust()
     {

@@ -97,6 +97,11 @@ class SalesOrders extends BaseController
                 if ($price < 0) {
                     throw new \RuntimeException($prodName . ': harga satuan tidak boleh negatif, diisi ' . $price . '.');
                 }
+                if ($price < (float) $prod['purchase_price']) {
+                    $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');
+                    $priceFmt = 'Rp ' . number_format($price, 0, ',', '.');
+                    throw new \RuntimeException("{$prodName}: harga satuan jual ({$priceFmt}) tidak boleh di bawah harga modal beli perusahaan ({$minFmt}).");
+                }
                 $stockSvc = new \App\Libraries\StockService();
                 $availInWh = $stockSvc->stockInWarehouse($pid, $warehouseId);
                 if ($qty > $availInWh) {
