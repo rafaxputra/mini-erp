@@ -6,7 +6,7 @@ class Categories extends BaseController
     public function index()
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola kategori.')) return $r;
-        return view('categories/index', ['title' => 'Kategori', 'items' => (new CategoryModel())->orderBy('name', 'ASC')->findAll()]);
+        return view('categories/index', ['title' => 'Kategori', 'items' => (new CategoryModel())->orderBy('id', 'ASC')->findAll()]);
     }
     public function create()
     {

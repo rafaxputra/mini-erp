@@ -56,11 +56,22 @@ class PurchaseOrders extends BaseController
                 ->getRowArray();
         }
 
+        $products = \Config\Database::connect()->table('products p')
+            ->select('p.id, p.code, p.name, p.unit, p.purchase_price, p.stock_qty, p.min_stock, p.max_stock,
+                COALESCE((
+                    SELECT SUM(po.qty - COALESCE((SELECT SUM(gr.qty_received) FROM goods_receipts gr WHERE gr.purchase_order_id = po.id), 0))
+                    FROM purchase_orders po
+                    WHERE po.product_id = p.id AND po.status IN (\'draft\', \'approved\')
+                ), 0) AS on_order_qty')
+            ->where('p.is_active', true)
+            ->orderBy('p.code', 'ASC')
+            ->get()
+            ->getResultArray();
+
         return view('purchase_orders/create', [
             'title' => 'Buat Pesanan Beli',
             'suppliers' => (new SupplierModel())->orderBy('name', 'ASC')->findAll(),
-            'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(),
-            'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll(),
+            'products' => $products,
             'selectedProductId' => $selectedProductId,
             'suggestedQty' => $suggestedQty,
             'existingActivePo' => $existingActivePo,
@@ -70,14 +81,12 @@ class PurchaseOrders extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/purchase-orders', 'Hanya Staff Purchasing dan Admin yang bisa membuat Pesanan Beli.')) return $r;
         $supplierId = (int) $this->request->getPost('supplier_id');
-        $warehouseId = (int) $this->request->getPost('warehouse_id');
         $orderDate = $this->request->getPost('order_date');
         $productIds = (array) $this->request->getPost('product_id');
         $qtys = (array) $this->request->getPost('qty');
         $prices = (array) $this->request->getPost('unit_price');
         $errors = [];
         if (! $supplierId) $errors[] = 'Pemasok wajib dipilih.';
-        $warehouseId = $this->resolveWarehouseId($warehouseId);
         if (! $orderDate) $errors[] = 'Tanggal pesanan wajib diisi.';
         if (empty($productIds)) $errors[] = 'Minimal satu detail produk wajib diisi.';
         if ($errors) {
@@ -110,6 +119,29 @@ class PurchaseOrders extends BaseController
                 if (isset($seen[$pid])) {
                     throw new \RuntimeException($prodName . ' hanya boleh sekali dalam satu PO.');
                 }
+
+                // Validasi Batas Stok Maksimum (Max Stock Guard)
+                $maxStock = (int) ($prod['max_stock'] ?? 0);
+                if ($maxStock > 0) {
+                    $onOrderRow = $db->table('purchase_orders po')
+                        ->select('COALESCE(SUM(po.qty - COALESCE((SELECT SUM(gr.qty_received) FROM goods_receipts gr WHERE gr.purchase_order_id = po.id), 0)), 0) AS pending_qty')
+                        ->where('po.product_id', $pid)
+                        ->whereIn('po.status', ['draft', 'approved'])
+                        ->get()
+                        ->getRowArray();
+                    $pendingQty = (int) ($onOrderRow['pending_qty'] ?? 0);
+                    $totalProjected = (int) $prod['stock_qty'] + $pendingQty;
+
+                    if ($totalProjected >= $maxStock) {
+                        throw new \RuntimeException("Produk '{$prodName}' sudah mencapai kapasitas stok maksimal ({$maxStock} {$prod['unit']}). Stok fisik saat ini: {$prod['stock_qty']}, dalam pesanan berjalan: {$pendingQty}. Tidak diperbolehkan membuat pesanan baru.");
+                    }
+
+                    if ($totalProjected + $qty > $maxStock) {
+                        $availableQuota = max(0, $maxStock - $totalProjected);
+                        throw new \RuntimeException("Jumlah pesanan untuk '{$prodName}' ({$qty} {$prod['unit']}) melampaui kapasitas stok maksimal! Sisa kuota pesanan yang diperbolehkan adalah {$availableQuota} {$prod['unit']} (Maksimal: {$maxStock}, Fisik: {$prod['stock_qty']}, On-Order: {$pendingQty}).");
+                    }
+                }
+
                 $seen[$pid] = true;
                 $lines[] = ['product_id' => $pid, 'qty' => $qty, 'unit_price' => $price];
             }
@@ -121,15 +153,20 @@ class PurchaseOrders extends BaseController
             foreach ($lines as $line) {
                 $id = (new PurchaseOrderModel())->insert([
                     'po_number' => $poNumber,
-                    'supplier_id' => $supplierId, 'warehouse_id' => $warehouseId, 'product_id' => $line['product_id'],
-                    'qty' => $line['qty'], 'unit_price' => $line['unit_price'],
-                    'order_date' => $orderDate, 'status' => 'draft',
-                    'notes' => $this->request->getPost('notes'), 'created_by' => $this->userId(),
+                    'supplier_id' => $supplierId,
+                    'warehouse_id' => null,
+                    'product_id' => $line['product_id'],
+                    'qty' => $line['qty'],
+                    'unit_price' => $line['unit_price'],
+                    'order_date' => $orderDate,
+                    'status' => 'draft',
+                    'notes' => $this->request->getPost('notes'),
+                    'created_by' => $this->userId(),
                 ], true);
                 if (! $firstId) $firstId = (int) $id;
             }
             $db->transCommit();
-            return redirect()->to('/purchase-orders/show/' . $firstId)->with('success', 'Pesanan Beli berhasil dibuat dengan status Draft. Stok belum berubah.');
+            return redirect()->to('/purchase-orders/show/' . $firstId)->with('success', 'Pesanan Beli berhasil dibuat dengan status Draft. Menunggu persetujuan (ACC) Manajer.');
         } catch (\Throwable $e) {
             $db->transRollback();
             return redirect()->back()->withInput()->with('error', $e->getMessage());
@@ -138,7 +175,14 @@ class PurchaseOrders extends BaseController
     protected function poById(int $id): ?array
     {
         $db = \Config\Database::connect();
-        $row = $db->table('purchase_orders po')->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name, w.name AS warehouse_name')->join('suppliers s', 's.id = po.supplier_id')->join('users u', 'u.id = po.created_by')->join('warehouses w', 'w.id = po.warehouse_id')->where('po.id', $id)->get()->getRowArray();
+        $row = $db->table('purchase_orders po')
+            ->select('po.*, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name, w.name AS warehouse_name')
+            ->join('suppliers s', 's.id = po.supplier_id')
+            ->join('users u', 'u.id = po.created_by')
+            ->join('warehouses w', 'w.id = po.warehouse_id', 'left')
+            ->where('po.id', $id)
+            ->get()
+            ->getRowArray();
         if (! $row) return null;
         $row['total_amount'] = (new PurchaseOrderModel())->totalAmount($row['po_number']);
         return $row;
@@ -155,11 +199,11 @@ class PurchaseOrders extends BaseController
     }
     public function approve($id)
     {
-        if ($r = $this->requireRole(['admin'], '/purchase-orders', 'Hanya admin yang bisa approve Pesanan Beli.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen'], '/purchase-orders', 'Hanya Manajer atau Admin yang berhak menyetujui (ACC) Pesanan Beli.')) return $r;
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] !== 'draft') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Hanya PO berstatus Draft yang bisa di approve.');
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Hanya PO berstatus Draft yang bisa di-approve (ACC).');
         }
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -168,9 +212,9 @@ class PurchaseOrders extends BaseController
             $db->transCommit();
         } catch (\Throwable $e) {
             $db->transRollback();
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal approve Pesanan Beli.');
+            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal menyetujui Pesanan Beli.');
         }
-        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil di approve.');
+        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil disetujui (ACC). Stok siap diterima oleh petugas Gudang saat barang tiba.');
     }
     public function cancel($id)
     {

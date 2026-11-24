@@ -17,7 +17,7 @@
 <?php
 $currentPath = uri_string();
 $activeGroup = '';
-if (preg_match('#^(categories|products|suppliers|customers|warehouses)(/|$)#', $currentPath)) $activeGroup = 'master';
+if (preg_match('#^(categories|units|products|suppliers|customers|warehouses)(/|$)#', $currentPath)) $activeGroup = 'master';
 elseif (preg_match('#^(purchase-orders|goods-receipts)(/|$)#', $currentPath)) $activeGroup = 'pembelian';
 elseif (preg_match('#^(sales-orders|deliveries)(/|$)#', $currentPath)) $activeGroup = 'penjualan';
 elseif (preg_match('#^(inventory)(/|$)#', $currentPath)) $activeGroup = 'persediaan';
@@ -34,6 +34,7 @@ $backUrl = count($backSegments) > 1 ? '/' . $backSegments[0] : null;
 
 $moduleLabels = [
     'categories' => 'Kategori',
+    'units' => 'Satuan',
     'products' => 'Produk',
     'suppliers' => 'Pemasok',
     'customers' => 'Pelanggan',
@@ -125,6 +126,7 @@ if ($initials === '') {
             <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
               <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
+              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('units') ?>" href="/units">Satuan</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
               <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('warehouses') ?>" href="/warehouses">Gudang</a><?php endif; ?>
@@ -279,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
   <?php if (session()->getFlashdata('success')): ?>
   Swal.fire({
     toast: true,
-    position: 'top-end',
+    position: 'top',
     icon: 'success',
     title: <?= json_encode(session()->getFlashdata('success')) ?>,
     showConfirmButton: false,
@@ -289,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
   <?php elseif (session()->getFlashdata('error')): ?>
   Swal.fire({
     toast: true,
-    position: 'top-end',
+    position: 'top',
     icon: 'error',
     title: <?= json_encode(session()->getFlashdata('error')) ?>,
     showConfirmButton: false,
@@ -299,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function () {
   <?php elseif (! empty($verrors)): ?>
   Swal.fire({
     toast: true,
-    position: 'top-end',
+    position: 'top',
     icon: 'error',
     html: <?= json_encode(implode('<br>', array_map('esc', $verrors))) ?>,
     showConfirmButton: false,

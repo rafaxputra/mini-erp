@@ -231,6 +231,19 @@ class Dashboard extends BaseController
 
             $lowStockCount = count($db->query('SELECT id FROM products WHERE stock_qty <= min_stock')->getResultArray());
 
+            // Antrean Pesanan Beli yang Menunggu Persetujuan (ACC) Manajer
+            $pendingApprovalPOs = $db->table('purchase_orders po')
+                ->select('MIN(po.id) AS id, po.po_number, MIN(po.order_date) AS order_date, s.name AS supplier_name, s.code AS supplier_code, u.name AS creator_name, SUM(po.qty * po.unit_price) AS total_amount, COUNT(po.id) AS total_items, MAX(po.created_at) AS created_at')
+                ->join('suppliers s', 's.id = po.supplier_id')
+                ->join('users u', 'u.id = po.created_by')
+                ->where('po.status', 'draft')
+                ->groupBy('po.po_number, s.name, s.code, u.name')
+                ->orderBy('MIN(po.order_date)', 'ASC')
+                ->orderBy('MIN(po.id)', 'ASC')
+                ->get()
+                ->getResultArray();
+            $pendingPoCount = count($pendingApprovalPOs);
+
             $data = [
                 'title' => 'Dashboard Eksekutif',
                 'role' => $role,
@@ -243,6 +256,8 @@ class Dashboard extends BaseController
                 'lowStockCount' => $lowStockCount,
                 'topProducts' => $topProducts,
                 'warehouseSummary' => $warehouseSummary,
+                'pendingApprovalPOs' => $pendingApprovalPOs,
+                'pendingPoCount' => $pendingPoCount,
             ];
             return view('dashboard/index', $data);
         }

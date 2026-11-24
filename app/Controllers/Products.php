@@ -41,7 +41,12 @@ class Products extends BaseController
     public function create()
     {
         if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
-        return view('products/form', ['title' => 'Tambah Produk', 'item' => null, 'categories' => (new CategoryModel())->orderBy('name', 'ASC')->findAll()]);
+        return view('products/form', [
+            'title' => 'Tambah Produk',
+            'item' => null,
+            'categories' => (new CategoryModel())->orderBy('name', 'ASC')->findAll(),
+            'units' => (new \App\Models\UnitModel())->orderBy('name', 'ASC')->findAll(),
+        ]);
     }
     public function store()
     {
@@ -50,28 +55,52 @@ class Products extends BaseController
             'code' => 'required|max_length[20]|is_unique[products.code]',
             'name' => 'required|min_length[2]|max_length[150]',
             'category_id' => 'required|integer',
-            'unit' => 'required|max_length[20]',
+            'unit_id' => 'required|integer',
             'purchase_price' => 'required|numeric|greater_than_equal_to[0]',
             'selling_price' => 'required|numeric|greater_than_equal_to[0]',
             'stock_qty' => 'required|integer|greater_than_equal_to[0]',
             'min_stock' => 'required|integer|greater_than_equal_to[0]',
+            'max_stock' => 'permit_empty|integer|greater_than_equal_to[0]',
         ];
         $messages = [
             'code' => ['required' => 'Kode produk wajib diisi.', 'max_length' => 'Kode produk maksimal 20 karakter.', 'is_unique' => 'Kode produk {value} sudah dipakai produk lain.'],
             'name' => ['required' => 'Nama produk wajib diisi.', 'min_length' => 'Nama produk minimal 2 karakter.', 'max_length' => 'Nama produk maksimal 150 karakter.'],
             'category_id' => ['required' => 'Kategori wajib dipilih.', 'integer' => 'Kategori tidak valid.'],
-            'unit' => ['required' => 'Satuan wajib diisi.', 'max_length' => 'Satuan maksimal 20 karakter.'],
+            'unit_id' => ['required' => 'Satuan wajib dipilih.', 'integer' => 'Satuan tidak valid.'],
             'purchase_price' => ['required' => 'Harga beli wajib diisi.', 'numeric' => 'Harga beli harus berupa angka.', 'greater_than_equal_to' => 'Harga beli tidak boleh negatif.'],
             'selling_price' => ['required' => 'Harga jual wajib diisi.', 'numeric' => 'Harga jual harus berupa angka.', 'greater_than_equal_to' => 'Harga jual tidak boleh negatif.'],
             'stock_qty' => ['required' => 'Stok wajib diisi.', 'integer' => 'Stok harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok tidak boleh negatif.'],
             'min_stock' => ['required' => 'Stok minimum wajib diisi.', 'integer' => 'Stok minimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok minimum tidak boleh negatif.'],
+            'max_stock' => ['integer' => 'Stok maksimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok maksimum tidak boleh negatif.'],
         ];
 
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+
+        $minStock = (int) $this->request->getPost('min_stock');
+        $maxStock = (int) $this->request->getPost('max_stock');
+        if ($maxStock > 0 && $maxStock < $minStock) {
+            return redirect()->back()->withInput()->with('error', 'Batas stok maksimum (' . $maxStock . ') tidak boleh lebih kecil dari stok minimum (' . $minStock . ').');
+        }
+
+        $unitId = (int) $this->request->getPost('unit_id');
+        $unitRow = (new \App\Models\UnitModel())->find($unitId);
+        $unitCode = $unitRow ? $unitRow['code'] : 'pcs';
+
         $stockQty = (int) $this->request->getPost('stock_qty');
-        $id = (new ProductModel())->insert($this->request->getPost(['code', 'name', 'category_id', 'unit', 'purchase_price', 'selling_price', 'stock_qty', 'min_stock']));
+        $id = (new ProductModel())->insert([
+            'code' => strtoupper((string) $this->request->getPost('code')),
+            'name' => $this->request->getPost('name'),
+            'category_id' => (int) $this->request->getPost('category_id'),
+            'unit_id' => $unitId,
+            'unit' => $unitCode,
+            'purchase_price' => $this->request->getPost('purchase_price'),
+            'selling_price' => $this->request->getPost('selling_price'),
+            'stock_qty' => $stockQty,
+            'min_stock' => $minStock,
+            'max_stock' => $maxStock,
+        ]);
         
         // Jika produk baru didaftarkan dengan saldo stok awal, catat ke mutasi stok gudang utama
         if ($stockQty > 0 && $id) {
@@ -109,6 +138,7 @@ class Products extends BaseController
             'title' => 'Ubah Produk',
             'item' => $item,
             'categories' => (new CategoryModel())->orderBy('name', 'ASC')->findAll(),
+            'units' => (new \App\Models\UnitModel())->orderBy('name', 'ASC')->findAll(),
             'hasTransactions' => $hasTransactions,
         ]);
     }
@@ -126,18 +156,20 @@ class Products extends BaseController
         $rules = [
             'name' => 'required|min_length[2]|max_length[150]',
             'category_id' => 'required|integer',
-            'unit' => 'required|max_length[20]',
+            'unit_id' => 'required|integer',
             'purchase_price' => 'required|numeric|greater_than_equal_to[0]',
             'selling_price' => 'required|numeric|greater_than_equal_to[0]',
             'min_stock' => 'required|integer|greater_than_equal_to[0]',
+            'max_stock' => 'permit_empty|integer|greater_than_equal_to[0]',
         ];
         $messages = [
             'name' => ['required' => 'Nama produk wajib diisi.', 'min_length' => 'Nama produk minimal 2 karakter.', 'max_length' => 'Nama produk maksimal 150 karakter.'],
             'category_id' => ['required' => 'Kategori wajib dipilih.', 'integer' => 'Kategori tidak valid.'],
-            'unit' => ['required' => 'Satuan wajib diisi.', 'max_length' => 'Satuan maksimal 20 karakter.'],
+            'unit_id' => ['required' => 'Satuan wajib dipilih.', 'integer' => 'Satuan tidak valid.'],
             'purchase_price' => ['required' => 'Harga beli wajib diisi.', 'numeric' => 'Harga beli harus berupa angka.', 'greater_than_equal_to' => 'Harga beli tidak boleh negatif.'],
             'selling_price' => ['required' => 'Harga jual wajib diisi.', 'numeric' => 'Harga jual harus berupa angka.', 'greater_than_equal_to' => 'Harga jual tidak boleh negatif.'],
             'min_stock' => ['required' => 'Stok minimum wajib diisi.', 'integer' => 'Stok minimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok minimum tidak boleh negatif.'],
+            'max_stock' => ['integer' => 'Stok maksimum harus berupa bilangan bulat.', 'greater_than_equal_to' => 'Stok maksimum tidak boleh negatif.'],
         ];
 
         // Jika belum ada riwayat transaksi, kode produk boleh diedit
@@ -150,9 +182,28 @@ class Products extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $updateData = $this->request->getPost(['name', 'category_id', 'unit', 'purchase_price', 'selling_price', 'min_stock']);
+        $minStock = (int) $this->request->getPost('min_stock');
+        $maxStock = (int) $this->request->getPost('max_stock');
+        if ($maxStock > 0 && $maxStock < $minStock) {
+            return redirect()->back()->withInput()->with('error', 'Batas stok maksimum (' . $maxStock . ') tidak boleh lebih kecil dari stok minimum (' . $minStock . ').');
+        }
+
+        $unitId = (int) $this->request->getPost('unit_id');
+        $unitRow = (new \App\Models\UnitModel())->find($unitId);
+        $unitCode = $unitRow ? $unitRow['code'] : 'pcs';
+
+        $updateData = [
+            'name' => $this->request->getPost('name'),
+            'category_id' => (int) $this->request->getPost('category_id'),
+            'unit_id' => $unitId,
+            'unit' => $unitCode,
+            'purchase_price' => $this->request->getPost('purchase_price'),
+            'selling_price' => $this->request->getPost('selling_price'),
+            'min_stock' => $minStock,
+            'max_stock' => $maxStock,
+        ];
         if (! $hasTransactions) {
-            $updateData['code'] = $this->request->getPost('code');
+            $updateData['code'] = strtoupper((string) $this->request->getPost('code'));
         }
 
         (new ProductModel())->update($id, $updateData);

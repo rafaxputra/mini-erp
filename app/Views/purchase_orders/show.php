@@ -15,11 +15,11 @@
         <div class="text-secondary small">Dibuat oleh: <strong class="text-dark"><?= esc($po['creator_name']) ?></strong></div>
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <?php if ($po['status'] === 'draft' && session()->get('user_role') === 'admin'): ?>
-          <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menyetujui Pesanan Beli <strong><?= esc($po['po_number']) ?></strong>?" data-confirm-title="Persetujuan Pesanan Beli" data-confirm-btn="Ya, Setujui" data-confirm-type="primary">
+        <?php if ($po['status'] === 'draft' && in_array(session()->get('user_role'), ['admin', 'manajemen'], true)): ?>
+          <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menyetujui (ACC) Pesanan Beli <strong><?= esc($po['po_number']) ?></strong>?" data-confirm-title="Persetujuan Pesanan Beli (ACC)" data-confirm-btn="Ya, Setujui (ACC)" data-confirm-type="primary">
             <button class="btn btn-success" type="submit">
               <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-              Setujui Pesanan
+              Setujui Pesanan (ACC)
             </button>
           </form>
         <?php endif; ?>
@@ -65,8 +65,8 @@
       </div>
       <div class="col-sm-6 col-lg-3">
         <div class="text-secondary small">Gudang Tujuan</div>
-        <div class="fw-bold text-dark mt-1"><?= esc($po['warehouse_name'] ?? 'Gudang Utama') ?></div>
-        <div class="text-secondary small">Penyimpanan fisik stok</div>
+        <div class="fw-bold text-dark mt-1"><?= esc($po['warehouse_name'] ?: 'Ditentukan saat GR') ?></div>
+        <div class="text-secondary small"><?= empty($po['warehouse_name']) ? 'Dipilih oleh petugas gudang' : 'Penyimpanan fisik stok' ?></div>
       </div>
       <div class="col-sm-6 col-lg-3">
         <div class="text-secondary small">Total Nilai Pesanan</div>

@@ -17,6 +17,12 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('categories/edit/(:num)', 'Categories::edit/$1');
     $routes->post('categories/update/(:num)', 'Categories::update/$1');
     $routes->post('categories/delete/(:num)', 'Categories::delete/$1');
+    $routes->get('units', 'Units::index');
+    $routes->get('units/create', 'Units::create');
+    $routes->post('units/store', 'Units::store');
+    $routes->get('units/edit/(:num)', 'Units::edit/$1');
+    $routes->post('units/update/(:num)', 'Units::update/$1');
+    $routes->post('units/delete/(:num)', 'Units::delete/$1');
     $routes->get('products', 'Products::index');
     $routes->get('products/create', 'Products::create');
     $routes->post('products/store', 'Products::store');

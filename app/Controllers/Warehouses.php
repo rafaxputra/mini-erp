@@ -6,7 +6,7 @@ class Warehouses extends BaseController
     public function index()
     {
         if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat daftar gudang.')) return $r;
-        return view('warehouses/index', ['title' => 'Gudang', 'items' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll()]);
+        return view('warehouses/index', ['title' => 'Gudang', 'items' => (new WarehouseModel())->orderBy('code', 'ASC')->findAll()]);
     }
     public function create()
     {

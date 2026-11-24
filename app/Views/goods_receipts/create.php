@@ -78,7 +78,7 @@
             <label class="form-label required">Gudang Penyimpanan</label>
             <select name="warehouse_id" class="form-select" required>
               <?php foreach ($warehouses as $w): ?>
-                <option value="<?= esc($w['id']) ?>" <?= (int) $po['warehouse_id'] === (int) $w['id'] ? 'selected' : '' ?>>
+                <option value="<?= esc($w['id']) ?>" <?= (! empty($po['warehouse_id']) && (int) $po['warehouse_id'] === (int) $w['id']) || (empty($po['warehouse_id']) && ! empty($w['is_default'])) ? 'selected' : '' ?>>
                   <?= esc($w['name']) ?> (<?= esc($w['code']) ?>)
                 </option>
               <?php endforeach; ?>

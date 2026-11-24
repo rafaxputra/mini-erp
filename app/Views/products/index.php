@@ -43,7 +43,7 @@
             <th class="text-end" style="width: 130px;">Harga Beli</th>
             <th class="text-end" style="width: 130px;">Harga Jual</th>
             <th class="text-center" style="width: 90px;">Stok</th>
-            <th class="text-center" style="width: 80px;">Min.</th>
+            <th class="text-center" style="width: 110px;">Min / Max</th>
             <?php if ($canManage): ?>
               <th class="text-end" style="width: 150px;">Aksi</th>
             <?php endif; ?>
@@ -65,7 +65,10 @@
               <span class="badge bg-success-lt fw-bold"><?= esc($it['stock_qty']) ?></span>
             <?php endif; ?>
           </td>
-          <td class="text-center text-muted"><?= esc($it['min_stock']) ?></td>
+          <td class="text-center text-muted font-monospace small">
+            <span class="text-danger fw-semibold" title="Batas Stok Minimum"><?= esc($it['min_stock']) ?></span> / 
+            <span class="text-primary fw-semibold" title="Batas Stok Maksimum"><?= (int) ($it['max_stock'] ?? 0) > 0 ? esc($it['max_stock']) : '&infin;' ?></span>
+          </td>
           <?php if ($canManage): ?>
           <td class="text-end">
             <div class="d-inline-flex align-items-center gap-1">

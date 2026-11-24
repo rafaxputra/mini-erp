@@ -10,7 +10,7 @@ class MainSeeder extends Seeder
     {
         $tables = [
             'stock_movements', 'deliveries', 'sales_orders', 'goods_receipts',
-            'purchase_orders', 'products', 'customers', 'suppliers',
+            'purchase_orders', 'products', 'units', 'customers', 'suppliers',
             'categories', 'users', 'roles', 'warehouses',
         ];
         foreach ($tables as $t) {
@@ -90,6 +90,26 @@ class MainSeeder extends Seeder
         $this->db->query("SELECT setval('categories_id_seq', (SELECT MAX(id) FROM categories))");
 
         // -------------------------------------------------------------
+        // 3B. SATUAN PRODUK (UNITS)
+        // -------------------------------------------------------------
+        $this->db->table('units')->insertBatch([
+            ['id' => 1, 'code' => 'pcs', 'name' => 'Pieces (Buah)', 'description' => 'Satuan hitung barang tunggal / eceran', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'code' => 'rim', 'name' => 'Rim (500 Lembar)', 'description' => 'Satuan kertas cetak dan fotokopi', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 3, 'code' => 'box', 'name' => 'Box (Kardus / Dus)', 'description' => 'Satuan kemasan kotak kardus', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 4, 'code' => 'pack', 'name' => 'Pack (Paket / Pak)', 'description' => 'Kemasan bungkusan isi beberapa unit', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 5, 'code' => 'set', 'name' => 'Set (Paket Lengkap)', 'description' => 'Gabungan beberapa barang dalam 1 set', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 6, 'code' => 'roll', 'name' => 'Roll (Gulungan)', 'description' => 'Satuan lakban, tali, pita gulung', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 7, 'code' => 'buku', 'name' => 'Buku', 'description' => 'Satuan buku tulis / ekspedisi', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 8, 'code' => 'botol', 'name' => 'Botol', 'description' => 'Kemasan botol cairan', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 9, 'code' => 'kg', 'name' => 'Kilogram (Kg)', 'description' => 'Satuan berat / bobot barang', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 10, 'code' => 'liter', 'name' => 'Liter (Ltr)', 'description' => 'Satuan volume cairan', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 11, 'code' => 'meter', 'name' => 'Meter (M)', 'description' => 'Satuan panjang / kabel', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 12, 'code' => 'lusin', 'name' => 'Lusin (12 Pcs)', 'description' => 'Satuan grosir 12 unit', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 13, 'code' => 'lembar', 'name' => 'Lembar', 'description' => 'Satuan lembaran tipis', 'created_at' => $now, 'updated_at' => $now],
+        ]);
+        $this->db->query("SELECT setval('units_id_seq', (SELECT MAX(id) FROM units))");
+
+        // -------------------------------------------------------------
         // 4. PEMASOK (SUPPLIERS)
         // -------------------------------------------------------------
         $this->db->table('suppliers')->insertBatch([
@@ -123,127 +143,127 @@ class MainSeeder extends Seeder
         $catalog = [
             [
                 'id' => 1, 'code' => 'PRD-001', 'name' => 'Pulpen Gel Hitam 0.5mm 12pcs',
-                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 15000, 'selling_price' => 25000, 'min_stock' => 15,
+                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 15000, 'selling_price' => 25000, 'min_stock' => 15, 'max_stock' => 250,
                 'stocks' => [1 => 80, 2 => 40, 3 => 45],
             ],
             [
                 'id' => 2, 'code' => 'PRD-002', 'name' => 'Pulpen Gel Biru 0.5mm 12pcs',
-                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 15000, 'selling_price' => 25000, 'min_stock' => 10,
+                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 15000, 'selling_price' => 25000, 'min_stock' => 10, 'max_stock' => 200,
                 'stocks' => [1 => 45, 2 => 0, 3 => 30],
             ],
             [
                 'id' => 3, 'code' => 'PRD-003', 'name' => 'Pensil 2B Ujian Komputer 12pcs',
-                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 12000, 'selling_price' => 20000, 'min_stock' => 10,
+                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 12000, 'selling_price' => 20000, 'min_stock' => 10, 'max_stock' => 200,
                 'stocks' => [1 => 50, 2 => 40, 3 => 0],
             ],
             [
                 'id' => 4, 'code' => 'PRD-004', 'name' => 'Spidol Whiteboard Hitam 12pcs',
-                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 25000, 'selling_price' => 40000, 'min_stock' => 10,
+                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 25000, 'selling_price' => 40000, 'min_stock' => 10, 'max_stock' => 150,
                 'stocks' => [1 => 40, 2 => 30, 3 => 25],
             ],
             [
                 'id' => 5, 'code' => 'PRD-005', 'name' => 'Penghapus Putih Lembut 20pcs',
-                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 10000, 'selling_price' => 18000, 'min_stock' => 15,
+                'category_id' => 1, 'unit' => 'pack', 'purchase_price' => 10000, 'selling_price' => 18000, 'min_stock' => 15, 'max_stock' => 200,
                 'stocks' => [1 => 30, 2 => 35, 3 => 45],
             ],
             [
                 'id' => 6, 'code' => 'PRD-006', 'name' => 'Penggaris Besi Stainless 30cm',
-                'category_id' => 1, 'unit' => 'pcs', 'purchase_price' => 7000, 'selling_price' => 14000, 'min_stock' => 10,
+                'category_id' => 1, 'unit' => 'pcs', 'purchase_price' => 7000, 'selling_price' => 14000, 'min_stock' => 10, 'max_stock' => 100,
                 'stocks' => [1 => 20, 2 => 10, 3 => 30],
             ],
             // [STOK MENIPIS 1]: Sisa 7 set <= Batas Minimum 10
             [
                 'id' => 7, 'code' => 'PRD-007', 'name' => 'Stabilo Boss Highlighter 4 Warna',
-                'category_id' => 1, 'unit' => 'set', 'purchase_price' => 32000, 'selling_price' => 52000, 'min_stock' => 10,
+                'category_id' => 1, 'unit' => 'set', 'purchase_price' => 32000, 'selling_price' => 52000, 'min_stock' => 10, 'max_stock' => 80,
                 'stocks' => [1 => 4, 2 => 0, 3 => 3],
             ],
             [
                 'id' => 8, 'code' => 'PRD-008', 'name' => 'Kertas HVS A4 70gsm PaperOne',
-                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 32000, 'selling_price' => 46000, 'min_stock' => 25,
+                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 32000, 'selling_price' => 46000, 'min_stock' => 25, 'max_stock' => 500,
                 'stocks' => [1 => 150, 2 => 80, 3 => 100],
             ],
             [
                 'id' => 9, 'code' => 'PRD-009', 'name' => 'Kertas HVS A4 80gsm SiDU',
-                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 36000, 'selling_price' => 52000, 'min_stock' => 25,
+                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 36000, 'selling_price' => 52000, 'min_stock' => 25, 'max_stock' => 450,
                 'stocks' => [1 => 120, 2 => 80, 3 => 90],
             ],
             [
                 'id' => 10, 'code' => 'PRD-010', 'name' => 'Kertas HVS F4/Folio 70gsm',
-                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 35000, 'selling_price' => 50000, 'min_stock' => 20,
+                'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 35000, 'selling_price' => 50000, 'min_stock' => 20, 'max_stock' => 350,
                 'stocks' => [1 => 70, 2 => 35, 3 => 0],
             ],
             // [STOK MENIPIS 2]: Sisa 6 pack <= Batas Minimum 10
             [
                 'id' => 11, 'code' => 'PRD-011', 'name' => 'Kertas Foto Glossy A4 20 Lembar',
-                'category_id' => 2, 'unit' => 'pack', 'purchase_price' => 28000, 'selling_price' => 45000, 'min_stock' => 10,
+                'category_id' => 2, 'unit' => 'pack', 'purchase_price' => 28000, 'selling_price' => 45000, 'min_stock' => 10, 'max_stock' => 80,
                 'stocks' => [1 => 6, 2 => 0, 3 => 0],
             ],
             [
                 'id' => 12, 'code' => 'PRD-012', 'name' => 'Buku Kas / Ekspedisi Hardcover',
-                'category_id' => 2, 'unit' => 'buku', 'purchase_price' => 18000, 'selling_price' => 30000, 'min_stock' => 10,
+                'category_id' => 2, 'unit' => 'buku', 'purchase_price' => 18000, 'selling_price' => 30000, 'min_stock' => 10, 'max_stock' => 150,
                 'stocks' => [1 => 25, 2 => 10, 3 => 35],
             ],
             [
                 'id' => 13, 'code' => 'PRD-013', 'name' => 'Stapler Besar HD-50 Kangaro',
-                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 45000, 'selling_price' => 75000, 'min_stock' => 5,
+                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 45000, 'selling_price' => 75000, 'min_stock' => 5, 'max_stock' => 80,
                 'stocks' => [1 => 10, 2 => 30, 3 => 5],
             ],
             [
                 'id' => 14, 'code' => 'PRD-014', 'name' => 'Isi Staples No. 10 (Box isi 20)',
-                'category_id' => 3, 'unit' => 'box', 'purchase_price' => 14000, 'selling_price' => 24000, 'min_stock' => 15,
+                'category_id' => 3, 'unit' => 'box', 'purchase_price' => 14000, 'selling_price' => 24000, 'min_stock' => 15, 'max_stock' => 150,
                 'stocks' => [1 => 60, 2 => 25, 3 => 0],
             ],
             [
                 'id' => 15, 'code' => 'PRD-015', 'name' => 'Map Plastik Zipper A4 12pcs',
-                'category_id' => 3, 'unit' => 'pack', 'purchase_price' => 22000, 'selling_price' => 38000, 'min_stock' => 15,
+                'category_id' => 3, 'unit' => 'pack', 'purchase_price' => 22000, 'selling_price' => 38000, 'min_stock' => 15, 'max_stock' => 250,
                 'stocks' => [1 => 80, 2 => 40, 3 => 60],
             ],
             [
                 'id' => 16, 'code' => 'PRD-016', 'name' => 'Amplop Coklat Tali F4 50pcs',
-                'category_id' => 3, 'unit' => 'pack', 'purchase_price' => 32000, 'selling_price' => 55000, 'min_stock' => 10,
+                'category_id' => 3, 'unit' => 'pack', 'purchase_price' => 32000, 'selling_price' => 55000, 'min_stock' => 10, 'max_stock' => 120,
                 'stocks' => [1 => 40, 2 => 20, 3 => 0],
             ],
             [
                 'id' => 17, 'code' => 'PRD-017', 'name' => 'Lakban Bening 48mm x 100 Yard',
-                'category_id' => 3, 'unit' => 'roll', 'purchase_price' => 8500, 'selling_price' => 15000, 'min_stock' => 20,
+                'category_id' => 3, 'unit' => 'roll', 'purchase_price' => 8500, 'selling_price' => 15000, 'min_stock' => 20, 'max_stock' => 300,
                 'stocks' => [1 => 100, 2 => 60, 3 => 60],
             ],
             [
                 'id' => 18, 'code' => 'PRD-018', 'name' => 'Klip Kertas Paper Clip No. 3',
-                'category_id' => 3, 'unit' => 'pak', 'purchase_price' => 16000, 'selling_price' => 26000, 'min_stock' => 15,
+                'category_id' => 3, 'unit' => 'pack', 'purchase_price' => 16000, 'selling_price' => 26000, 'min_stock' => 15, 'max_stock' => 180,
                 'stocks' => [1 => 20, 2 => 50, 3 => 30],
             ],
             [
                 'id' => 19, 'code' => 'PRD-019', 'name' => 'Gunting Kantor Stainless 21cm',
-                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 18000, 'selling_price' => 32000, 'min_stock' => 5,
+                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 18000, 'selling_price' => 32000, 'min_stock' => 5, 'max_stock' => 100,
                 'stocks' => [1 => 15, 2 => 35, 3 => 10],
             ],
             // [STOK KRITIS 3]: Sisa 1 pcs <= Batas Minimum 3 (Perlu Restock Segera)
             [
                 'id' => 20, 'code' => 'PRD-020', 'name' => 'Papan Tulis Whiteboard 60x90cm',
-                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 175000, 'selling_price' => 285000, 'min_stock' => 3,
+                'category_id' => 3, 'unit' => 'pcs', 'purchase_price' => 175000, 'selling_price' => 285000, 'min_stock' => 3, 'max_stock' => 20,
                 'stocks' => [1 => 1, 2 => 0, 3 => 0],
             ],
             [
                 'id' => 21, 'code' => 'PRD-021', 'name' => 'Tinta Printer Hitam 100ml Universal',
-                'category_id' => 4, 'unit' => 'botol', 'purchase_price' => 65000, 'selling_price' => 110000, 'min_stock' => 10,
+                'category_id' => 4, 'unit' => 'botol', 'purchase_price' => 65000, 'selling_price' => 110000, 'min_stock' => 10, 'max_stock' => 100,
                 'stocks' => [1 => 25, 2 => 0, 3 => 15],
             ],
             // [STOK MENIPIS 4]: Sisa 4 set <= Batas Minimum 8
             [
                 'id' => 22, 'code' => 'PRD-022', 'name' => 'Tinta Printer Warna (CMY) 100ml',
-                'category_id' => 4, 'unit' => 'set', 'purchase_price' => 85000, 'selling_price' => 145000, 'min_stock' => 8,
+                'category_id' => 4, 'unit' => 'set', 'purchase_price' => 85000, 'selling_price' => 145000, 'min_stock' => 8, 'max_stock' => 60,
                 'stocks' => [1 => 2, 2 => 0, 3 => 2],
             ],
             // [STOK MENIPIS 5]: Sisa 2 pcs <= Batas Minimum 3
             [
                 'id' => 23, 'code' => 'PRD-023', 'name' => 'Toner Cartridge Laser Hitam HP 85A',
-                'category_id' => 4, 'unit' => 'pcs', 'purchase_price' => 260000, 'selling_price' => 395000, 'min_stock' => 3,
+                'category_id' => 4, 'unit' => 'pcs', 'purchase_price' => 260000, 'selling_price' => 395000, 'min_stock' => 3, 'max_stock' => 25,
                 'stocks' => [1 => 2, 2 => 0, 3 => 0],
             ],
             [
                 'id' => 24, 'code' => 'PRD-024', 'name' => 'Mouse USB Optik Logitech B100',
-                'category_id' => 5, 'unit' => 'pcs', 'purchase_price' => 58000, 'selling_price' => 95000, 'min_stock' => 8,
+                'category_id' => 5, 'unit' => 'pcs', 'purchase_price' => 58000, 'selling_price' => 95000, 'min_stock' => 8, 'max_stock' => 100,
                 'stocks' => [1 => 25, 2 => 0, 3 => 20],
             ],
         ];
@@ -251,18 +271,29 @@ class MainSeeder extends Seeder
         // Masukkan data produk & catat saldo awal per gudang dengan timestamp realistis
         $initialMovementDate = date('Y-m-d H:i:s', strtotime('-12 days 08:30:00'));
 
+        $unitMap = [
+            'pcs' => 1, 'rim' => 2, 'box' => 3, 'pack' => 4, 'set' => 5,
+            'roll' => 6, 'buku' => 7, 'botol' => 8, 'kg' => 9, 'liter' => 10,
+            'meter' => 11, 'lusin' => 12, 'lembar' => 13, 'pak' => 4,
+        ];
+
         foreach ($catalog as $item) {
             $totalStock = array_sum($item['stocks']);
+            $unitCode = $item['unit'] === 'pak' ? 'pack' : $item['unit'];
+            $unitId = $unitMap[$item['unit']] ?? 1;
+
             $this->db->table('products')->insert([
                 'id' => $item['id'],
                 'code' => $item['code'],
                 'name' => $item['name'],
                 'category_id' => $item['category_id'],
-                'unit' => $item['unit'],
+                'unit_id' => $unitId,
+                'unit' => $unitCode,
                 'purchase_price' => $item['purchase_price'],
                 'selling_price' => $item['selling_price'],
                 'stock_qty' => $totalStock,
                 'min_stock' => $item['min_stock'],
+                'max_stock' => $item['max_stock'] ?? ($item['min_stock'] * 10),
                 'is_active' => true,
                 'created_at' => $initialMovementDate,
                 'updated_at' => $initialMovementDate,
@@ -312,8 +343,8 @@ class MainSeeder extends Seeder
         // PO 1: Diterima Penuh di GUDANG UTAMA (Pulpen Hitam x20 & Kertas A4 PaperOne x30)
         $po1Num = 'PO-' . $n8 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => 1, 'product_id' => 1, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 30, 'unit_price' => 32000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
+            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => null, 'product_id' => 1, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
+            ['po_number' => $po1Num, 'supplier_id' => 1, 'warehouse_id' => null, 'product_id' => 8, 'qty' => 30, 'unit_price' => 32000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
         ]);
         $po1Items = $this->db->table('purchase_orders')->where('po_number', $po1Num)->get()->getResultArray();
         $gr1Num = 'GR-' . date('Ymd', strtotime('-7 days')) . '-001';
@@ -331,8 +362,8 @@ class MainSeeder extends Seeder
         // PO 2: Diterima Penuh di GUDANG CABANG SIDOARJO (Kertas A4 SiDU x25 & Stapler Kangaro x10)
         $po2Num = 'PO-' . $n6 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => 2, 'product_id' => 9, 'qty' => 25, 'unit_price' => 36000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => 2, 'product_id' => 13, 'qty' => 10, 'unit_price' => 45000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
+            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => null, 'product_id' => 9, 'qty' => 25, 'unit_price' => 36000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
+            ['po_number' => $po2Num, 'supplier_id' => 2, 'warehouse_id' => null, 'product_id' => 13, 'qty' => 10, 'unit_price' => 45000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
         ]);
         $po2Items = $this->db->table('purchase_orders')->where('po_number', $po2Num)->get()->getResultArray();
         $gr2Num = 'GR-' . date('Ymd', strtotime('-5 days')) . '-001';
@@ -347,24 +378,24 @@ class MainSeeder extends Seeder
             $this->applyStockIn($item['product_id'], 2, $item['qty'], 'PURCHASE_RECEIPT', $grId, 'Terima barang PO ' . $po2Num, 3, $d5 . ' 14:15:00');
         }
 
-        // PO 3: Status APPROVED (Menunggu Barang Datang di Gudang Surabaya Timur)
+        // PO 3: Status APPROVED (Menunggu Barang Datang - Gudang Ditentukan saat GR)
         $po3Num = 'PO-' . $n3 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => 3, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => 3, 'product_id' => 24, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => null, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po3Num, 'supplier_id' => 5, 'warehouse_id' => null, 'product_id' => 24, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
         ]);
 
         // PO 4: Status DRAFT (Menunggu Persetujuan Admin / Manajemen)
         $po4Num = 'PO-' . $n1 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => 1, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard besar kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => 1, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
+            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => null, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard besar kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
+            ['po_number' => $po4Num, 'supplier_id' => 3, 'warehouse_id' => null, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
         ]);
 
         // PO 5: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
         $po5Num = 'PO-' . $n8 . '-002';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po5Num, 'supplier_id' => 6, 'warehouse_id' => 1, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier Sentral ATK kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
+            ['po_number' => $po5Num, 'supplier_id' => 6, 'warehouse_id' => null, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier Sentral ATK kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
         ]);
 
         // -------------------------------------------------------------

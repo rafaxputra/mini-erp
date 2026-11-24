@@ -627,16 +627,21 @@
                 </td>
                 <td class="text-center text-secondary font-monospace"><?= esc($p['min_stock']) ?></td>
                 <td class="text-end">
+                  <?php 
+                    $suggestedQty = (int) ($p['max_stock'] ?? 0) > 0 
+                      ? max(1, (int)$p['max_stock'] - ((int)$p['stock_qty'] + (int)($p['active_po_qty'] ?? 0))) 
+                      : max(1, (int)$p['min_stock'] - (int)$p['stock_qty']);
+                  ?>
                   <?php if (! empty($p['active_po_number'])): ?>
                     <div class="d-inline-flex align-items-center gap-1">
                       <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
                         Lihat PO
                       </a>
-                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= max(1, (int) $p['min_stock'] - (int) $p['stock_qty']) ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
+                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
                     </div>
                   <?php else: ?>
-                    <a class="btn btn-sm btn-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= max(1, (int) $p['min_stock'] - (int) $p['stock_qty']) ?>">
+                    <a class="btn btn-sm btn-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">
                       + Buat PO
                     </a>
                   <?php endif; ?>
@@ -727,6 +732,12 @@
     </div>
     <div class="col-auto ms-auto d-print-none">
       <div class="btn-list">
+        <?php if (! empty($pendingPoCount)): ?>
+          <a href="#pendingPoSection" class="btn btn-warning d-inline-flex align-items-center gap-1 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.76 2.75"/></svg>
+            <span class="badge bg-white text-dark me-1"><?= esc($pendingPoCount) ?></span> Butuh ACC PO
+          </a>
+        <?php endif; ?>
         <a href="/reports/purchase" class="btn btn-outline-primary">
           <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/></svg>
           Laporan Pembelian
@@ -802,6 +813,98 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ======================================================================= -->
+<!-- ANTREAN PERSETUJUAN PO UNTUK MANAJER (QUICK APPROVAL) -->
+<!-- ======================================================================= -->
+<div class="card border-0 shadow-sm mb-4" id="pendingPoSection">
+  <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <span class="avatar avatar-sm rounded <?= ! empty($pendingPoCount) ? 'bg-warning-lt text-warning' : 'bg-success-lt text-success' ?>">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/><path d="M9 14l2 2l4 -4"/></svg>
+      </span>
+      <div>
+        <h3 class="card-title m-0 fw-bold">Antrean Persetujuan Pesanan Beli (PO Menunggu ACC)</h3>
+        <div class="text-secondary small">Daftar pengajuan pesanan pembelian dari Staff Purchasing yang membutuhkan persetujuan Anda sebelum diproses gudang.</div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <?php if (! empty($pendingPoCount)): ?>
+        <span class="badge bg-warning-lt fw-bold px-2 py-1"><?= esc($pendingPoCount) ?> PO Perlu Tindakan</span>
+      <?php else: ?>
+        <span class="badge bg-success-lt fw-bold px-2 py-1">Semua PO Sudah Disetujui</span>
+      <?php endif; ?>
+      <a href="/purchase-orders?status=draft" class="btn btn-sm btn-link text-decoration-none">Semua Draft &rarr;</a>
+    </div>
+  </div>
+
+  <?php if (empty($pendingApprovalPOs)): ?>
+    <div class="card-body text-center py-4">
+      <div class="text-success mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+      </div>
+      <div class="h4 mb-1 text-dark fw-semibold">Tidak ada pesanan beli yang menunggu persetujuan</div>
+      <div class="text-secondary small">Seluruh pengajuan pembelian dari staff purchasing telah ditindaklanjuti.</div>
+    </div>
+  <?php else: ?>
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead>
+          <tr>
+            <th style="width: 140px;">No. PO</th>
+            <th style="width: 110px;">Tanggal</th>
+            <th>Pemasok</th>
+            <th>Diajukan Oleh</th>
+            <th class="text-center" style="width: 90px;">Item</th>
+            <th class="text-end" style="width: 160px;">Total Estimasi</th>
+            <th class="text-end" style="width: 220px;">Tindakan Manajer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pendingApprovalPOs as $po): ?>
+          <tr>
+            <td>
+              <a href="/purchase-orders/show/<?= esc($po['id']) ?>" class="fw-bold font-monospace text-primary text-decoration-none">
+                <?= esc($po['po_number']) ?>
+              </a>
+            </td>
+            <td class="text-secondary small font-monospace">
+              <?= date('d M Y', strtotime($po['order_date'])) ?>
+            </td>
+            <td>
+              <div class="fw-semibold text-dark"><?= esc($po['supplier_name']) ?></div>
+              <div class="text-secondary small font-monospace"><?= esc($po['supplier_code']) ?></div>
+            </td>
+            <td>
+              <div class="text-dark small fw-medium"><?= esc($po['creator_name']) ?></div>
+              <div class="text-secondary small"><?= esc(substr($po['created_at'], 0, 16)) ?></div>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-secondary-lt fw-bold"><?= esc($po['total_items']) ?> SKU</span>
+            </td>
+            <td class="text-end font-monospace fw-bold text-dark fs-3">
+              Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex align-items-center gap-1">
+                <a href="/purchase-orders/show/<?= esc($po['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Lihat detail rincian produk & harga">
+                  Review
+                </a>
+                <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menyetujui (ACC) Pesanan Beli <strong><?= esc($po['po_number']) ?></strong> senilai <strong>Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></strong>?" data-confirm-title="Persetujuan Pesanan Beli (ACC)" data-confirm-btn="Ya, Setujui (ACC)" data-confirm-type="primary">
+                  <button type="submit" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+                    Setujui (ACC)
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
 </div>
 
 <div class="row g-3">
@@ -1064,16 +1167,21 @@
                 </td>
                 <td class="text-center text-secondary font-monospace"><?= esc($p['min_stock']) ?></td>
                 <td class="text-end">
+                  <?php 
+                    $suggestedQty = (int) ($p['max_stock'] ?? 0) > 0 
+                      ? max(1, (int)$p['max_stock'] - ((int)$p['stock_qty'] + (int)($p['active_po_qty'] ?? 0))) 
+                      : max(1, (int)$p['min_stock'] - (int)$p['stock_qty']);
+                  ?>
                   <?php if (! empty($p['active_po_number'])): ?>
                     <div class="d-inline-flex align-items-center gap-1">
                       <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
                         Lihat PO
                       </a>
-                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= max(1, (int) $p['min_stock'] - (int) $p['stock_qty']) ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
+                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
                     </div>
                   <?php else: ?>
-                    <a class="btn btn-sm btn-outline-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= max(1, (int) $p['min_stock'] - (int) $p['stock_qty']) ?>">
+                    <a class="btn btn-sm btn-outline-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">
                       Restock
                     </a>
                   <?php endif; ?>

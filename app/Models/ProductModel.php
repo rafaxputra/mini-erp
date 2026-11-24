@@ -8,5 +8,5 @@ class ProductModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['code', 'name', 'category_id', 'unit', 'purchase_price', 'selling_price', 'stock_qty', 'min_stock', 'is_active'];
+    protected $allowedFields = ['code', 'name', 'category_id', 'unit_id', 'unit', 'purchase_price', 'selling_price', 'stock_qty', 'min_stock', 'max_stock', 'is_active'];
 }

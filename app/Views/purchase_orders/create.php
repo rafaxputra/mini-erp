@@ -44,7 +44,7 @@
     </div>
     <div class="card-body">
       <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-7">
           <label class="form-label required">Pemasok</label>
           <select name="supplier_id" class="form-select" required>
             <option value="">-- Pilih Pemasok --</option>
@@ -54,22 +54,14 @@
           </select>
           <div class="form-text">Pemasok yang menyediakan barang untuk pesanan ini.</div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-5">
           <label class="form-label required">Tanggal Pesanan</label>
           <input type="date" name="order_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label required">Gudang Penerima</label>
-          <select name="warehouse_id" class="form-select" required>
-            <?php foreach ($warehouses as $w): ?>
-              <option value="<?= esc($w['id']) ?>" <?= $w['is_default'] ? 'selected' : '' ?>><?= esc($w['name']) ?> (<?= esc($w['code']) ?>)</option>
-            <?php endforeach; ?>
-          </select>
-          <div class="form-text">Gudang penyimpanan fisik barang saat tiba.</div>
+          <div class="form-text text-muted"><span class="badge bg-secondary-lt">Info</span> Gudang penyimpanan fisik ditentukan oleh petugas saat Penerimaan Barang (GR).</div>
         </div>
         <div class="col-12">
           <label class="form-label">Catatan Tambahan</label>
-          <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Pesanan berkala, kirim langsung ke pintu loading dock gudang utama"></textarea>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Contoh: Pesanan rutin berkala ke vendor"></textarea>
         </div>
       </div>
     </div>
@@ -115,21 +107,35 @@
               <select name="product_id[]" class="form-select product-select" required>
                 <option value="">-- Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
-                  <option value="<?= esc($p['id']) ?>" data-price="<?= esc($p['purchase_price']) ?>" <?= ($initProductId && (int)$p['id'] === (int)$initProductId) ? 'selected' : '' ?>><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
+                  <option value="<?= esc($p['id']) ?>" 
+                    data-price="<?= esc($p['purchase_price']) ?>"
+                    data-unit="<?= esc($p['unit']) ?>"
+                    data-stock="<?= (int) $p['stock_qty'] ?>"
+                    data-min-stock="<?= (int) $p['min_stock'] ?>"
+                    data-max-stock="<?= (int) $p['max_stock'] ?>"
+                    data-on-order="<?= (int) $p['on_order_qty'] ?>"
+                    <?= ($initProductId && (int)$p['id'] === (int)$initProductId) ? 'selected' : '' ?>>
+                    <?= esc($p['code']) ?> - <?= esc($p['name']) ?> (Fisik: <?= esc($p['stock_qty']) ?><?= $p['max_stock'] > 0 ? ' / Max: ' . esc($p['max_stock']) : '' ?><?= $p['on_order_qty'] > 0 ? ', On-Order: ' . esc($p['on_order_qty']) : '' ?>)
+                  </option>
                 <?php endforeach; ?>
               </select>
+              <div class="product-info-note small mt-1 text-muted"></div>
             </td>
-            <td>
-              <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="<?= esc($initQty) ?>" required>
+            <td style="vertical-align: top;">
+              <div class="input-group">
+                <input type="number" name="qty[]" class="form-control qty text-center" min="1" value="<?= esc($initQty) ?>" required>
+                <span class="input-group-text unit-label text-muted small">unit</span>
+              </div>
+              <div class="qty-warning small text-danger mt-1 fw-semibold" style="display:none;"></div>
             </td>
-            <td>
+            <td style="vertical-align: top;">
               <div class="input-group">
                 <span class="input-group-text">Rp</span>
                 <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="0" value="<?= $initPrice > 0 ? number_format($initPrice, 0, ',', '.') : '' ?>" required>
               </div>
             </td>
-            <td class="text-end fw-bold subtotal text-dark"><?= $initSubtotal > 0 ? 'Rp ' . number_format($initSubtotal, 0, ',', '.') : 'Rp 0' ?></td>
-            <td class="text-center">
+            <td class="text-end fw-bold subtotal text-dark" style="vertical-align: top; padding-top: 12px;"><?= $initSubtotal > 0 ? 'Rp ' . number_format($initSubtotal, 0, ',', '.') : 'Rp 0' ?></td>
+            <td class="text-center" style="vertical-align: top;">
               <button type="button" class="btn btn-sm btn-outline-danger btn-icon" title="Hapus baris" onclick="removeRow(this)">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
@@ -227,6 +233,66 @@ function updateProductDropdowns() {
   }
 }
 
+function validateRowStock(row) {
+  const sel = row.querySelector('.product-select');
+  const opt = sel.options[sel.selectedIndex];
+  const infoEl = row.querySelector('.product-info-note');
+  const warnEl = row.querySelector('.qty-warning');
+  const unitLabel = row.querySelector('.unit-label');
+  const qtyInput = row.querySelector('.qty');
+
+  if (!opt || !opt.value) {
+    if (infoEl) infoEl.innerHTML = '';
+    if (warnEl) { warnEl.style.display = 'none'; warnEl.textContent = ''; }
+    if (unitLabel) unitLabel.textContent = 'unit';
+    qtyInput.classList.remove('is-invalid');
+    return;
+  }
+
+  const unit = opt.getAttribute('data-unit') || 'unit';
+  const stock = parseInt(opt.getAttribute('data-stock') || '0', 10);
+  const minStock = parseInt(opt.getAttribute('data-min-stock') || '0', 10);
+  const maxStock = parseInt(opt.getAttribute('data-max-stock') || '0', 10);
+  const onOrder = parseInt(opt.getAttribute('data-on-order') || '0', 10);
+  const qty = parseInt(qtyInput.value || '0', 10);
+
+  if (unitLabel) unitLabel.textContent = unit;
+
+  let infoHtml = `Stok fisik: <strong>${stock} ${unit}</strong>`;
+  if (maxStock > 0) {
+    infoHtml += ` &bull; Kapasitas max: <strong>${maxStock} ${unit}</strong>`;
+  }
+  if (onOrder > 0) {
+    infoHtml += ` &bull; <span class="badge bg-warning-lt">PO Aktif: ${onOrder} ${unit}</span>`;
+  }
+  if (infoEl) infoEl.innerHTML = infoHtml;
+
+  if (maxStock > 0) {
+    const totalProjected = stock + onOrder;
+    const availableQuota = Math.max(0, maxStock - totalProjected);
+
+    if (totalProjected >= maxStock) {
+      if (warnEl) {
+        warnEl.style.display = 'block';
+        warnEl.textContent = `Kapasitas penuh! Sudah ${totalProjected} / ${maxStock} ${unit}. Tidak dapat dipesan.`;
+      }
+      qtyInput.classList.add('is-invalid');
+    } else if (qty > availableQuota) {
+      if (warnEl) {
+        warnEl.style.display = 'block';
+        warnEl.textContent = `Melebihi max stok! Sisa kuota pemesanan: ${availableQuota} ${unit}.`;
+      }
+      qtyInput.classList.add('is-invalid');
+    } else {
+      if (warnEl) { warnEl.style.display = 'none'; warnEl.textContent = ''; }
+      qtyInput.classList.remove('is-invalid');
+    }
+  } else {
+    if (warnEl) { warnEl.style.display = 'none'; warnEl.textContent = ''; }
+    qtyInput.classList.remove('is-invalid');
+  }
+}
+
 function bindRowEvents(row) {
   const sel = row.querySelector('.product-select');
   const priceInput = row.querySelector('.price');
@@ -237,6 +303,7 @@ function bindRowEvents(row) {
     const defPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
     priceInput.value = parseInt(defPrice, 10).toLocaleString('id-ID').replace(/,/g, '.');
     updateProductDropdowns();
+    validateRowStock(row);
     recalc();
   });
 
@@ -245,7 +312,12 @@ function bindRowEvents(row) {
     recalc();
   });
 
-  qtyInput.addEventListener('input', recalc);
+  qtyInput.addEventListener('input', function () {
+    validateRowStock(row);
+    recalc();
+  });
+
+  validateRowStock(row);
 }
 
 function removeRow(btn) {
@@ -277,15 +349,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     newRow.querySelector('.product-select').value = '';
     newRow.querySelector('.qty').value = '1';
+    newRow.querySelector('.qty').classList.remove('is-invalid');
     newRow.querySelector('.price').value = '';
     newRow.querySelector('.subtotal').textContent = 'Rp 0';
+    newRow.querySelector('.product-info-note').innerHTML = '';
+    const warn = newRow.querySelector('.qty-warning');
+    if (warn) { warn.style.display = 'none'; warn.textContent = ''; }
 
     tbody.appendChild(newRow);
     bindRowEvents(newRow);
     updateProductDropdowns();
   });
 
-  document.getElementById('poForm').addEventListener('submit', function () {
+  document.getElementById('poForm').addEventListener('submit', function (e) {
+    const hasInvalid = document.querySelector('#detailRows .is-invalid');
+    if (hasInvalid) {
+      e.preventDefault();
+      alert('Terdapat jumlah pemesanan yang melebihi batas stok maksimum produk. Silakan sesuaikan jumlah pesanan terlebih dahulu.');
+      return false;
+    }
+
     document.querySelectorAll('.js-rupiah').forEach(function (inp) {
       inp.value = inp.value.replace(/\./g, '');
     });

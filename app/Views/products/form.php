@@ -43,7 +43,15 @@
             </div>
             <div class="col-md-6">
               <label class="form-label required">Satuan</label>
-              <input type="text" name="unit" class="form-control" placeholder="Contoh: pcs, box, rim, kg" value="<?= esc(old('unit', $item['unit'] ?? 'pcs')) ?>" required>
+              <select name="unit_id" class="form-select" id="unitSelect" required>
+                <option value="">-- Pilih Satuan --</option>
+                <?php foreach ($units as $u): ?>
+                  <option value="<?= esc($u['id']) ?>" data-code="<?= esc($u['code']) ?>" <?= (string) old('unit_id', $item['unit_id'] ?? '') === (string) $u['id'] || (empty($item['unit_id']) && strtolower($item['unit'] ?? '') === strtolower($u['code'])) ? 'selected' : '' ?>>
+                    <?= esc($u['name']) ?> (<?= esc($u['code']) ?>)
+                  </option>
+                <?php endforeach; ?>
+              </select>
+              <div class="form-text">Satuan fisik produk (kelola di menu Data Master &rarr; Satuan).</div>
             </div>
           </div>
 
@@ -67,14 +75,14 @@
           </div>
 
           <div class="row g-3 mb-3">
-            <div class="col-md-6">
+            <div class="col-md-12">
               <?php if (isset($item)): ?>
-                <label class="form-label">Stok Saat Ini (Terkonsolidasi)</label>
+                <label class="form-label">Stok Saat Ini (Terkonsolidasi Seluruh Gudang)</label>
                 <div class="input-group">
                   <input type="text" class="form-control bg-light font-monospace fw-semibold" value="<?= esc($item['stock_qty']) ?> <?= esc($item['unit'] ?? 'unit') ?>" readonly>
                   <a href="/inventory/adjust" class="btn btn-outline-secondary" title="Buka Penyesuaian Stok">Koreksi Stok</a>
                 </div>
-                <div class="form-text text-muted">Stok fisik tidak dapat diedit langsung di master produk agar kartu stok dan mutasi gudang tidak rusak. Gunakan <a href="/inventory/adjust" class="text-decoration-none fw-medium">Penyesuaian Stok</a> untuk koreksi fisik di gudang.</div>
+                <div class="form-text text-muted">Stok fisik tidak dapat diedit langsung di master produk. Gunakan <a href="/inventory/adjust" class="text-decoration-none fw-medium">Penyesuaian Stok</a> untuk koreksi fisik di gudang.</div>
               <?php else: ?>
                 <label class="form-label required">Stok Awal Fisik</label>
                 <input type="number" min="0" name="stock_qty" class="form-control" value="<?= esc(old('stock_qty', 0)) ?>" required>
@@ -82,9 +90,14 @@
               <?php endif; ?>
             </div>
             <div class="col-md-6">
-              <label class="form-label required">Batas Stok Minimum</label>
+              <label class="form-label required">Batas Stok Minimum (Reorder Point)</label>
               <input type="number" min="0" name="min_stock" class="form-control" value="<?= esc(old('min_stock', $item['min_stock'] ?? 5)) ?>" required>
-              <div class="form-text">Peringatan otomatis muncul bila stok mencapai angka ini.</div>
+              <div class="form-text">Peringatan otomatis muncul bila stok mencapai atau di bawah angka ini.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Batas Stok Maksimum (Kapasitas Simpan)</label>
+              <input type="number" min="0" name="max_stock" class="form-control" value="<?= esc(old('max_stock', $item['max_stock'] ?? 0)) ?>" placeholder="0 = Tanpa batas">
+              <div class="form-text">Batas maksimal kapasitas gudang. Saat membuat PO, pemesanan dicegah jika melampaui batas ini (0 = tidak dibatasi).</div>
             </div>
           </div>
 
