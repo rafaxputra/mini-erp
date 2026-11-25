@@ -9,7 +9,7 @@ class Deliveries extends BaseController
 {
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'gudang', 'sales', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pengiriman.')) return $r;
+        if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);

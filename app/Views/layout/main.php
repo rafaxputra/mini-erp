@@ -142,7 +142,9 @@ if ($initials === '') {
               <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
                 <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Pembelian (PO)</a>
               <?php endif; ?>
-              <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
+              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
+                <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
+              <?php endif; ?>
             </div>
           </li>
           <?php endif; ?>
@@ -156,7 +158,9 @@ if ($initials === '') {
               <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
                 <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Penjualan (SO)</a>
               <?php endif; ?>
-              <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman Barang (DO)</a>
+              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
+                <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman Barang (DO)</a>
+              <?php endif; ?>
             </div>
           </li>
           <?php endif; ?>
@@ -167,11 +171,13 @@ if ($initials === '') {
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
               <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
-              <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
+              <?php if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)): ?>
+                <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
+              <?php endif; ?>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('inventory/adjust') ?>" href="/inventory/adjust">Penyesuaian Stok</a><?php endif; ?>
             </div>
           </li>
-          <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
+          <?php if (in_array($role, ['admin', 'manajemen', 'sales'], true)): ?>
           <li class="nav-item">
             <a class="nav-link <?= $navActive('reports') ?>" href="/reports">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -14" /> <path d="M4 20h14" /> </svg></span>

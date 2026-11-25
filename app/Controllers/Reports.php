@@ -12,13 +12,13 @@ class Reports extends BaseController
     }
     public function index()
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/dashboard', 'Hanya Admin dan Manajemen yang bisa melihat laporan.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen', 'sales'], '/dashboard', 'Peran Anda tidak diizinkan melihat laporan.')) return $r;
         [$start, $end] = $this->period();
         return view('reports/index', ['title' => 'Laporan', 'start_date' => $start, 'end_date' => $end]);
     }
     public function purchase()
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/dashboard', 'Hanya Admin dan Manajemen yang bisa melihat laporan.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen'], '/reports', 'Hanya Admin dan Manajemen yang bisa melihat Laporan Pembelian.')) return $r;
         [$start, $end] = $this->period();
         $db = \Config\Database::connect();
         $pos = $db->table('purchase_orders po')->select('po.po_number, po.supplier_id, s.name AS supplier_name, MIN(po.order_date) AS order_date, MIN(po.status) AS status, SUM(po.qty * po.unit_price) AS total_amount')->join('suppliers s', 's.id = po.supplier_id')->where('po.order_date >=', $start)->where('po.order_date <=', $end)->groupBy('po.po_number, po.supplier_id, s.name')->orderBy('order_date', 'DESC')->get()->getResultArray();
@@ -51,7 +51,7 @@ class Reports extends BaseController
     }
     public function sales()
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/dashboard', 'Hanya Admin dan Manajemen yang bisa melihat laporan.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen', 'sales'], '/reports', 'Peran Anda tidak diizinkan melihat Laporan Penjualan.')) return $r;
         [$start, $end] = $this->period();
         $db = \Config\Database::connect();
         $sos = $db->table('sales_orders so')->select('so.so_number, so.customer_id, c.name AS customer_name, MIN(so.order_date) AS order_date, MIN(so.status) AS status, SUM(so.qty * so.unit_price) AS total_amount')->join('customers c', 'c.id = so.customer_id')->where('so.order_date >=', $start)->where('so.order_date <=', $end)->groupBy('so.so_number, so.customer_id, c.name')->orderBy('order_date', 'DESC')->get()->getResultArray();
@@ -84,7 +84,7 @@ class Reports extends BaseController
     }
     public function stock()
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/dashboard', 'Hanya Admin dan Manajemen yang bisa melihat laporan.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen'], '/reports', 'Hanya Admin dan Manajemen yang bisa melihat Laporan Stok.')) return $r;
         [$start, $end] = $this->period();
         $db = \Config\Database::connect();
         $products = $db->table('products p')->select('p.*, c.name AS category_name')->join('categories c', 'c.id = p.category_id')->orderBy('p.code', 'ASC')->get()->getResultArray();
@@ -95,7 +95,7 @@ class Reports extends BaseController
     }
     public function topProducts()
     {
-        if ($r = $this->requireRole(['admin', 'manajemen'], '/dashboard', 'Hanya Admin dan Manajemen yang bisa melihat laporan.')) return $r;
+        if ($r = $this->requireRole(['admin', 'manajemen', 'sales'], '/reports', 'Peran Anda tidak diizinkan melihat Produk Terlaris.')) return $r;
         [$start, $end] = $this->period();
         $db = \Config\Database::connect();
         $items = $db->query("SELECT p.code, p.name, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_sales FROM sales_orders so JOIN products p ON p.id = so.product_id WHERE so.order_date BETWEEN ? AND ? AND so.status <> 'cancelled' GROUP BY p.id, p.code, p.name ORDER BY total_qty DESC LIMIT 10", [$start, $end])->getResultArray();

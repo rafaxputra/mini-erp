@@ -75,6 +75,7 @@ class Inventory extends BaseController
     }
     public function movements()
     {
+        if ($r = $this->requireRole(['admin', 'gudang', 'purchasing', 'manajemen'], '/inventory', 'Peran Anda tidak diizinkan melihat Riwayat/Mutasi Stok.')) return $r;
         $db = \Config\Database::connect();
         $productId = (int) ($this->request->getGet('product_id') ?? 0);
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);

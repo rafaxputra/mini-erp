@@ -32,7 +32,7 @@
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #1d4ed8 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Barang Masuk (GR)</span>
@@ -47,7 +47,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #2fb344 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Barang Terkirim (DO)</span>
@@ -62,7 +62,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Antrean Kirim (SO)</span>
@@ -77,7 +77,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Stok Kritis / Menipis</span>
@@ -289,7 +289,7 @@
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #2fb344 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Omset Bulan Ini</span>
@@ -304,7 +304,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">SO Draf / Menunggu</span>
@@ -319,7 +319,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">SO Terkirim Bulan Ini</span>
@@ -334,7 +334,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #1d4ed8 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pelanggan Aktif</span>
@@ -500,7 +500,7 @@
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Belanja Bulan Ini</span>
@@ -515,7 +515,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PO Draf (Belum Approve)</span>
@@ -530,7 +530,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #1d4ed8 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PO Approved (Menunggu Kirim)</span>
@@ -545,7 +545,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Perlu Restock Kritis</span>
@@ -749,7 +749,7 @@
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #2fb344 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pendapatan Penjualan</span>
@@ -764,7 +764,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pengeluaran Pengadaan</span>
@@ -779,7 +779,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid <?= ($netMargin >= 0) ? '#16a34a' : '#dc2626' ?> !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= ($netMargin >= 0) ? '#16a34a' : '#dc2626' ?> !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Arus Perdagangan Bersih</span>
@@ -796,7 +796,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Valuasi Aset Persediaan</span>
@@ -1074,7 +1074,7 @@
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #1d4ed8 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Katalog Produk</span>
@@ -1089,7 +1089,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Valuasi Stok</span>
@@ -1104,7 +1104,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #2fb344 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Penjualan Bulan Ini</span>
@@ -1119,7 +1119,7 @@
   </div>
 
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
       <div class="card-body p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pengguna Aktif</span>
