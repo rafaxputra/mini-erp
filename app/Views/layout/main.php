@@ -279,7 +279,9 @@ window.alert = function (message) {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Notifikasi Flash message
+  <?php $isAuthPage = ! session()->get('user_id') || ($currentPath === 'auth/login' || $currentPath === 'auth'); ?>
+  <?php if (! $isAuthPage): ?>
+  // Notifikasi Flash message (khusus halaman internal setelah login)
   <?php $verrors = session()->getFlashdata('errors') ?? \Config\Services::validation()->getErrors(); ?>
   <?php if (session()->getFlashdata('success')): ?>
   const Toast = Swal.mixin({
@@ -313,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function () {
     confirmButtonText: 'Perbaiki',
     confirmButtonColor: '#f59e0b'
   });
+  <?php endif; ?>
   <?php endif; ?>
 
   // Interseptor Form Konfirmasi Pengganti confirm() bawaan browser

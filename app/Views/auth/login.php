@@ -6,6 +6,54 @@
       <div class="card-body p-4">
         <h2 class="card-title text-center mb-1">Masuk ke Mini ERP</h2>
         <p class="text-secondary text-center mb-4">Gunakan akun PT Nusantara Distribusi Anda.</p>
+
+        <?php if (session()->getFlashdata('error')): ?>
+          <div class="alert alert-danger alert-dismissible mb-3 shadow-sm" role="alert">
+            <div class="d-flex align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div><?= esc(session()->getFlashdata('error')) ?></div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          </div>
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('info')): ?>
+          <div class="alert alert-info alert-dismissible mb-3 shadow-sm" role="alert">
+            <div class="d-flex align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12.01" y2="8"/><polyline points="11 12 12 12 12 16 13 16"/></svg>
+              <div><?= esc(session()->getFlashdata('info')) ?></div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          </div>
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('success')): ?>
+          <div class="alert alert-success alert-dismissible mb-3 shadow-sm" role="alert">
+            <div class="d-flex align-items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+              <div><?= esc(session()->getFlashdata('success')) ?></div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          </div>
+        <?php endif; ?>
+
+        <?php $loginErrors = session()->getFlashdata('errors'); ?>
+        <?php if (! empty($loginErrors)): ?>
+          <div class="alert alert-warning alert-dismissible mb-3 shadow-sm" role="alert">
+            <div class="d-flex align-items-start">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon me-2 mt-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+              <div>
+                <ul class="mb-0 ps-2">
+                  <?php foreach ((array) $loginErrors as $err): ?>
+                    <li><?= esc($err) ?></li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          </div>
+        <?php endif; ?>
+
         <form action="/auth/login" method="post" id="loginForm">
           <div class="mb-3">
             <label class="form-label">Email</label>
