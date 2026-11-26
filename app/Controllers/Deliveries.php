@@ -166,6 +166,7 @@ class Deliveries extends BaseController
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
+            $stock = new StockService();
             $lines = [];
             foreach ($qtys as $soRowId => $qty) {
                 $qty = (int) $qty;
@@ -181,13 +182,23 @@ class Deliveries extends BaseController
                     $prodName = $prod ? $prod['name'] : ('Produk ' . $soRow['product_id']);
                     throw new \RuntimeException('Jumlah kirim melebihi sisa. ' . $prodName . ' sisa kirim ' . $remaining . ', diminta ' . $qty . '.');
                 }
-                $lines[] = ['sales_order_id' => (int) $soRowId, 'product_id' => (int) $soRow['product_id'], 'qty_delivered' => $qty, 'already_delivered' => $delivered];
+                $freeWhStock = $stock->stockInWarehouse((int) $soRow['product_id'], $warehouseId);
+                $soDeducted = (int) ($db->query("SELECT COALESCE(SUM(qty), 0) AS total FROM stock_movements WHERE reference_type = 'SALES_ORDER' AND movement_type = 'OUT' AND reference_id = ?", [(int) $soRowId])->getRowArray()['total']);
+                $allocatedRemaining = max(0, $soDeducted - $delivered);
+                $readyStock = $allocatedRemaining + $freeWhStock;
+                if ($qty > $readyStock) {
+                    $prod = (new ProductModel())->find((int) $soRow['product_id']);
+                    $prodName = $prod ? $prod['name'] : ('Produk ' . $soRow['product_id']);
+                    $whRow = (new WarehouseModel())->find($warehouseId);
+                    $whName = $whRow ? $whRow['name'] : ('Gudang ' . $warehouseId);
+                    throw new \RuntimeException('Stok ' . $prodName . ' di ' . $whName . ' tidak mencukupi. Stok siap kirim ' . $readyStock . ', diminta ' . $qty . '.');
+                }
+                $lines[] = ['sales_order_id' => (int) $soRowId, 'product_id' => (int) $soRow['product_id'], 'qty_delivered' => $qty, 'already_delivered' => $delivered, 'so_deducted' => $soDeducted];
             }
             if (empty($lines)) {
                 throw new \RuntimeException('Isi minimal satu jumlah kirim yang lebih dari nol.');
             }
             $doNumber = $this->nextNumber('deliveries', 'delivery_number', 'DO', 1004);
-            $stock = new StockService();
             foreach ($lines as $line) {
                 $doRowId = (new DeliveryModel())->insert([
                     'delivery_number' => $doNumber,
@@ -199,9 +210,8 @@ class Deliveries extends BaseController
 
                 // Stok sudah dipotong saat SO dibuat sejumlah stok yang tersedia saat itu.
                 // Jika total pengiriman melebihi yang sudah dipotong di SO (kasus kekurangan stok / backorder yang baru masuk via GR), potong selisihnya sekarang.
-                $soDeducted = (int) ($db->query("SELECT COALESCE(SUM(qty), 0) AS total FROM stock_movements WHERE reference_type = 'SALES_ORDER' AND movement_type = 'OUT' AND reference_id = ?", [$line['sales_order_id']])->getRowArray()['total']);
                 $totalAfter = $line['already_delivered'] + $line['qty_delivered'];
-                $prevCovered = max($soDeducted, $line['already_delivered']);
+                $prevCovered = max($line['so_deducted'], $line['already_delivered']);
                 $extraToDeduct = max(0, $totalAfter - $prevCovered);
                 if ($extraToDeduct > 0) {
                     $stock->deliverStock($line['product_id'], $extraToDeduct, 'SALES_DELIVERY', (int) $doRowId, $this->userId(), 'Kirim SO ' . $so['so_number'], $warehouseId);
