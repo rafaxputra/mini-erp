@@ -102,7 +102,7 @@ $filterActive = ! empty($filterQuery);
                   <form action="/deliveries/complete/<?= esc($it['id']) ?>" method="post" class="d-inline" data-confirm="Tandai pengiriman <strong><?= esc($it['delivery_number']) ?></strong> sudah <strong>Terkirim</strong>?" data-confirm-title="Selesaikan Pengiriman" data-confirm-btn="Ya, Terkirim" data-confirm-type="primary">
                     <button type="submit" class="btn btn-sm btn-success">Selesaikan</button>
                   </form>
-                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="openCancelDoModal(<?= (int) $it['id'] ?>, <?= json_encode($it['delivery_number']) ?>)">Batalkan</button>
+                  <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-do" data-bs-toggle="modal" data-bs-target="#modalCancelDO" data-id="<?= (int) $it['id'] ?>" data-number="<?= esc($it['delivery_number']) ?>">Batalkan</button>
                 <?php else: ?>
                   <span class="text-muted small">-</span>
                 <?php endif; ?>
@@ -160,7 +160,7 @@ $filterActive = ! empty($filterQuery);
         </div>
         <div class="modal-body">
           <div class="alert alert-warning small mb-3">
-            Pembatalan Pengiriman (DO) akan mengembalikan status Pesanan Jual (SO) terkait menjadi <strong>Dikonfirmasi</strong> agar dapat diproses ulang atau diubah oleh Sales.
+            Pembatalan Pengiriman (DO) akan otomatis <strong>membatalkan Pesanan Jual (SO) terkait dan mengembalikan seluruh stok ke gudang</strong>, sehingga Staff Sales dapat langsung membuat SO baru jika pelanggan mengganti atau menambah barang.
           </div>
           <div class="mb-3">
             <label class="form-label required">Alasan Pembatalan</label>
@@ -177,12 +177,19 @@ $filterActive = ! empty($filterQuery);
 </div>
 
 <script>
-function openCancelDoModal(id, doNumber) {
-  document.getElementById('cancelDoNumber').textContent = doNumber;
-  document.getElementById('formCancelDO').action = '/deliveries/cancel/' + id;
-  const modal = new bootstrap.Modal(document.getElementById('modalCancelDO'));
-  modal.show();
-}
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('modalCancelDO');
+  if (modalEl) {
+    modalEl.addEventListener('show.bs.modal', function (event) {
+      const btn = event.relatedTarget;
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const doNumber = btn.getAttribute('data-number');
+      document.getElementById('cancelDoNumber').textContent = doNumber || '';
+      document.getElementById('formCancelDO').action = '/deliveries/cancel/' + id;
+    });
+  }
+});
 </script>
 <?php endif; ?>
 
