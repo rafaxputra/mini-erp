@@ -127,14 +127,15 @@
       </div>
       <div class="card-body">
         <div class="row g-3 mb-3">
+          <?php $minDeliveryDate = max(date('Y-m-d'), (string) $so['order_date']); ?>
           <div class="col-md-4">
             <label class="form-label required">Tanggal Kirim</label>
-            <input type="date" name="delivery_date" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= esc($so['order_date']) ?>" required>
-            <div class="form-text">Minimal sama dengan tanggal pesanan (<?= date('d/m/Y', strtotime($so['order_date'])) ?>). Dapat memilih tanggal mendatang maupun hari Sabtu/Minggu.</div>
+            <input type="date" name="delivery_date" id="deliveryDateInput" class="form-control bg-light" value="<?= date('Y-m-d') ?>" min="<?= esc($minDeliveryDate) ?>" readonly required>
+            <div class="form-text" id="deliveryDateHelp">Terkunci otomatis ke hari ini karena pengiriman langsung dilakukan hari ini.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label required">Status Pengiriman</label>
-            <select name="delivery_status" class="form-select" required>
+            <select name="delivery_status" id="deliveryStatusSelect" class="form-select" required>
               <option value="scheduled">Terjadwal (Jadwalkan Pengiriman)</option>
               <option value="delivered" selected>Terkirim (Langsung Kirim Hari Ini)</option>
             </select>
@@ -244,6 +245,32 @@ function clearAllDelivery() {
     }
   });
 }
+
+(function () {
+  const statusEl = document.getElementById('deliveryStatusSelect');
+  const dateEl = document.getElementById('deliveryDateInput');
+  const helpEl = document.getElementById('deliveryDateHelp');
+  if (!statusEl || !dateEl) return;
+
+  const today = '<?= date('Y-m-d') ?>';
+  const minDateFormatted = '<?= isset($minDeliveryDate) ? date('d/m/Y', strtotime($minDeliveryDate)) : date('d/m/Y') ?>';
+
+  function syncDeliveryDateMode() {
+    if (statusEl.value === 'delivered') {
+      dateEl.value = today;
+      dateEl.readOnly = true;
+      dateEl.classList.add('bg-light');
+      if (helpEl) helpEl.textContent = 'Terkunci otomatis ke hari ini karena pengiriman langsung dilakukan hari ini.';
+    } else {
+      dateEl.readOnly = false;
+      dateEl.classList.remove('bg-light');
+      if (helpEl) helpEl.textContent = 'Pilih tanggal jadwal kirim (minimal ' + minDateFormatted + ', dapat memilih tanggal mendatang maupun hari Sabtu/Minggu).';
+    }
+  }
+
+  statusEl.addEventListener('change', syncDeliveryDateMode);
+  syncDeliveryDateMode();
+})();
 </script>
 
 <?= $this->endSection() ?>

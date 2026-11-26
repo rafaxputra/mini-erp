@@ -146,6 +146,26 @@ class GoodsReceipts extends BaseController
                     'notes' => $this->request->getPost('notes'), 'received_by' => $this->userId(),
                 ], true);
                 $stock->receiveStock($line['product_id'], $line['qty_received'], 'PURCHASE_RECEIPT', (int) $grRowId, $this->userId(), 'Terima PO ' . $po['po_number'], $warehouseId);
+
+                // Tutup notifikasi kekurangan stok (restock_alerts) di gudang ini jika stok baru sudah mencukupi
+                $currentWhStock = $stock->stockInWarehouse($line['product_id'], $warehouseId);
+                $openAlerts = $db->table('restock_alerts')
+                    ->where('product_id', $line['product_id'])
+                    ->where('warehouse_id', $warehouseId)
+                    ->whereIn('status', ['open', 'ordered'])
+                    ->orderBy('created_at', 'ASC')
+                    ->get()
+                    ->getResultArray();
+                $remainingCover = $currentWhStock;
+                foreach ($openAlerts as $al) {
+                    if ($remainingCover >= (int) $al['shortage_qty']) {
+                        $db->table('restock_alerts')->where('id', $al['id'])->update([
+                            'status' => 'resolved',
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                        $remainingCover -= (int) $al['shortage_qty'];
+                    }
+                }
             }
             $poRows = $db->table('purchase_orders')->select('id, qty')->where('po_number', $po['po_number'])->get()->getResultArray();
             $full = true;

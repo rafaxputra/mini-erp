@@ -104,13 +104,30 @@ class Deliveries extends BaseController
                 $it['warehouse_stock'] = $allocatedRemaining + $freeWhStock;
             }
             unset($it);
-            $shortageAlerts = $db->table('restock_alerts ra')
+            $itemsByProduct = [];
+            foreach ($items as $itRow) {
+                $sisaRow = max(0, (int) $itRow['qty'] - (int) $itRow['delivered_qty']);
+                $itemsByProduct[(int) $itRow['product_id']] = [
+                    'sisa' => $sisaRow,
+                    'warehouse_stock' => (int) $itRow['warehouse_stock'],
+                ];
+            }
+
+            $rawAlerts = $db->table('restock_alerts ra')
                 ->select('ra.*, p.code AS product_code, p.name AS product_name')
                 ->join('products p', 'p.id = ra.product_id')
                 ->where('ra.sales_order_number', $so['so_number'])
                 ->whereIn('ra.status', ['open', 'ordered'])
                 ->get()
                 ->getResultArray();
+
+            $shortageAlerts = array_values(array_filter($rawAlerts, static function ($al) use ($itemsByProduct) {
+                $pid = (int) $al['product_id'];
+                if (! isset($itemsByProduct[$pid])) {
+                    return false;
+                }
+                return $itemsByProduct[$pid]['warehouse_stock'] < $itemsByProduct[$pid]['sisa'];
+            }));
         }
         return view('deliveries/create', [
             'title' => 'Buat Pengiriman',
@@ -127,6 +144,9 @@ class Deliveries extends BaseController
         $soId = (int) $this->request->getPost('sales_order_id');
         $deliveryDate = $this->request->getPost('delivery_date');
         $deliveryStatus = $this->request->getPost('delivery_status') === 'scheduled' ? 'scheduled' : 'delivered';
+        if ($deliveryStatus === 'delivered') {
+            $deliveryDate = date('Y-m-d');
+        }
         $qtys = (array) $this->request->getPost('qty_delivered');
         $so = (new SalesOrderModel())->find($soId);
         if (! $so) {
@@ -137,6 +157,9 @@ class Deliveries extends BaseController
         }
         if (! $deliveryDate) {
             return redirect()->back()->withInput()->with('error', 'Tanggal kirim wajib diisi.');
+        }
+        if ($deliveryStatus === 'scheduled' && $deliveryDate < date('Y-m-d')) {
+            return redirect()->back()->withInput()->with('error', 'Tanggal jadwal pengiriman tidak boleh sebelum hari ini.');
         }
         // Kunci gudang pengiriman strictly mengikuti alokasi gudang pada Pesanan Jual (SO)
         $warehouseId = (int) $so['warehouse_id'];
@@ -193,6 +216,7 @@ class Deliveries extends BaseController
                 }
                 if ($full) {
                     $db->table('sales_orders')->where('so_number', $so['so_number'])->update(['status' => 'delivered', 'updated_at' => date('Y-m-d H:i:s')]);
+                    $db->table('restock_alerts')->where('sales_order_number', $so['so_number'])->whereIn('status', ['open', 'ordered'])->update(['status' => 'resolved', 'updated_at' => date('Y-m-d H:i:s')]);
                 }
             }
             $db->transCommit();
