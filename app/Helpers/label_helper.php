@@ -11,6 +11,7 @@ if (! function_exists('status_label')) {
             'received' => 'Diterima',
             'cancelled' => 'Dibatalkan',
             'confirmed' => 'Dikonfirmasi',
+            'revision' => 'Butuh Revisi',
             'scheduled' => 'Terjadwal',
             'delivered' => 'Terkirim',
         ][$status] ?? $status;
@@ -23,6 +24,7 @@ if (! function_exists('status_badge_class')) {
             'draft'     => 'bg-secondary-lt',
             'approved'  => 'bg-azure-lt',
             'confirmed' => 'bg-azure-lt',
+            'revision'  => 'bg-warning-lt',
             'scheduled' => 'bg-warning-lt',
             'received'  => 'bg-success-lt',
             'delivered' => 'bg-success-lt',

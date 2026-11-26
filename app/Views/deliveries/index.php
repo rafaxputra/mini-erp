@@ -2,9 +2,95 @@
 <?= $this->section('content') ?>
 
 <?php 
-$filterQuery = array_filter(['q' => $q ?? '', 'warehouse_id' => $warehouseId ?? 0, 'start_date' => $start_date ?? '', 'end_date' => $end_date ?? ''], static fn ($v) => $v !== '' && $v !== 0); 
-$filterActive = ! empty($filterQuery);
+$curStatus = $status ?? '';
+$filterQuery = array_filter(['q' => $q ?? '', 'status' => $curStatus, 'warehouse_id' => $warehouseId ?? 0, 'start_date' => $start_date ?? '', 'end_date' => $end_date ?? ''], static fn ($v) => $v !== '' && $v !== 0); 
+$filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?? '') !== '' || ($end_date ?? '') !== '';
 ?>
+
+<!-- Tab Status Cepat Pengiriman -->
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <ul class="nav nav-pills gap-1">
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === '' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?<?= http_build_query(array_filter(['q' => $q ?? '', 'warehouse_id' => $warehouseId ?? 0, 'start_date' => $start_date ?? '', 'end_date' => $end_date ?? ''])) ?>">
+        Semua Pengiriman
+        <span class="badge ms-1 <?= $curStatus === '' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['all'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === 'pending_so' ? 'active bg-primary text-white fw-bold' : (! empty($statusCounts['pending_so']) ? 'text-primary fw-bold border border-primary-subtle' : 'text-secondary') ?>" href="/deliveries?status=pending_so">
+        Siap Dikirim (SO Dikonfirmasi)
+        <span class="badge ms-1 <?= $curStatus === 'pending_so' ? 'bg-white text-primary' : (! empty($statusCounts['pending_so']) ? 'bg-primary text-white' : 'bg-secondary-lt') ?>"><?= esc($statusCounts['pending_so'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === 'scheduled' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?status=scheduled">
+        Terjadwal
+        <span class="badge ms-1 <?= $curStatus === 'scheduled' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['scheduled'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === 'delivered' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?status=delivered">
+        Terkirim
+        <span class="badge ms-1 <?= $curStatus === 'delivered' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['delivered'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === 'cancelled' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?status=cancelled">
+        Dibatalkan
+        <span class="badge ms-1 <?= $curStatus === 'cancelled' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['cancelled'] ?? 0) ?></span>
+      </a>
+    </li>
+  </ul>
+</div>
+
+<?php if ($curStatus === 'pending_so'): ?>
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Pesanan Pelanggan (SO) Siap Dikirim</h3>
+  </div>
+  <?php if (empty($pendingSos)): ?>
+    <div class="card-body text-center py-5">
+      <div class="h4 mb-1">Tidak ada Pesanan Jual yang menunggu pengiriman</div>
+      <div class="text-secondary small">Semua pesanan berstatus Dikonfirmasi sudah diproses.</div>
+    </div>
+  <?php else: ?>
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover table-striped">
+        <thead>
+          <tr>
+            <th>Nomor SO</th>
+            <th>Pelanggan</th>
+            <th>Gudang Pengirim</th>
+            <th>Tanggal SO</th>
+            <th class="text-center">Item / Unit</th>
+            <th>Catatan</th>
+            <?php if (session()->get('user_role') === 'gudang'): ?>
+              <th class="text-end">Aksi</th>
+            <?php endif; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($pendingSos as $ps): ?>
+          <tr>
+            <td><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($ps['so_number']) ?></code></td>
+            <td class="fw-semibold text-dark"><?= esc($ps['customer_name'] ?? '-') ?></td>
+            <td><span class="badge bg-secondary-lt"><?= esc($ps['warehouse_name'] ?? '-') ?></span></td>
+            <td class="text-secondary font-monospace text-nowrap"><?= date('d/m/Y', strtotime($ps['order_date'])) ?></td>
+            <td class="text-center text-nowrap"><?= (int) $ps['item_count'] ?> item &bull; <strong><?= (int) $ps['total_qty'] ?></strong> unit</td>
+            <td class="text-secondary small" style="min-width: 220px;"><?= esc($ps['notes'] ?: '-') ?></td>
+            <?php if (session()->get('user_role') === 'gudang'): ?>
+              <td class="text-end text-nowrap">
+                <a href="/deliveries/create?sales_order_id=<?= esc($ps['id']) ?>" class="btn btn-sm btn-primary">Proses Kirim &rarr;</a>
+              </td>
+            <?php endif; ?>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</div>
+<?php else: ?>
 
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-3">
@@ -65,11 +151,11 @@ $filterActive = ! empty($filterQuery);
       <table class="table table-vcenter card-table table-hover table-striped">
         <thead>
           <tr>
-            <th style="width: 140px;">Nomor DO</th>
-            <th style="width: 140px;">Nomor Pesanan Jual</th>
+            <th>Nomor DO</th>
+            <th>Nomor Pesanan Jual</th>
             <th>Gudang Pengirim</th>
-            <th style="width: 115px;">Tanggal Kirim</th>
-            <th style="width: 110px;">Status</th>
+            <th>Tanggal Kirim</th>
+            <th>Status</th>
             <th>Dikirim Oleh</th>
             <th>Catatan</th>
             <?php if (session()->get('user_role') === 'gudang'): ?>
@@ -83,13 +169,18 @@ $filterActive = ! empty($filterQuery);
           $sb = status_badge($doStatus);
         ?>
         <tr class="<?= $doStatus === 'cancelled' ? 'opacity-75' : '' ?>">
-          <td><code class="text-primary font-monospace fw-bold"><?= esc($it['delivery_number']) ?></code></td>
-          <td><code class="text-dark font-monospace"><?= esc($it['so_number']) ?></code></td>
+          <td><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($it['delivery_number']) ?></code></td>
+          <td><code class="text-dark font-monospace text-nowrap"><?= esc($it['so_number']) ?></code></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
-          <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['delivery_date'])) ?></td>
+          <td class="text-secondary font-monospace">
+            <?= date('d/m/Y', strtotime($it['delivery_date'])) ?>
+            <?php if (! empty($it['delivery_time'])): ?>
+              <div class="small text-muted"><?= esc($it['delivery_time']) ?> WIB</div>
+            <?php endif; ?>
+          </td>
           <td><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
           <td class="fw-semibold text-dark"><?= esc($it['deliverer_name']) ?></td>
-          <td class="text-secondary small">
+          <td class="text-secondary small" style="min-width: 220px;">
             <?= esc($it['notes']) ?>
             <?php if ($doStatus === 'cancelled' && ! empty($it['cancel_reason'])): ?>
               <div class="text-danger mt-1"><strong>Alasan Batal:</strong> <?= esc($it['cancel_reason']) ?></div>
@@ -159,12 +250,35 @@ $filterActive = ! empty($filterQuery);
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="alert alert-warning small mb-3">
-            Pembatalan Pengiriman (DO) akan otomatis <strong>membatalkan Pesanan Jual (SO) terkait dan mengembalikan seluruh stok ke gudang</strong>, sehingga Staff Sales dapat langsung membuat SO baru jika pelanggan mengganti atau menambah barang.
+          <div class="mb-3">
+            <label class="form-label required">Pilih Tindakan Lanjutan untuk Pesanan Jual (SO)</label>
+            <div class="form-selectgroup form-selectgroup-boxes d-flex flex-column gap-2">
+              <label class="form-selectgroup-item flex-fill m-0">
+                <input type="radio" name="cancel_type" value="revision" class="form-selectgroup-input" checked>
+                <div class="form-selectgroup-label d-flex align-items-start p-3 text-start">
+                  <div class="me-3"><span class="form-selectgroup-check"></span></div>
+                  <div>
+                    <div class="fw-bold text-dark">Customer Minta Revisi (Ganti / Tambah / Kurang Barang)</div>
+                    <div class="text-secondary small">DO dibatalkan, SO masuk status <strong>Butuh Revisi</strong> agar Staff Sales memperbaiki pesanan sesuai catatan Anda. Stok tetap ditahan sementara.</div>
+                  </div>
+                </div>
+              </label>
+              <label class="form-selectgroup-item flex-fill m-0">
+                <input type="radio" name="cancel_type" value="cancel_order" class="form-selectgroup-input">
+                <div class="form-selectgroup-label d-flex align-items-start p-3 text-start">
+                  <div class="me-3"><span class="form-selectgroup-check"></span></div>
+                  <div>
+                    <div class="fw-bold text-danger">Customer Batal Total / Menolak Barang</div>
+                    <div class="text-secondary small">DO dan SO otomatis <strong>Dibatalkan</strong>, serta seluruh stok langsung dikembalikan ke gudang.</div>
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
           <div class="mb-3">
-            <label class="form-label required">Alasan Pembatalan</label>
-            <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Contoh: Pelanggan meminta ganti/tambah barang pada pesanan" required></textarea>
+            <label class="form-label required">Catatan / Alasan Pembatalan</label>
+            <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Contoh: Customer minta tambah pulpen 5 pack / Customer batal beli karena pindah kantor" required></textarea>
+            <div class="form-text">Pesan ini akan tampil di halaman detail SO untuk dibaca Staff Sales.</div>
           </div>
         </div>
         <div class="modal-footer">
@@ -191,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+<?php endif; ?>
 <?php endif; ?>
 
 <?= $this->endSection() ?>

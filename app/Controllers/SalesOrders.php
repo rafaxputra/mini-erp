@@ -13,7 +13,7 @@ class SalesOrders extends BaseController
         $status = (string) ($this->request->getGet('status') ?? '');
         $start = (string) ($this->request->getGet('start_date') ?? '');
         $end = (string) ($this->request->getGet('end_date') ?? '');
-        $statuses = ['draft', 'confirmed', 'delivered', 'cancelled'];
+        $statuses = ['draft', 'revision', 'confirmed', 'delivered', 'cancelled'];
         if (! in_array($status, $statuses, true)) $status = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
@@ -29,6 +29,7 @@ class SalesOrders extends BaseController
         $statusCounts = [
             'all' => (int) $db->table('sales_orders')->select('so_number')->distinct()->countAllResults(),
             'draft' => (int) $db->table('sales_orders')->where('status', 'draft')->select('so_number')->distinct()->countAllResults(),
+            'revision' => (int) $db->table('sales_orders')->where('status', 'revision')->select('so_number')->distinct()->countAllResults(),
             'confirmed' => (int) $db->table('sales_orders')->where('status', 'confirmed')->select('so_number')->distinct()->countAllResults(),
             'delivered' => (int) $db->table('sales_orders')->where('status', 'delivered')->select('so_number')->distinct()->countAllResults(),
             'cancelled' => (int) $db->table('sales_orders')->where('status', 'cancelled')->select('so_number')->distinct()->countAllResults(),
@@ -208,7 +209,7 @@ class SalesOrders extends BaseController
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         $db = \Config\Database::connect();
         $items = $db->table('sales_orders so')->select('so.id, so.product_id, so.qty, so.unit_price, (so.qty * so.unit_price) AS subtotal, p.code, p.name AS product_name, p.unit, p.stock_qty, COALESCE((SELECT SUM(d.qty_delivered) FROM deliveries d WHERE d.sales_order_id = so.id AND d.status <> \'cancelled\'), 0) AS delivered_qty')->join('products p', 'p.id = so.product_id')->where('so.so_number', $so['so_number'])->orderBy('so.id', 'ASC')->get()->getResultArray();
-        $deliveries = $db->table('deliveries d')->select('MIN(d.id) AS id, d.delivery_number, MIN(d.delivery_date) AS delivery_date, MIN(d.status) AS status, MIN(d.cancel_reason) AS cancel_reason')->whereIn('d.sales_order_id', array_column($items, 'id'))->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
+        $deliveries = $db->table('deliveries d')->select('MIN(d.id) AS id, d.delivery_number, MIN(d.delivery_date) AS delivery_date, MIN(d.delivery_time) AS delivery_time, MIN(d.status) AS status, MIN(d.cancel_reason) AS cancel_reason')->whereIn('d.sales_order_id', array_column($items, 'id'))->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
         return view('sales_orders/show', ['title' => 'Detail Pesanan Jual', 'so' => $so, 'items' => $items, 'deliveries' => $deliveries]);
     }
     public function confirm($id)
@@ -310,5 +311,235 @@ class SalesOrders extends BaseController
             return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Gagal membatalkan Pesanan Jual: ' . $e->getMessage());
         }
         return redirect()->to('/sales-orders/show/' . $id)->with('success', 'Pesanan Jual berhasil dibatalkan dan stok yang telah dialokasikan sudah dikembalikan.');
+    }
+
+    public function edit($id)
+    {
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa merevisi Pesanan Jual.')) return $r;
+        $so = $this->soById((int) $id);
+        if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
+        if (! in_array($so['status'], ['draft', 'confirmed', 'revision'], true)) {
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Hanya SO berstatus Draf, Dikonfirmasi, atau Butuh Revisi yang dapat direvisi.');
+        }
+
+        $db = \Config\Database::connect();
+        $doCount = $db->table('deliveries d')
+            ->join('sales_orders so', 'so.id = d.sales_order_id')
+            ->where('so.so_number', $so['so_number'])
+            ->where('d.status <>', 'cancelled')
+            ->countAllResults();
+        if ($doCount > 0) {
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'SO ini sudah memiliki Pengiriman (DO) aktif. Minta Staff Gudang membatalkan DO terlebih dahulu sebelum merevisi SO.');
+        }
+
+        $items = $db->table('sales_orders so')
+            ->select('so.id, so.product_id, so.qty, so.unit_price')
+            ->where('so.so_number', $so['so_number'])
+            ->orderBy('so.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $stockRows = $db->query('SELECT DISTINCT ON (warehouse_id, product_id) warehouse_id, product_id, qty_after FROM stock_movements ORDER BY warehouse_id, product_id, created_at DESC, id DESC')->getResultArray();
+        $warehouseStocks = [];
+        foreach ($stockRows as $sr) {
+            $warehouseStocks[(int) $sr['warehouse_id']][(int) $sr['product_id']] = (int) $sr['qty_after'];
+        }
+
+        // Tambahkan kembali stok yang sudah dialokasikan oleh SO ini ke tampilan stok gudang agar sales melihat kapasitas riil untuk revisi
+        $soRowIds = array_column($items, 'id');
+        if (! empty($soRowIds)) {
+            $allocatedMovements = $db->table('stock_movements')
+                ->where('reference_type', 'SALES_ORDER')
+                ->where('movement_type', 'OUT')
+                ->whereIn('reference_id', $soRowIds)
+                ->get()
+                ->getResultArray();
+            foreach ($allocatedMovements as $mov) {
+                $wh = (int) $mov['warehouse_id'];
+                $pid = (int) $mov['product_id'];
+                $warehouseStocks[$wh][$pid] = ($warehouseStocks[$wh][$pid] ?? 0) + (int) $mov['qty'];
+            }
+        }
+
+        return view('sales_orders/edit', [
+            'title' => 'Revisi Pesanan Jual ' . $so['so_number'],
+            'so' => $so,
+            'items' => $items,
+            'customers' => (new CustomerModel())->orderBy('name', 'ASC')->findAll(),
+            'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(),
+            'products' => (new ProductModel())->where('is_active', true)->orderBy('code', 'ASC')->findAll(),
+            'warehouseStocks' => $warehouseStocks,
+        ]);
+    }
+
+    public function update($id)
+    {
+        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa merevisi Pesanan Jual.')) return $r;
+        $so = (new SalesOrderModel())->find((int) $id);
+        if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
+        if (! in_array($so['status'], ['draft', 'confirmed', 'revision'], true)) {
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Hanya SO berstatus Draf, Dikonfirmasi, atau Butuh Revisi yang dapat direvisi.');
+        }
+
+        $db = \Config\Database::connect();
+        $activeDoCount = $db->table('deliveries d')
+            ->join('sales_orders so', 'so.id = d.sales_order_id')
+            ->where('so.so_number', $so['so_number'])
+            ->where('d.status <>', 'cancelled')
+            ->countAllResults();
+        if ($activeDoCount > 0) {
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'SO ini sudah memiliki Pengiriman (DO) aktif. Minta Staff Gudang membatalkan DO terlebih dahulu sebelum merevisi SO.');
+        }
+
+        $customerId = (int) $this->request->getPost('customer_id');
+        $warehouseId = $this->resolveWarehouseId((int) $this->request->getPost('warehouse_id'));
+        $orderDate = $this->request->getPost('order_date');
+        $productIds = (array) $this->request->getPost('product_id');
+        $qtys = (array) $this->request->getPost('qty');
+        $prices = (array) $this->request->getPost('unit_price');
+        $errors = [];
+        if (! $customerId) $errors[] = 'Pelanggan wajib dipilih.';
+        if (! $orderDate) $errors[] = 'Tanggal pesanan wajib diisi.';
+        if (empty($productIds)) $errors[] = 'Minimal satu detail produk wajib diisi.';
+        if ($errors) {
+            return redirect()->back()->withInput()->with('errors', $errors);
+        }
+
+        $db->transBegin();
+        try {
+            $stockSvc = new \App\Libraries\StockService();
+
+            // 1. Kembalikan seluruh alokasi stok lama dari SO ini sebelum menghitung ulang item baru
+            $oldRows = $db->table('sales_orders')->select('id')->where('so_number', $so['so_number'])->get()->getResultArray();
+            $oldRowIds = array_column($oldRows, 'id');
+            if (! empty($oldRowIds)) {
+                $oldMovements = $db->table('stock_movements')
+                    ->where('reference_type', 'SALES_ORDER')
+                    ->where('movement_type', 'OUT')
+                    ->whereIn('reference_id', $oldRowIds)
+                    ->get()
+                    ->getResultArray();
+                foreach ($oldMovements as $mov) {
+                    $stockSvc->receiveStock(
+                        (int) $mov['product_id'],
+                        (int) $mov['qty'],
+                        'CANCEL_SALES_ORDER',
+                        (int) $mov['reference_id'],
+                        $this->userId(),
+                        'Revisi ' . $so['so_number'] . ' (kembalikan alokasi lama)',
+                        (int) $mov['warehouse_id']
+                    );
+                }
+            }
+
+            // Tutup notifikasi kekurangan stok lama milik SO ini
+            $db->table('restock_alerts')
+                ->where('sales_order_number', $so['so_number'])
+                ->whereIn('status', ['open', 'ordered'])
+                ->update(['status' => 'cancelled', 'updated_at' => date('Y-m-d H:i:s')]);
+
+            // 2. Validasi seluruh item baru setelah stok lama dikembalikan
+            $lines = [];
+            $seen = [];
+            foreach ($productIds as $i => $pid) {
+                $pid = (int) $pid;
+                $qty = (int) ($qtys[$i] ?? 0);
+                $rawPrice = (string) ($prices[$i] ?? '0');
+                $price = (float) str_replace(['.', ','], ['', '.'], $rawPrice);
+                $row = $i + 1;
+                if ($pid <= 0) {
+                    throw new \RuntimeException('Baris ' . $row . ': produk wajib dipilih.');
+                }
+                $prod = (new ProductModel())->find($pid);
+                if (! $prod) {
+                    throw new \RuntimeException('Baris ' . $row . ': produk tidak ditemukan.');
+                }
+                $prodName = $prod['name'] . ' (' . $prod['code'] . ')';
+                if ($qty <= 0) {
+                    throw new \RuntimeException($prodName . ': jumlah harus lebih dari nol, diisi ' . $qty . '.');
+                }
+                if ($price < 0) {
+                    throw new \RuntimeException($prodName . ': harga satuan tidak boleh negatif, diisi ' . $price . '.');
+                }
+                if ($price < (float) $prod['purchase_price']) {
+                    $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');
+                    $priceFmt = 'Rp ' . number_format($price, 0, ',', '.');
+                    throw new \RuntimeException("{$prodName}: harga satuan jual ({$priceFmt}) tidak boleh di bawah harga modal beli perusahaan ({$minFmt}).");
+                }
+                $availInWh = $stockSvc->stockInWarehouse($pid, $warehouseId);
+                $deductQty = min($qty, max(0, $availInWh));
+                $shortageQty = max(0, $qty - $deductQty);
+                if (isset($seen[$pid])) {
+                    throw new \RuntimeException($prodName . ' hanya boleh sekali dalam satu SO.');
+                }
+                $seen[$pid] = true;
+                $lines[] = [
+                    'product_id' => $pid,
+                    'qty' => $qty,
+                    'unit_price' => $price,
+                    'avail_qty' => max(0, $availInWh),
+                    'deduct_qty' => $deductQty,
+                    'shortage_qty' => $shortageQty,
+                ];
+            }
+
+            if (empty($lines)) {
+                throw new \RuntimeException('Minimal satu detail produk wajib diisi.');
+            }
+
+            // 3. Hapus baris lama (bersihkan dulu baris DO yang sudah dibatalkan agar tidak terhalang FK) dan simpan baris baru
+            if (! empty($oldRowIds)) {
+                $db->table('deliveries')->whereIn('sales_order_id', $oldRowIds)->where('status', 'cancelled')->delete();
+            }
+            $db->table('sales_orders')->where('so_number', $so['so_number'])->delete();
+
+            $newStatus = $so['status'] === 'revision' ? 'confirmed' : $so['status'];
+            $firstId = 0;
+            $hasShortage = false;
+            foreach ($lines as $line) {
+                $newRowId = (new SalesOrderModel())->insert([
+                    'so_number' => $so['so_number'],
+                    'customer_id' => $customerId,
+                    'warehouse_id' => $warehouseId,
+                    'product_id' => $line['product_id'],
+                    'qty' => $line['qty'],
+                    'unit_price' => $line['unit_price'],
+                    'order_date' => $orderDate,
+                    'status' => $newStatus,
+                    'notes' => $this->request->getPost('notes'),
+                    'created_by' => $so['created_by'],
+                ], true);
+                if (! $firstId) $firstId = (int) $newRowId;
+
+                if ($line['deduct_qty'] > 0) {
+                    $stockSvc->deliverStock($line['product_id'], $line['deduct_qty'], 'SALES_ORDER', (int) $newRowId, $this->userId(), 'Revisi Pesanan Jual ' . $so['so_number'], $warehouseId);
+                }
+
+                if ($line['shortage_qty'] > 0) {
+                    $hasShortage = true;
+                    $db->table('restock_alerts')->insert([
+                        'sales_order_number' => $so['so_number'],
+                        'product_id' => $line['product_id'],
+                        'warehouse_id' => $warehouseId,
+                        'requested_qty' => $line['qty'],
+                        'available_qty' => $line['avail_qty'],
+                        'shortage_qty' => $line['shortage_qty'],
+                        'status' => 'open',
+                        'created_by' => $this->userId(),
+                        'created_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+
+            $db->transCommit();
+            $msg = $hasShortage
+                ? 'Revisi Pesanan Jual ' . $so['so_number'] . ' berhasil disimpan. Stok diperbarui dan notifikasi kekurangan baru dikirim ke Purchasing.'
+                : 'Revisi Pesanan Jual ' . $so['so_number'] . ' berhasil disimpan dan stok gudang otomatis disesuaikan.';
+            return redirect()->to('/sales-orders/show/' . $firstId)->with('success', $msg);
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
     }
 }

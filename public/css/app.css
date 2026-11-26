@@ -229,3 +229,374 @@
   box-shadow: 0 10px 22px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04) !important;
 }
 
+/* =====================================================================
+   PRESENTATION-READY VISUAL & UX OVERHAUL (DRASTIC HIGH-CONTRAST)
+   ===================================================================== */
+:root {
+  --tblr-primary: #2563eb;
+  --tblr-primary-rgb: 37, 99, 235;
+  --tblr-body-bg: #eef2f7;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.96rem;
+  color: #0f172a;
+  background-color: #eef2f7 !important;
+}
+
+.navbar-vertical {
+  background: linear-gradient(180deg, #090d1a 0%, #111827 55%, #1e1b4b 100%) !important;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.22) !important;
+}
+
+.navbar-vertical .nav-item .nav-link {
+  font-size: 0.95rem !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
+  margin: 0.1rem 0.5rem;
+  border-radius: 8px;
+}
+
+.navbar-vertical .nav-item .nav-link.active,
+.navbar-vertical .dropdown-item.active {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.08) 100%) !important;
+  color: #fbbf24 !important;
+  border-left: 3px solid #f59e0b !important;
+  font-weight: 700 !important;
+}
+
+.card {
+  border-radius: 14px !important;
+  border: 1px solid #dbe2ea !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+  background-color: #ffffff !important;
+}
+
+.card-header {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.card-title {
+  font-size: 1.08rem !important;
+  color: #0f172a !important;
+}
+
+.page-title {
+  font-size: 1.7rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em;
+  color: #0f172a !important;
+}
+
+.h1, .h2 {
+  letter-spacing: -0.02em;
+}
+
+.btn {
+  border-radius: 9px !important;
+  font-weight: 600 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25) !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35) !important;
+}
+
+.form-control, .form-select {
+  background-color: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  color: #0f172a !important;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Kotak Info Angka Read-Only (Stok Gudang, Stok Total, Maks Kapasitas) */
+.readonly-stat-box {
+  background-color: #f1f5f9 !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  font-variant-numeric: tabular-nums;
+  cursor: default !important;
+  pointer-events: none;
+  box-shadow: none !important;
+}
+.readonly-stat-box.is-stock-ok {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+.readonly-stat-box.is-stock-empty {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+/* Input Group & Tabel Angka */
+.input-group-text {
+  background-color: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.375rem 0.75rem !important;
+}
+.input-group > .form-control:not(:last-child),
+.input-group > .form-select:not(:last-child) {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.input-group > .form-control:not(:first-child),
+.input-group > .form-select:not(:first-child) {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+.input-group > .input-group-text:first-child {
+  border-top-left-radius: 8px !important;
+  border-bottom-left-radius: 8px !important;
+  border-right: 0 !important;
+}
+.input-group > .input-group-text:last-child {
+  border-top-right-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  border-left: 0 !important;
+}
+.input-group-flat .input-group-text {
+  background-color: #ffffff !important;
+  padding: 0 0.65rem !important;
+}
+#togglePassword {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  line-height: 1;
+}
+.form-control:not(textarea):not(.form-control-sm):not(.form-control-lg),
+.form-select:not(.form-select-sm):not(.form-select-lg) {
+  min-height: 40px;
+}
+.table-responsive thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.table-bordered > :not(caption) > * > * {
+  border-color: #e2e8f0 !important;
+}
+/* Low-glare table breathing room & calm neutral badges */
+.table > :not(caption) > * > * {
+  padding: 0.72rem 0.75rem;
+}
+.badge.bg-secondary-lt {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0;
+}
+kbd.erp-kbd {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+/* Visual Progress Stepper untuk Detail SO / PO / DO */
+.erp-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  overflow-x: auto;
+}
+.erp-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 130px;
+  position: relative;
+}
+.erp-step:not(:last-child)::after {
+  content: "";
+  flex: 1;
+  height: 2.5px;
+  background: #e2e8f0;
+  margin-left: 0.5rem;
+  border-radius: 2px;
+}
+.erp-step.is-done:not(:last-child)::after {
+  background: #22c55e;
+}
+.erp-step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+}
+.erp-step.is-done .erp-step-dot {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #22c55e;
+}
+.erp-step.is-active .erp-step-dot {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+.erp-step.is-warn .erp-step-dot {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.16);
+}
+.erp-step.is-danger .erp-step-dot {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #ef4444;
+}
+.erp-step-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+.erp-step.is-done .erp-step-label { color: #15803d; }
+.erp-step.is-active .erp-step-label { color: #1d4ed8; font-weight: 700; }
+.erp-step.is-warn .erp-step-label { color: #b45309; font-weight: 700; }
+.erp-step.is-danger .erp-step-label { color: #b91c1c; font-weight: 700; }
+.card-footer {
+  background-color: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  border-bottom-left-radius: 14px !important;
+  border-bottom-right-radius: 14px !important;
+}
+.page-pretitle {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important;
+}
+.badge {
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+}
+.qty, .price, .subtotal, #totalAmount {
+  font-variant-numeric: tabular-nums;
+}
+
+.table thead th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #334155;
+  background-color: #f8fafc;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+/* Tom Select Searchable Dropdown Integration (Solid & Never Transparent) */
+.ts-wrapper.form-select,
+.ts-wrapper.form-select-sm {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.ts-wrapper.single .ts-control {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  min-height: 40px !important;
+  padding: 0.45rem 2rem 0.45rem 0.75rem !important;
+  font-size: 0.94rem !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  display: flex;
+  align-items: center;
+}
+.ts-wrapper.single.focus .ts-control {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+.ts-wrapper.form-select-sm .ts-control {
+  min-height: 32px !important;
+  padding: 0.25rem 1.75rem 0.25rem 0.55rem !important;
+  font-size: 0.85rem !important;
+}
+.ts-dropdown {
+  background-color: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16) !important;
+  z-index: 9999 !important;
+  color: #0f172a !important;
+}
+.ts-dropdown .option {
+  padding: 0.55rem 0.85rem !important;
+  font-size: 0.92rem !important;
+}
+.ts-dropdown .active {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 600 !important;
+}
+
+/* Print / Export PDF Styling */
+@media print {
+  .navbar-vertical,
+  .d-print-none,
+  .btn,
+  form,
+  .input-icon {
+    display: none !important;
+  }
+  .page-wrapper {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    break-inside: avoid;
+  }
+}
+

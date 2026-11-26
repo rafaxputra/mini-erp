@@ -77,6 +77,7 @@ class Inventory extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'gudang', 'purchasing', 'manajemen'], '/inventory', 'Peran Anda tidak diizinkan melihat Riwayat/Mutasi Stok.')) return $r;
         $db = \Config\Database::connect();
+        $q = trim((string) ($this->request->getGet('q') ?? ''));
         $productId = (int) ($this->request->getGet('product_id') ?? 0);
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
         $movementType = strtoupper(trim((string) ($this->request->getGet('movement_type') ?? '')));
@@ -89,6 +90,12 @@ class Inventory extends BaseController
             ->join('users u', 'u.id = sm.created_by')
             ->join('warehouses w', 'w.id = sm.warehouse_id');
 
+        if ($q !== '') {
+            $builder->groupStart()
+                ->like('p.code', $q, 'both', null, true)
+                ->orLike('p.name', $q, 'both', null, true)
+                ->groupEnd();
+        }
         if ($productId > 0) $builder->where('sm.product_id', $productId);
         if ($warehouseId > 0) $builder->where('sm.warehouse_id', $warehouseId);
         if (in_array($movementType, ['IN', 'OUT', 'ADJUSTMENT'], true)) $builder->where('sm.movement_type', $movementType);
@@ -103,55 +110,12 @@ class Inventory extends BaseController
             'items' => $items,
             'products' => (new ProductModel())->orderBy('code', 'ASC')->findAll(),
             'warehouses' => $warehouses,
+            'q' => $q,
             'product_id' => $productId,
             'warehouse_id' => $warehouseId,
             'movement_type' => $movementType,
             'start_date' => $start,
             'end_date' => $end,
         ]);
-    }
-    public function adjust()
-    {
-        if ($r = $this->requireRole(['admin'], '/inventory', 'Hanya admin yang bisa mencatat penyesuaian stok.')) return $r;
-        $db = \Config\Database::connect();
-        $products = (new ProductModel())->orderBy('code', 'ASC')->findAll();
-        $warehouses = (new WarehouseModel())->orderBy('id', 'ASC')->findAll();
-
-        $stockRows = $db->query('SELECT DISTINCT ON (warehouse_id, product_id) warehouse_id, product_id, qty_after FROM stock_movements ORDER BY warehouse_id, product_id, created_at DESC, id DESC')->getResultArray();
-        $warehouseStocks = [];
-        foreach ($stockRows as $sr) {
-            $warehouseStocks[(int) $sr['warehouse_id']][(int) $sr['product_id']] = (int) $sr['qty_after'];
-        }
-
-        return view('inventory/adjust', [
-            'title' => 'Koreksi Stok',
-            'products' => $products,
-            'warehouses' => $warehouses,
-            'warehouseStocks' => $warehouseStocks,
-        ]);
-    }
-    public function adjustPost()
-    {
-        if ($r = $this->requireRole(['admin'], '/inventory', 'Hanya admin yang bisa mencatat penyesuaian stok.')) return $r;
-        $productId = (int) $this->request->getPost('product_id');
-        $warehouseId = (int) $this->request->getPost('warehouse_id');
-        $direction = $this->request->getPost('direction');
-        $qty = (int) $this->request->getPost('qty');
-        $notes = trim((string) $this->request->getPost('notes'));
-        $errors = [];
-        if ($productId <= 0) $errors[] = 'Produk wajib dipilih.';
-        $warehouseId = $this->resolveWarehouseId($warehouseId);
-        if ($direction !== 'IN' && $direction !== 'OUT') $errors[] = 'Arah penyesuaian wajib dipilih (Masuk atau Keluar).';
-        if ($qty <= 0) $errors[] = 'Jumlah penyesuaian harus lebih dari nol, diisi ' . $qty . '.';
-        if ($notes === '') $errors[] = 'Alasan penyesuaian wajib diisi.';
-        if ($errors) {
-            return redirect()->back()->withInput()->with('errors', $errors);
-        }
-        try {
-            (new StockService())->adjustStock($productId, $qty, $direction, $this->userId(), $notes, $warehouseId);
-            return redirect()->to('/inventory/movements?product_id=' . $productId)->with('success', 'Penyesuaian stok berhasil disimpan dan tercatat sebagai mutasi.');
-        } catch (\Throwable $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
-        }
     }
 }

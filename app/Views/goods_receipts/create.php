@@ -23,21 +23,21 @@
             <form action="/goods-receipts/create" method="get">
               <div class="mb-3">
                 <label class="form-label required">Nomor Pesanan Beli (Status Disetujui)</label>
-                <select name="purchase_order_id" class="form-select" required>
-                  <option value="">-- Pilih Pesanan Beli --</option>
+                <select name="purchase_order_id" class="form-select js-searchable" onchange="if(this.value) this.form.submit();" required>
+                  <option value="">-- Ketik Nomor PO atau Nama Pemasok --</option>
                   <?php foreach ($pos as $p): ?>
                     <option value="<?= esc($p['id']) ?>">
-                      <?= esc($p['po_number']) ?> - Tanggal: <?= esc($p['order_date']) ?>
+                      <?= esc($p['po_number']) ?> — <?= esc($p['supplier_name'] ?? '-') ?> (<?= date('d/m/Y', strtotime($p['order_date'])) ?> • <?= (int) ($p['item_count'] ?? 0) ?> item, <?= (int) ($p['total_qty'] ?? 0) ?> unit)
                     </option>
                   <?php endforeach; ?>
                 </select>
                 <div class="form-text text-secondary mt-1">
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1 text-info" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z"/></svg>
-                  Hanya Pesanan Beli dengan status <strong>Disetujui</strong> yang dapat diproses penerimaan barangnya di gudang.
+                  Pilih Pesanan Beli berstatus <strong>Disetujui</strong> — daftar barang akan langsung terbuka otomatis.
                 </div>
               </div>
               <div class="d-flex justify-content-end gap-2">
-                <a href="/goods-receipts" class="btn btn-secondary">Batal</a>
+                <a href="/goods-receipts" class="btn btn-outline-secondary">Batal</a>
                 <button class="btn btn-primary" type="submit">
                   Lanjutkan Penerimaan
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg>

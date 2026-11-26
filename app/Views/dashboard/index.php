@@ -1,96 +1,242 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
-<?php $userRole = $role ?? session()->get('user_role'); ?>
+<?php
+$userRole = $role ?? session()->get('user_role');
+$pType = $periodType ?? 'month';
+$pYear = (int) ($year ?? date('Y'));
+$pMonth = (int) ($month ?? date('m'));
+$pWeek = $weekStart ?? date('Y-m-d', strtotime('monday this week'));
+$pLabel = $periodLabel ?? date('F Y');
+$exportQueryBase = http_build_query([
+    'period_type' => $pType,
+    'year' => $pYear,
+    'month' => $pMonth,
+    'week_start' => $pWeek,
+]);
+$monthNames = [
+    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+];
+
+$roleMeta = match ($userRole) {
+    'gudang' => [
+        'pretitle' => 'Operasional Pergudangan',
+        'pretitleClass' => 'text-primary',
+        'title' => 'Ringkasan Gudang & Pengiriman',
+        'subtitle' => 'Pantau barang yang baru tiba dari pemasok, jadwal pengiriman ke pelanggan, dan ketersediaan fisik barang.',
+        'pdfOptions' => [
+            'summary'   => ['label' => 'Ringkasan Operasional Gudang', 'checked' => true],
+            'stock'     => ['label' => 'Daftar Stok Fisik Produk (Tanpa Harga)', 'checked' => true],
+            'low_stock' => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+        ],
+    ],
+    'sales' => [
+        'pretitle' => 'Penjualan & Layanan Pelanggan',
+        'pretitleClass' => 'text-success',
+        'title' => 'Dashboard & Laporan Penjualan',
+        'subtitle' => 'Pantau total penjualan, produk paling diminati, serta status pesanan pelanggan.',
+        'pdfOptions' => [
+            'summary'      => ['label' => 'Ringkasan Kinerja Penjualan (KPI)', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
+            'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => true],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => false],
+        ],
+    ],
+    'purchasing' => [
+        'pretitle' => 'Pengadaan & Pemasok',
+        'pretitleClass' => 'text-azure',
+        'title' => 'Dashboard & Laporan Pembelian',
+        'subtitle' => 'Pantau kebutuhan restok barang dari gudang/penjualan serta belanja ke pemasok.',
+        'pdfOptions' => [
+            'summary'   => ['label' => 'Ringkasan Pengadaan & Pembelian (KPI)', 'checked' => true],
+            'purchase'  => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'stock'     => ['label' => 'Daftar Stok Produk & Nilai Persediaan', 'checked' => false],
+            'low_stock' => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+        ],
+    ],
+    'manajemen' => [
+        'pretitle' => 'Ringkasan Bisnis & Pelaporan',
+        'pretitleClass' => 'text-primary',
+        'title' => 'Dashboard Eksekutif',
+        'subtitle' => 'Pantau hasil penjualan, pengeluaran belanja barang, nilai stok di gudang, serta persetujuan pembelian dalam satu layar.',
+        'pdfOptions' => [
+            'summary'      => ['label' => 'Ringkasan Eksekutif (KPI Utama)', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
+            'purchase'     => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => true],
+            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Aset', 'checked' => false],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+        ],
+    ],
+    default => [
+        'pretitle' => 'Tata Kelola Sistem & Master Data',
+        'pretitleClass' => 'text-primary',
+        'title' => 'Dashboard Administrator',
+        'subtitle' => 'Kelola katalog produk, satuan, kategori, gudang, serta pengaturan pengguna dan hak akses.',
+        'pdfOptions' => [
+            'summary'      => ['label' => 'Ringkasan Eksekutif (KPI Utama)', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
+            'purchase'     => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => false],
+            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Aset', 'checked' => true],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+        ],
+    ],
+};
+?>
+
+<!-- ===================================================================== -->
+<!-- PAGE HEADER TERPADU (JUDUL, AKSI CEPAT, EXPORT & FILTER PERIODE)      -->
+<!-- ===================================================================== -->
+<div class="page-header d-print-none mt-0 mb-4">
+  <div class="row align-items-center g-3">
+    <div class="col">
+      <div class="page-pretitle text-uppercase font-monospace <?= esc($roleMeta['pretitleClass']) ?> fw-semibold"><?= esc($roleMeta['pretitle']) ?></div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <h2 class="page-title fw-bold text-dark mb-0"><?= esc($roleMeta['title']) ?></h2>
+        <span class="badge bg-azure-lt text-azure px-2 py-1 fw-semibold">Periode: <?= esc($pLabel) ?></span>
+      </div>
+      <div class="text-secondary small mt-1"><?= esc($roleMeta['subtitle']) ?></div>
+    </div>
+
+    <div class="col-auto ms-auto">
+      <div class="btn-list">
+        <?php if ($userRole === 'gudang'): ?>
+          <a href="/goods-receipts/create" class="btn btn-outline-primary">Catat Barang Masuk</a>
+          <a href="/deliveries/create" class="btn btn-primary">Jadwalkan / Kirim Barang</a>
+        <?php elseif ($userRole === 'sales'): ?>
+          <?php if (!empty($revisionSoCount)): ?>
+            <a href="/sales-orders?status=revision" class="btn btn-warning fw-bold"><?= esc($revisionSoCount) ?> Pesanan Butuh Revisi</a>
+          <?php endif; ?>
+          <a href="/sales-orders/create" class="btn btn-primary">+ Buat Pesanan Pelanggan Baru</a>
+        <?php elseif ($userRole === 'purchasing'): ?>
+          <a href="/purchase-orders/create" class="btn btn-primary">+ Buat Pesanan Pembelian (PO)</a>
+        <?php elseif ($userRole === 'admin'): ?>
+          <a href="/products/create" class="btn btn-outline-primary">+ Tambah Produk</a>
+          <a href="/users/create" class="btn btn-primary">+ Tambah Pengguna</a>
+        <?php endif; ?>
+
+        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#exportPdfModal">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4"/><path d="M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6"/><path d="M17 18h2"/><path d="M20 15h-3v6"/><path d="M11 15v6h1a2 2 0 0 0 2 -2v-2a2 2 0 0 0 -2 -2h-1z"/></svg>
+          Export PDF
+        </button>
+
+        <?php if ($userRole === 'manajemen' || $userRole === 'admin'): ?>
+          <div class="dropdown">
+            <button class="btn btn-success dropdown-toggle d-inline-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
+              Export Excel
+            </button>
+            <div class="dropdown-menu dropdown-menu-end">
+              <a class="dropdown-item" href="/dashboard/export?type=sales&amp;<?= $exportQueryBase ?>">Laporan Penjualan (.xlsx)</a>
+              <a class="dropdown-item" href="/dashboard/export?type=purchase&amp;<?= $exportQueryBase ?>">Laporan Pembelian (.xlsx)</a>
+              <a class="dropdown-item" href="/dashboard/export?type=stock&amp;<?= $exportQueryBase ?>">Laporan Stok Produk (.xlsx)</a>
+            </div>
+          </div>
+        <?php elseif ($userRole === 'sales'): ?>
+          <a class="btn btn-success d-inline-flex align-items-center gap-1" href="/dashboard/export?type=sales&amp;<?= $exportQueryBase ?>">
+            Export Excel
+          </a>
+        <?php elseif ($userRole === 'purchasing'): ?>
+          <a class="btn btn-success d-inline-flex align-items-center gap-1" href="/dashboard/export?type=purchase&amp;<?= $exportQueryBase ?>">
+            Export Excel
+          </a>
+        <?php elseif ($userRole === 'gudang'): ?>
+          <a class="btn btn-success d-inline-flex align-items-center gap-1" href="/dashboard/export?type=stock&amp;<?= $exportQueryBase ?>">
+            Export Excel
+          </a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub-bar Filter Periode Terintegrasi -->
+  <div class="mt-3 pt-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <form action="/dashboard" method="get" class="d-flex flex-wrap align-items-center gap-2" id="dashboardPeriodForm">
+      <span class="text-secondary small fw-semibold me-1">Filter Periode:</span>
+      <select name="period_type" id="periodTypeSelect" class="form-select form-select-sm" style="width: 125px;">
+        <option value="week" <?= $pType === 'week' ? 'selected' : '' ?>>Mingguan</option>
+        <option value="month" <?= $pType === 'month' ? 'selected' : '' ?>>Bulanan</option>
+        <option value="year" <?= $pType === 'year' ? 'selected' : '' ?>>Tahunan</option>
+      </select>
+
+      <div id="filterWeekWrap" class="<?= $pType === 'week' ? '' : 'd-none' ?>">
+        <input type="date" name="week_start" class="form-control form-control-sm" value="<?= esc($pWeek) ?>" title="Mulai Tanggal (7 Hari)">
+      </div>
+
+      <div id="filterMonthWrap" class="<?= $pType === 'month' ? '' : 'd-none' ?>">
+        <select name="month" class="form-select form-select-sm" style="width: 130px;">
+          <?php foreach ($monthNames as $mNum => $mName): ?>
+            <option value="<?= $mNum ?>" <?= $pMonth === $mNum ? 'selected' : '' ?>><?= esc($mName) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div id="filterYearWrap" class="<?= $pType !== 'week' ? '' : 'd-none' ?>">
+        <select name="year" class="form-select form-select-sm" style="width: 95px;">
+          <?php for ($y = (int) date('Y'); $y >= (int) date('Y') - 3; $y--): ?>
+            <option value="<?= $y ?>" <?= $pYear === $y ? 'selected' : '' ?>><?= $y ?></option>
+          <?php endfor; ?>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-sm btn-primary px-3">Terapkan</button>
+    </form>
+  </div>
+</div>
 
 <?php if ($userRole === 'gudang'): ?>
 <!-- ======================================================================= -->
-<!-- 1. DASHBOARD KHUSUS STAFF GUDANG & LOGISTIK (BEBAS DATA FINANSIAL) -->
+<!-- 1. DASHBOARD KHUSUS STAFF GUDANG & LOGISTIK (RAMAH AWAM & BEBAS HARGA)  -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mt-0 mb-3">
-  <div class="row align-items-center">
-    <div class="col">
-      <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Operasional Pergudangan & Logistik</div>
-      <h2 class="page-title fw-bold text-dark">Dashboard Logistik</h2>
-      <div class="text-secondary small mt-1">Pantau penerimaan barang dari pemasok, proses pengiriman pesanan penjualan, dan kontrol fisik stok.</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #1d4ed8 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Barang Masuk</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($grThisMonth ?? 0) ?> <span class="fs-4 text-muted fw-normal">Kali</span></div>
+        <div class="text-secondary small"><?= number_format((float) ($grQtyThisMonth ?? 0), 0, ',', '.') ?> unit diterima pada periode ini</div>
+      </div>
     </div>
-    <div class="col-auto ms-auto d-print-none">
-      <div class="btn-list">
-        <a href="/goods-receipts/create" class="btn btn-outline-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          Catat Barang Masuk (GR)
-        </a>
-        <a href="/deliveries/create" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg>
-          Catat Pengiriman (DO)
-        </a>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #16a34a !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Barang Dikirim</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($doThisMonth ?? 0) ?> <span class="fs-4 text-muted fw-normal">Kiriman</span></div>
+        <div class="text-secondary small"><?= number_format((float) ($doQtyThisMonth ?? 0), 0, ',', '.') ?> unit keluar ke pelanggan</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #0284c7 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Menunggu Dikirim</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($pendingDeliveriesCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
+        <div class="text-secondary small">Pesanan pelanggan siap dikemas</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid <?= !empty($lowStock) ? '#dc2626' : '#16a34a' ?> !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Stok Hampir Habis</div>
+        <div class="h1 mb-1 fw-bold font-monospace <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>"><?= count($lowStock) ?> <span class="fs-4 text-muted fw-normal">Produk</span></div>
+        <div class="text-secondary small"><?= !empty($lowStock) ? 'Segera lapor ke tim pembelian' : 'Semua stok fisik aman' ?></div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Barang Masuk (GR)</span>
-          <span class="avatar avatar-xs rounded bg-blue-lt text-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($grThisMonth ?? 0) ?> <span class="fs-4 text-muted fw-normal">Siklus</span></div>
-        <div class="text-secondary small"><?= number_format((float) ($grQtyThisMonth ?? 0), 0, ',', '.') ?> unit diterima bulan ini</div>
-      </div>
-    </div>
+<!-- Grafik Pergerakan Barang -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Grafik Barang Masuk vs Barang Keluar (<?= esc($pLabel) ?>)</h3>
   </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Barang Terkirim (DO)</span>
-          <span class="avatar avatar-xs rounded bg-success-lt text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($doThisMonth ?? 0) ?> <span class="fs-4 text-muted fw-normal">Kirim</span></div>
-        <div class="text-secondary small"><?= number_format((float) ($doQtyThisMonth ?? 0), 0, ',', '.') ?> unit keluar gudang</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Antrean Kirim (SO)</span>
-          <span class="avatar avatar-xs rounded bg-azure-lt text-azure">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($pendingDeliveriesCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
-        <div class="text-secondary small">Siap dikemas & diproses kirim</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Stok Kritis / Menipis</span>
-          <span class="avatar avatar-xs rounded <?= !empty($lowStock) ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success' ?>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold font-monospace <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>">
-          <?= count($lowStock) ?> <span class="fs-4 text-muted fw-normal">SKU</span>
-        </div>
-        <div class="text-secondary small"><?= !empty($lowStock) ? 'Mencapai batas minimum' : 'Seluruh stok fisik aman' ?></div>
-      </div>
-    </div>
+  <div class="card-body">
+    <div id="mainDashboardChart" style="min-height: 270px;"></div>
   </div>
 </div>
 
@@ -98,45 +244,24 @@
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg>
-          <h3 class="card-title m-0 fw-bold">Pesanan Siap Dikirim (Perlu DO)</h3>
-        </div>
-        <span class="badge bg-primary-lt fw-bold"><?= esc($pendingDeliveriesCount ?? 0) ?> Menunggu Pengiriman</span>
+        <h3 class="card-title m-0 fw-bold">Pesanan Pelanggan Siap Dikirim</h3>
+        <span class="badge bg-azure-lt fw-bold"><?= esc($pendingDeliveriesCount ?? 0) ?> Antrean</span>
       </div>
-
       <?php if (empty($pendingDeliveries)): ?>
-        <div class="card-body text-center py-4 text-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-muted mb-2" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-          <div>Semua pesanan penjualan yang dikonfirmasi telah selesai dikirim.</div>
-        </div>
+        <div class="card-body text-center py-4 text-secondary">Semua pesanan pelanggan sudah diproses kirim.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
             <thead>
-              <tr>
-                <th>No. Pesanan (SO)</th>
-                <th>Pelanggan</th>
-                <th>Gudang Asal</th>
-                <th class="text-center">Jml Barang</th>
-                <th class="text-end">Aksi</th>
-              </tr>
+              <tr><th>No. Pesanan</th><th>Pelanggan &amp; Gudang</th><th class="text-center">Jumlah</th><th class="text-end">Aksi</th></tr>
             </thead>
             <tbody>
               <?php foreach ($pendingDeliveries as $pd): ?>
               <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($pd['so_number']) ?></code></td>
-                <td>
-                  <div class="fw-semibold text-dark"><?= esc($pd['customer_name']) ?></div>
-                  <div class="small text-muted"><?= date('d/m/Y', strtotime($pd['order_date'])) ?></div>
-                </td>
-                <td class="text-secondary small"><?= esc($pd['warehouse_name']) ?></td>
-                <td class="text-center font-monospace fw-bold text-dark"><?= esc($pd['total_qty']) ?> unit</td>
-                <td class="text-end">
-                  <a href="/deliveries/create?sales_order_id=<?= (int) $pd['id'] ?>" class="btn btn-sm btn-primary">
-                    Proses DO
-                  </a>
-                </td>
+                <td><code class="text-dark fw-bold"><?= esc($pd['so_number']) ?></code></td>
+                <td><div class="fw-semibold"><?= esc($pd['customer_name']) ?></div><div class="small text-muted"><?= esc($pd['warehouse_name']) ?></div></td>
+                <td class="text-center fw-bold"><?= esc($pd['total_qty']) ?></td>
+                <td class="text-end"><a class="btn btn-sm btn-primary" href="/deliveries/create?sales_order_id=<?= esc($pd['id']) ?>">Proses Kirim</a></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -147,47 +272,24 @@
 
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-azure" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          <h3 class="card-title m-0 fw-bold">Barang Masuk Menunggu Diterima (Perlu GR)</h3>
-        </div>
-        <span class="badge bg-azure-lt fw-bold"><?= esc($pendingReceiptsCount ?? 0) ?> Menunggu Penerimaan</span>
+        <h3 class="card-title m-0 fw-bold">Jadwal Kedatangan Barang dari Pemasok</h3>
+        <span class="badge bg-primary-lt fw-bold"><?= esc($pendingReceiptsCount ?? 0) ?> Menunggu</span>
       </div>
-
       <?php if (empty($pendingReceipts)): ?>
-        <div class="card-body text-center py-4 text-secondary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-muted mb-2" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-          <div>Tidak ada jadwal kedatangan pesanan beli dari pemasok saat ini.</div>
-        </div>
+        <div class="card-body text-center py-4 text-secondary">Belum ada barang datang dari pemasok saat ini.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
             <thead>
-              <tr>
-                <th>No. Pesanan (PO)</th>
-                <th>Pemasok</th>
-                <th>Gudang Tujuan</th>
-                <th class="text-center">Jml Barang</th>
-                <th class="text-end">Aksi</th>
-              </tr>
+              <tr><th>No. Pembelian</th><th>Pemasok</th><th class="text-center">Jumlah</th><th class="text-end">Aksi</th></tr>
             </thead>
             <tbody>
               <?php foreach ($pendingReceipts as $pr): ?>
               <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($pr['po_number']) ?></code></td>
-                <td>
-                  <div class="fw-semibold text-dark"><?= esc($pr['supplier_name']) ?></div>
-                  <div class="small text-muted"><?= date('d/m/Y', strtotime($pr['order_date'])) ?></div>
-                </td>
-                <td class="text-secondary small">
-                  <span class="badge bg-secondary-lt fw-normal"><?= esc($pr['warehouse_name']) ?></span>
-                </td>
-                <td class="text-center font-monospace fw-bold text-dark"><?= esc($pr['total_qty']) ?> unit</td>
-                <td class="text-end">
-                  <a href="/goods-receipts/create?purchase_order_id=<?= (int) $pr['id'] ?>" class="btn btn-sm btn-outline-primary">
-                    Terima GR
-                  </a>
-                </td>
+                <td><code class="text-dark fw-bold"><?= esc($pr['po_number']) ?></code></td>
+                <td><div class="fw-semibold"><?= esc($pr['supplier_name']) ?></div><div class="small text-muted">Lokasi simpan dipilih saat terima</div></td>
+                <td class="text-center fw-bold"><?= esc($pr['total_qty']) ?></td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/goods-receipts/create?purchase_order_id=<?= esc($pr['id']) ?>">Terima Barang</a></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -199,57 +301,19 @@
 
   <div class="col-lg-5">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-danger" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-          <h3 class="card-title m-0 fw-bold">Peringatan Stok Fisik</h3>
-        </div>
-        <a href="/inventory" class="btn btn-sm btn-link text-decoration-none p-0">Semua Stok &rarr;</a>
-      </div>
-
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Barang dengan Stok Menipis</h3></div>
       <?php if (empty($lowStock)): ?>
-        <div class="card-body text-center py-5">
-          <div class="text-success mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
-          </div>
-          <div class="h4 mb-1 text-dark">Kondisi Stok Fisik Aman</div>
-          <div class="text-secondary small">Seluruh kuantitas fisik produk saat ini berada di atas batas minimum.</div>
-        </div>
+        <div class="card-body text-center py-5 text-secondary">Seluruh stok fisik aman.</div>
       <?php else: ?>
         <div class="table-responsive">
-          <table class="table table-vcenter card-table table-hover table-striped">
-            <thead>
-              <tr>
-                <th>Produk</th>
-                <th class="text-center" style="width: 100px;">Sisa Fisik</th>
-                <th class="text-center" style="width: 80px;">Min</th>
-              </tr>
-            </thead>
+          <table class="table table-vcenter card-table table-hover">
+            <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Batas Min</th></tr></thead>
             <tbody>
               <?php foreach ($lowStock as $p): ?>
               <tr>
-                <td>
-                  <div class="fw-semibold text-dark text-truncate" style="max-width: 180px;" title="<?= esc($p['name']) ?>"><?= esc($p['name']) ?></div>
-                  <div class="small text-muted font-monospace"><?= esc($p['code']) ?></div>
-                  <?php if (! empty($p['active_po_number'])): ?>
-                    <div class="mt-1">
-                      <?php if ($p['active_po_status'] === 'approved'): ?>
-                        <span class="badge bg-warning-lt text-warning fw-bold border border-warning-subtle py-0" title="PO <?= esc($p['active_po_number']) ?> berstatus Approved (Disetujui) & sedang menunggu kedatangan fisik di gudang">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="12" height="12" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-                          Menunggu Kirim: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?>)
-                        </span>
-                      <?php else: ?>
-                        <span class="badge bg-azure-lt text-primary fw-medium border border-info-subtle py-0" title="PO <?= esc($p['active_po_number']) ?> masih berstatus Draft di purchasing">
-                          Draft PO: <?= esc($p['active_po_number']) ?>
-                        </span>
-                      <?php endif; ?>
-                    </div>
-                  <?php endif; ?>
-                </td>
-                <td class="text-center">
-                  <span class="badge bg-danger-lt fw-bold px-2 py-1"><?= esc($p['stock_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?></span>
-                </td>
-                <td class="text-center text-secondary font-monospace"><?= esc($p['min_stock']) ?></td>
+                <td><div class="fw-semibold"><?= esc($p['name']) ?></div><div class="small text-muted"><?= esc($p['code']) ?></div></td>
+                <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
+                <td class="text-center text-muted"><?= esc($p['min_stock']) ?></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -262,90 +326,55 @@
 
 <?php elseif ($userRole === 'sales'): ?>
 <!-- ======================================================================= -->
-<!-- 2. DASHBOARD KHUSUS STAFF SALES (PENJUALAN & PELANGGAN) -->
+<!-- 2. DASHBOARD & LAPORAN KHUSUS STAFF SALES                               -->
 <!-- ======================================================================= -->
 
-<div class="page-header d-print-none mt-0 mb-3">
-  <div class="row align-items-center">
-    <div class="col">
-      <div class="page-pretitle text-uppercase font-monospace text-success fw-semibold" style="letter-spacing: 0.5px;">Divisi Penjualan & Komersial</div>
-      <h2 class="page-title fw-bold text-dark">Dashboard Penjualan</h2>
-      <div class="text-secondary small mt-1">Pantau performa omset pesanan penjualan, status pesanan pelanggan, dan produk terlaris.</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #16a34a !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Nilai Penjualan</div>
+        <div class="h2 mb-1 fw-bold text-success font-monospace">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small">Dari <?= esc($ordersThisMonth ?? 0) ?> pesanan pada <?= esc($pLabel) ?></div>
+      </div>
     </div>
-    <div class="col-auto ms-auto d-print-none">
-      <div class="btn-list">
-        <a href="/customers/create" class="btn btn-outline-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 11h6m-3 -3v6"/></svg>
-          + Pelanggan Baru
-        </a>
-        <a href="/sales-orders/create" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          + Buat Pesanan Jual (SO)
-        </a>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #f59e0b !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Perlu Ditindaklanjuti</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc(($draftSoCount ?? 0) + ($revisionSoCount ?? 0)) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
+        <div class="text-secondary small"><?= esc($draftSoCount ?? 0) ?> Draf &bull; <?= esc($revisionSoCount ?? 0) ?> Butuh Revisi</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #0284c7 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Sudah Terkirim</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($deliveredSoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
+        <div class="text-secondary small">Diterima pelanggan pada periode ini</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #1d4ed8 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Pelanggan Terdaftar</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($customerCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Mitra</span></div>
+        <div class="text-secondary small">Perusahaan &amp; toko rekanan aktif</div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Omset Bulan Ini</span>
-          <span class="avatar avatar-xs rounded bg-success-lt text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"/><path d="M12 3v3m0 12v3"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan berhasil</div>
-      </div>
-    </div>
+<!-- Grafik Tren Penjualan -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Grafik Perkembangan Penjualan (<?= esc($pLabel) ?>)</h3>
   </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">SO Draf / Menunggu</span>
-          <span class="avatar avatar-xs rounded bg-warning-lt text-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($draftSoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
-        <div class="text-secondary small">Perlu dikonfirmasi agar diproses</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">SO Terkirim Bulan Ini</span>
-          <span class="avatar avatar-xs rounded bg-azure-lt text-azure">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($deliveredSoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
-        <div class="text-secondary small">Telah diterima oleh pelanggan</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pelanggan Aktif</span>
-          <span class="avatar avatar-xs rounded bg-blue-lt text-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($customerCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Klien</span></div>
-        <div class="text-secondary small">Mitra bisnis terdaftar</div>
-      </div>
-    </div>
+  <div class="card-body">
+    <div id="mainDashboardChart" style="min-height: 270px;"></div>
   </div>
 </div>
 
@@ -353,56 +382,23 @@
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          <h3 class="card-title m-0 fw-bold">Pesanan Penjualan Terbaru (SO)</h3>
-        </div>
-        <a href="/sales-orders" class="btn btn-sm btn-link text-decoration-none p-0">Semua Pesanan &rarr;</a>
+        <h3 class="card-title m-0 fw-bold">Laporan Pesanan Pelanggan (<?= esc($pLabel) ?>)</h3>
+        <a href="/sales-orders" class="btn btn-sm btn-outline-primary d-print-none">Kelola Pesanan</a>
       </div>
-
       <?php if (empty($recentOrders)): ?>
-        <div class="card-body text-center py-5 text-secondary">
-          Belum ada riwayat pesanan penjualan.
-        </div>
+        <div class="card-body text-center py-5 text-secondary">Belum ada transaksi penjualan pada periode ini.</div>
       <?php else: ?>
         <div class="table-responsive">
-          <table class="table table-vcenter card-table table-hover">
-            <thead>
-              <tr>
-                <th>No. Pesanan</th>
-                <th>Pelanggan</th>
-                <th>Nilai SO</th>
-                <th class="text-center">Status</th>
-                <th class="text-end">Aksi</th>
-              </tr>
-            </thead>
+          <table class="table table-vcenter card-table table-hover table-striped">
+            <thead><tr><th>No. Pesanan</th><th>Pelanggan</th><th>Tanggal</th><th class="text-end">Total</th><th class="text-center">Status</th></tr></thead>
             <tbody>
-              <?php foreach ($recentOrders as $ro): ?>
+              <?php foreach ($recentOrders as $ro): $sb = status_badge($ro['status']); ?>
               <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($ro['so_number']) ?></code></td>
-                <td>
-                  <div class="fw-semibold text-dark"><?= esc($ro['customer_name']) ?></div>
-                  <div class="small text-muted"><?= date('d/m/Y', strtotime($ro['order_date'])) ?></div>
-                </td>
-                <td class="font-monospace text-dark fw-bold">
-                  Rp <?= number_format((float) $ro['total_amount'], 0, ',', '.') ?>
-                </td>
-                <td class="text-center">
-                  <?php if ($ro['status'] === 'confirmed'): ?>
-                    <span class="badge bg-blue-lt">Dikonfirmasi</span>
-                  <?php elseif ($ro['status'] === 'delivered'): ?>
-                    <span class="badge bg-success-lt">Terkirim</span>
-                  <?php elseif ($ro['status'] === 'cancelled'): ?>
-                    <span class="badge bg-danger-lt">Dibatalkan</span>
-                  <?php else: ?>
-                    <span class="badge bg-secondary-lt">Draf</span>
-                  <?php endif; ?>
-                </td>
-                <td class="text-end">
-                  <a href="/sales-orders/show/<?= (int) $ro['id'] ?>" class="btn btn-sm btn-outline-primary">
-                    Lihat
-                  </a>
-                </td>
+                <td><a href="/sales-orders/show/<?= esc($ro['id']) ?>" class="fw-bold font-monospace"><?= esc($ro['so_number']) ?></a></td>
+                <td class="fw-medium"><?= esc($ro['customer_name']) ?></td>
+                <td class="text-secondary small"><?= date('d/m/Y', strtotime($ro['order_date'])) ?></td>
+                <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $ro['total_amount'], 0, ',', '.') ?></td>
+                <td class="text-center"><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -411,58 +407,23 @@
       <?php endif; ?>
     </div>
   </div>
-
   <div class="col-lg-5">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z"/></svg>
-          <h3 class="card-title m-0 fw-bold">Top 5 Produk Terlaris</h3>
-        </div>
-        <span class="badge bg-primary-lt">Bulan Ini</span>
-      </div>
-
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">10 Produk Paling Laris</h3></div>
       <?php if (empty($topProducts)): ?>
-        <div class="card-body text-center py-5 text-secondary">
-          Belum ada riwayat pesanan penjualan bulan ini.
-        </div>
+        <div class="card-body text-center py-5 text-secondary">Belum ada data penjualan produk.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
-            <thead>
-              <tr>
-                <th class="text-center" style="width: 45px;">#</th>
-                <th>Produk</th>
-                <th class="text-center" style="width: 80px;">Qty</th>
-                <th class="text-end">Omset</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Produk</th><th class="text-center">Terjual</th><th class="text-end">Total Penjualan</th></tr></thead>
             <tbody>
-              <?php $rank = 1; foreach ($topProducts as $tp): ?>
+              <?php foreach ($topProducts as $tp): ?>
               <tr>
-                <td class="text-center">
-                  <?php if ($rank === 1): ?>
-                    <span class="badge bg-yellow text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">1</span>
-                  <?php elseif ($rank === 2): ?>
-                    <span class="badge bg-secondary text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">2</span>
-                  <?php elseif ($rank === 3): ?>
-                    <span class="badge bg-azure text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">3</span>
-                  <?php else: ?>
-                    <span class="text-muted fw-bold"><?= $rank ?></span>
-                  <?php endif; ?>
-                </td>
-                <td>
-                  <div class="fw-semibold text-dark text-truncate" style="max-width: 160px;" title="<?= esc($tp['name']) ?>"><?= esc($tp['name']) ?></div>
-                  <div class="small text-muted font-monospace"><?= esc($tp['code']) ?></div>
-                </td>
-                <td class="text-center font-monospace fw-bold text-dark">
-                  <?= esc($tp['total_qty']) ?> <span class="small text-muted fw-normal"><?= esc($tp['unit'] ?? '') ?></span>
-                </td>
-                <td class="text-end font-monospace text-primary fw-bold" style="font-size: 0.85rem;">
-                  Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?>
-                </td>
+                <td><div class="fw-semibold"><?= esc($tp['name']) ?></div><div class="small text-muted"><?= esc($tp['code']) ?></div></td>
+                <td class="text-center"><span class="badge bg-success-lt fw-bold"><?= esc($tp['total_qty']) ?> <?= esc($tp['unit']) ?></span></td>
+                <td class="text-end font-monospace fw-semibold">Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?></td>
               </tr>
-              <?php $rank++; endforeach; ?>
+              <?php endforeach; ?>
             </tbody>
           </table>
         </div>
@@ -473,134 +434,67 @@
 
 <?php elseif ($userRole === 'purchasing'): ?>
 <!-- ======================================================================= -->
-<!-- 3. DASHBOARD KHUSUS STAFF PURCHASING (PENGADAAN & PEMASOK) -->
+<!-- 3. DASHBOARD & LAPORAN KHUSUS STAFF PURCHASING                          -->
 <!-- ======================================================================= -->
-
-<div class="page-header d-print-none mt-0 mb-3">
-  <div class="row align-items-center">
-    <div class="col">
-      <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Divisi Pengadaan & Hubungan Pemasok</div>
-      <h2 class="page-title fw-bold text-dark">Dashboard Pengadaan</h2>
-      <div class="text-secondary small mt-1">Pantau anggaran belanja modal, pesanan aktif ke supplier, dan inventaris yang harus di-restock.</div>
-    </div>
-    <div class="col-auto ms-auto d-print-none">
-      <div class="btn-list">
-        <a href="/suppliers/create" class="btn btn-outline-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
-          + Pemasok Baru
-        </a>
-        <a href="/purchase-orders/create" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5v14m-7 -7h14"/></svg>
-          + Buat Pesanan Beli (PO)
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #0284c7 !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Belanja Bulan Ini</span>
-          <span class="avatar avatar-xs rounded bg-azure-lt text-azure">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($purchasesThisMonth ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan beli berjalan</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Belanja Pembelian</div>
+        <div class="h2 mb-1 fw-bold text-primary font-monospace">Rp <?= number_format((float) ($purchasesThisMonth ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan pada <?= esc($pLabel) ?></div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #f59e0b !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PO Draf (Belum Approve)</span>
-          <span class="avatar avatar-xs rounded bg-warning-lt text-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($draftPoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
-        <div class="text-secondary small">Menunggu persetujuan manajemen</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Menunggu Persetujuan</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($draftPoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">PO</span></div>
+        <div class="text-secondary small">Menunggu ACC dari Pimpinan</div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #1d4ed8 !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">PO Approved (Menunggu Kirim)</span>
-          <span class="avatar avatar-xs rounded bg-blue-lt text-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($approvedPoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Pesanan</span></div>
-        <div class="text-secondary small">Barang sedang dikirim vendor</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Menunggu Barang Tiba</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($approvedPoCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">PO</span></div>
+        <div class="text-secondary small">Sudah disetujui, siap diterima Gudang</div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= !empty($lowStock) ? '#d63939' : '#2fb344' ?> !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid <?= !empty($lowStock) ? '#dc2626' : '#16a34a' ?> !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Perlu Restock Kritis</span>
-          <span class="avatar avatar-xs rounded <?= !empty($lowStock) ? 'bg-danger-lt text-danger' : 'bg-success-lt text-success' ?>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold font-monospace <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>">
-          <?= count($lowStock) ?> <span class="fs-4 text-muted fw-normal">SKU</span>
-        </div>
-        <div class="text-secondary small"><?= !empty($lowStock) ? 'Harus segera dipesan ulang' : 'Seluruh stok aman' ?></div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Perlu Segera Dipesan</div>
+        <div class="h1 mb-1 fw-bold font-monospace <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>"><?= count($lowStock) ?> <span class="fs-4 text-muted fw-normal">Produk</span></div>
+        <div class="text-secondary small">Stok di bawah batas aman</div>
       </div>
     </div>
   </div>
 </div>
 
 <?php if (! empty($restockAlerts)): ?>
-<div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #f59e0b !important;">
+<div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #f59e0b !important;">
   <div class="card-header bg-warning-lt py-3 d-flex justify-content-between align-items-center">
-    <div class="d-flex align-items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon text-warning" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
-      <h3 class="card-title m-0 fw-bold text-dark">Notifikasi Pengadaan dari Pesanan Jual (Stok Kurang)</h3>
-    </div>
+    <h3 class="card-title m-0 fw-bold text-dark">Notifikasi Kebutuhan Barang dari Pesanan Pelanggan (Stok Kurang)</h3>
     <span class="badge bg-warning text-white fw-bold"><?= count($restockAlerts) ?> Permintaan</span>
   </div>
   <div class="table-responsive">
     <table class="table table-vcenter card-table table-hover mb-0">
-      <thead>
-        <tr>
-          <th>No. SO</th>
-          <th>Produk</th>
-          <th>Gudang</th>
-          <th class="text-center">Diminta</th>
-          <th class="text-center">Tersedia</th>
-          <th class="text-center">Kurang (Min. Beli)</th>
-          <th class="text-end">Aksi</th>
-        </tr>
-      </thead>
+      <thead><tr><th>No. SO</th><th>Produk</th><th>Gudang</th><th class="text-center">Diminta</th><th class="text-center">Tersedia</th><th class="text-center">Kurang (Min. Beli)</th><th class="text-end">Aksi</th></tr></thead>
       <tbody>
         <?php foreach ($restockAlerts as $al): ?>
         <tr>
-          <td><code class="text-dark font-monospace fw-bold"><?= esc($al['sales_order_number']) ?></code></td>
-          <td>
-            <div class="fw-semibold text-dark"><?= esc($al['product_name']) ?></div>
-            <div class="small text-muted font-monospace"><?= esc($al['product_code']) ?></div>
-          </td>
+          <td><code class="text-dark fw-bold"><?= esc($al['sales_order_number']) ?></code></td>
+          <td><div class="fw-semibold"><?= esc($al['product_name']) ?></div><div class="small text-muted"><?= esc($al['product_code']) ?></div></td>
           <td><span class="badge bg-secondary-lt"><?= esc($al['warehouse_name']) ?></span></td>
           <td class="text-center font-monospace"><?= esc($al['requested_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></td>
           <td class="text-center font-monospace"><?= esc($al['available_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></td>
           <td class="text-center"><span class="badge bg-danger-lt fw-bold font-monospace"><?= esc($al['shortage_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></span></td>
-          <td class="text-end">
-            <a href="/purchase-orders/create?product_id=<?= esc($al['product_id']) ?>&qty=<?= esc($al['shortage_qty']) ?>" class="btn btn-sm btn-primary">
-              Buat PO (Min. <?= esc($al['shortage_qty']) ?>)
-            </a>
-          </td>
+          <td class="text-end"><a href="/purchase-orders/create?product_id=<?= esc($al['product_id']) ?>&qty=<?= esc($al['shortage_qty']) ?>" class="btn btn-sm btn-primary">Buat PO (Min. <?= esc($al['shortage_qty']) ?>)</a></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
@@ -609,92 +503,39 @@
 </div>
 <?php endif; ?>
 
+<!-- Grafik Tren Pembelian -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Grafik Tren Belanja Pembelian (<?= esc($pLabel) ?>)</h3>
+  </div>
+  <div class="card-body">
+    <div id="mainDashboardChart" style="min-height: 260px;"></div>
+  </div>
+</div>
+
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-danger" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-          <h3 class="card-title m-0 fw-bold">Peringatan Stok Menipis (Restock)</h3>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-          <span class="badge bg-danger-lt fw-bold"><?= count($lowStock) ?> SKU Perlu PO</span>
-          <?php $onOrderCount = count(array_filter($lowStock, static fn($x) => !empty($x['active_po_number']))); ?>
-          <?php if ($onOrderCount > 0): ?>
-            <span class="badge bg-warning-lt fw-bold border border-warning-subtle" title="<?= $onOrderCount ?> SKU sudah memiliki PO aktif (Draft atau Approved)">
-              <?= $onOrderCount ?> On Order
-            </span>
-          <?php endif; ?>
-        </div>
-      </div>
-
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Barang dengan Stok Menipis (Restock)</h3></div>
       <?php if (empty($lowStock)): ?>
-        <div class="card-body text-center py-5">
-          <div class="text-success mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
-          </div>
-          <div class="h4 mb-1 text-dark">Persediaan Gudang Mencukupi</div>
-          <div class="text-secondary small">Tidak ada produk yang berada di bawah kuantitas minimum.</div>
-        </div>
+        <div class="card-body text-center py-5 text-secondary">Persediaan seluruh produk mencukupi.</div>
       <?php else: ?>
         <div class="table-responsive">
-          <table class="table table-vcenter card-table table-hover table-striped">
-            <thead>
-              <tr>
-                <th>Kode</th>
-                <th>Nama Produk</th>
-                <th class="text-center">Sisa Stok</th>
-                <th class="text-center">Min</th>
-                <th class="text-end">Aksi</th>
-              </tr>
-            </thead>
+          <table class="table table-vcenter card-table table-hover">
+            <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Min</th><th class="text-end">Aksi</th></tr></thead>
             <tbody>
-              <?php foreach ($lowStock as $p): ?>
+              <?php foreach ($lowStock as $p): $suggestedQty = max(10, ((int) $p['min_stock'] * 2) - (int) $p['stock_qty']); ?>
               <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($p['code']) ?></code></td>
                 <td>
-                  <div class="fw-semibold text-dark"><?= esc($p['name']) ?></div>
-                  <div class="small text-muted"><?= esc($p['category_name'] ?? 'Umum') ?></div>
+                  <div class="fw-semibold"><?= esc($p['name']) ?></div>
+                  <div class="small text-muted"><?= esc($p['code']) ?></div>
                   <?php if (! empty($p['active_po_number'])): ?>
-                    <div class="mt-1">
-                      <?php if ($p['active_po_status'] === 'approved'): ?>
-                        <span class="badge bg-warning-lt text-warning fw-bold border border-warning-subtle d-inline-flex align-items-center gap-1 px-2 py-0" title="Sudah dibuatkan PO <?= esc($p['active_po_number']) ?> (Disetujui) & sedang menunggu penerimaan barang (GR).">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-                          Sedang Dipesan: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?> &bull; Approved)
-                        </span>
-                      <?php else: ?>
-                        <span class="badge bg-azure-lt text-primary fw-bold border border-info-subtle d-inline-flex align-items-center gap-1 px-2 py-0" title="Sudah masuk di Draft PO <?= esc($p['active_po_number']) ?> & menunggu persetujuan.">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z"/></svg>
-                          Draft PO: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?>)
-                        </span>
-                      <?php endif; ?>
-                    </div>
+                    <span class="badge bg-warning-lt mt-1">Sedang dipesan: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit']) ?>)</span>
                   <?php endif; ?>
                 </td>
-                <td class="text-center">
-                  <span class="badge bg-danger-lt fw-bold px-2 py-1"><?= esc($p['stock_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?></span>
-                </td>
-                <td class="text-center text-secondary font-monospace"><?= esc($p['min_stock']) ?></td>
-                <td class="text-end">
-                  <?php 
-                    $suggestedQty = (int) ($p['max_stock'] ?? 0) > 0 
-                      ? max(1, (int)$p['max_stock'] - ((int)$p['stock_qty'] + (int)($p['active_po_qty'] ?? 0))) 
-                      : max(1, (int)$p['min_stock'] - (int)$p['stock_qty']);
-                  ?>
-                  <?php if (! empty($p['active_po_number'])): ?>
-                    <div class="d-inline-flex align-items-center gap-1">
-                      <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
-                        Lihat PO
-                      </a>
-                      <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>" title="Pesan tambahan lagi jika diperlukan">+</a>
-                    </div>
-                  <?php else: ?>
-                    <a class="btn btn-sm btn-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">
-                      + Buat PO
-                    </a>
-                  <?php endif; ?>
-                </td>
+                <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
+                <td class="text-center text-muted"><?= esc($p['min_stock']) ?></td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">Buat PO</a></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -703,60 +544,22 @@
       <?php endif; ?>
     </div>
   </div>
-
   <div class="col-lg-5">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          <h3 class="card-title m-0 fw-bold">Pesanan Pembelian Terbaru (PO)</h3>
-        </div>
-        <a href="/purchase-orders" class="btn btn-sm btn-link text-decoration-none p-0">Semua PO &rarr;</a>
-      </div>
-
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Laporan Pembelian (<?= esc($pLabel) ?>)</h3></div>
       <?php if (empty($recentPurchases)): ?>
-        <div class="card-body text-center py-5 text-secondary">
-          Belum ada riwayat pesanan pembelian.
-        </div>
+        <div class="card-body text-center py-5 text-secondary">Belum ada pembelian pada periode ini.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
-            <thead>
-              <tr>
-                <th>No. PO</th>
-                <th>Pemasok</th>
-                <th>Nilai PO</th>
-                <th class="text-center">Status</th>
-                <th class="text-end">Aksi</th>
-              </tr>
-            </thead>
+            <thead><tr><th>No. PO</th><th>Pemasok</th><th class="text-end">Total</th><th class="text-center">Status</th></tr></thead>
             <tbody>
-              <?php foreach ($recentPurchases as $rp): ?>
+              <?php foreach ($recentPurchases as $rp): $sb = status_badge($rp['status']); ?>
               <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($rp['po_number']) ?></code></td>
-                <td>
-                  <div class="fw-semibold text-dark text-truncate" style="max-width: 140px;"><?= esc($rp['supplier_name']) ?></div>
-                  <div class="small text-muted"><?= date('d/m/Y', strtotime($rp['order_date'])) ?></div>
-                </td>
-                <td class="font-monospace text-dark fw-bold">
-                  Rp <?= number_format((float) $rp['total_amount'], 0, ',', '.') ?>
-                </td>
-                <td class="text-center">
-                  <?php if ($rp['status'] === 'approved'): ?>
-                    <span class="badge bg-blue-lt">Disetujui</span>
-                  <?php elseif ($rp['status'] === 'received'): ?>
-                    <span class="badge bg-success-lt">Diterima</span>
-                  <?php elseif ($rp['status'] === 'cancelled'): ?>
-                    <span class="badge bg-danger-lt">Dibatalkan</span>
-                  <?php else: ?>
-                    <span class="badge bg-secondary-lt">Draf</span>
-                  <?php endif; ?>
-                </td>
-                <td class="text-end">
-                  <a href="/purchase-orders/show/<?= (int) $rp['id'] ?>" class="btn btn-sm btn-outline-primary">
-                    Lihat
-                  </a>
-                </td>
+                <td><a href="/purchase-orders/show/<?= esc($rp['id']) ?>" class="fw-bold font-monospace"><?= esc($rp['po_number']) ?></a></td>
+                <td class="small fw-medium"><?= esc($rp['supplier_name']) ?></td>
+                <td class="text-end font-monospace small fw-bold">Rp <?= number_format((float) $rp['total_amount'], 0, ',', '.') ?></td>
+                <td class="text-center"><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -769,500 +572,114 @@
 
 <?php elseif ($userRole === 'manajemen'): ?>
 <!-- ======================================================================= -->
-<!-- 4. DASHBOARD KHUSUS MANAJEMEN (EKSEKUTIF / DIREKSI) -->
+<!-- 4. DASHBOARD EKSEKUTIF & LAPORAN TERPADU (DIREKTUR / MANAJEMEN)         -->
 <!-- ======================================================================= -->
-
-<div class="page-header d-print-none mt-0 mb-3">
-  <div class="row align-items-center">
-    <div class="col">
-      <div class="page-pretitle text-uppercase font-monospace text-indigo fw-semibold" style="letter-spacing: 0.5px;">Ringkasan Eksekutif & Direksi</div>
-      <h2 class="page-title fw-bold text-dark">Dashboard Eksekutif</h2>
-      <div class="text-secondary small mt-1">Laporan tingkat tinggi performa komersial, perputaran kas pengadaan, dan valuasi aset persediaan.</div>
-    </div>
-    <div class="col-auto ms-auto d-print-none">
-      <div class="btn-list">
-        <a href="/reports/purchase" class="btn btn-outline-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/></svg>
-          Laporan Pembelian
-        </a>
-        <a href="/reports/sales" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6"/><path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10"/></svg>
-          Laporan Penjualan
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #16a34a !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pendapatan Penjualan</span>
-          <span class="avatar avatar-xs rounded bg-success-lt text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"/><path d="M12 3v3m0 12v3"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($totalSales ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small"><?= esc($soCount ?? 0) ?> pesanan jual bulan ini</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Penjualan</div>
+        <div class="h2 mb-1 fw-bold text-success font-monospace">Rp <?= number_format((float) ($totalSales ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small"><?= esc($soCount ?? 0) ?> pesanan pelanggan (<?= esc($pLabel) ?>)</div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #0284c7 !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pengeluaran Pengadaan</span>
-          <span class="avatar avatar-xs rounded bg-azure-lt text-azure">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($totalPurchases ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small"><?= esc($poCount ?? 0) ?> pesanan beli bulan ini</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Pembelian</div>
+        <div class="h2 mb-1 fw-bold text-primary font-monospace">Rp <?= number_format((float) ($totalPurchases ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small"><?= esc($poCount ?? 0) ?> pesanan ke pemasok</div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid <?= ($netMargin >= 0) ? '#16a34a' : '#dc2626' ?> !important;">
+    <?php $marginPositive = ($netMargin ?? 0) >= 0; ?>
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid <?= $marginPositive ? '#16a34a' : '#dc2626' ?> !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Arus Perdagangan Bersih</span>
-          <span class="avatar avatar-xs rounded <?= ($netMargin >= 0) ? 'bg-success-lt text-success' : 'bg-danger-lt text-danger' ?>">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold font-monospace <?= ($netMargin >= 0) ? 'text-success' : 'text-danger' ?>">
-          Rp <?= number_format((float) $netMargin, 0, ',', '.') ?>
-        </div>
-        <div class="text-secondary small">Selisih Penjualan vs Pengadaan</div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Untung / Rugi Periode Ini</div>
+        <div class="h2 mb-1 fw-bold font-monospace <?= $marginPositive ? 'text-success' : 'text-danger' ?>">Rp <?= number_format((float) ($netMargin ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small"><?= $marginPositive ? 'Penjualan lebih besar daripada biaya belanja stok' : 'Biaya belanja stok lebih besar daripada penjualan' ?></div>
       </div>
     </div>
   </div>
-
   <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #f59e0b !important;">
       <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Valuasi Aset Persediaan</span>
-          <span class="avatar avatar-xs rounded bg-warning-lt text-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12"/></svg>
-          </span>
-        </div>
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Nilai Stok Gudang</div>
         <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small">Nilai modal barang di seluruh gudang</div>
+        <div class="text-secondary small"><?= esc($lowStockCount ?? 0) ?> produk perlu restok ulang</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ======================================================================= -->
-<!-- ANTREAN PERSETUJUAN PO UNTUK MANAJER (QUICK APPROVAL) -->
-<!-- ======================================================================= -->
-<div class="card border-0 shadow-sm mb-4" id="pendingPoSection">
-  <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <div class="d-flex align-items-center gap-2">
-      <span class="avatar avatar-sm rounded <?= ! empty($pendingPoCount) ? 'bg-warning-lt text-warning' : 'bg-success-lt text-success' ?>">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/><path d="M9 14l2 2l4 -4"/></svg>
-      </span>
-      <div>
-        <h3 class="card-title m-0 fw-bold">Antrean Persetujuan Pesanan Beli (PO Menunggu ACC)</h3>
-        <div class="text-secondary small">Daftar pengajuan pesanan pembelian dari Staff Purchasing yang membutuhkan persetujuan Anda sebelum diproses gudang.</div>
-      </div>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <?php if (! empty($pendingPoCount)): ?>
-        <span class="badge bg-warning-lt fw-bold px-2 py-1"><?= esc($pendingPoCount) ?> PO Perlu Tindakan</span>
-      <?php else: ?>
-        <span class="badge bg-success-lt fw-bold px-2 py-1">Semua PO Sudah Disetujui</span>
-      <?php endif; ?>
-      <a href="/purchase-orders?status=draft" class="btn btn-sm btn-link text-decoration-none fw-semibold">
-        <?= $pendingPoCount > 5 ? 'Lihat Semua (' . esc($pendingPoCount) . ' Draft) &rarr;' : 'Lihat Semua Draft &rarr;' ?>
-      </a>
-    </div>
+<!-- Grafik Penjualan vs Pembelian -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Grafik Perbandingan Penjualan vs Pembelian (<?= esc($pLabel) ?>)</h3>
   </div>
+  <div class="card-body">
+    <div id="mainDashboardChart" style="min-height: 290px;"></div>
+  </div>
+</div>
 
+<!-- Antrean Persetujuan PO -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+    <h3 class="card-title m-0 fw-bold">Antrean Persetujuan Pembelian (Butuh ACC Direktur)</h3>
+    <span class="badge <?= !empty($pendingPoCount) ? 'bg-warning text-white' : 'bg-success-lt' ?> fw-bold"><?= esc($pendingPoCount ?? 0) ?> Menunggu</span>
+  </div>
   <?php if (empty($pendingApprovalPOs)): ?>
-    <div class="card-body text-center py-4">
-      <div class="text-success mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-      </div>
-      <div class="h4 mb-1 text-dark fw-semibold">Tidak ada pesanan beli yang menunggu persetujuan</div>
-      <div class="text-secondary small">Seluruh pengajuan pembelian dari staff purchasing telah ditindaklanjuti.</div>
-    </div>
+    <div class="card-body text-center py-4 text-secondary">Tidak ada pesanan pembelian yang menunggu persetujuan.</div>
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-vcenter card-table table-hover">
-        <thead>
-          <tr>
-            <th style="width: 140px;">No. PO</th>
-            <th style="width: 110px;">Tanggal</th>
-            <th>Pemasok</th>
-            <th>Diajukan Oleh</th>
-            <th class="text-center" style="width: 90px;">Item</th>
-            <th class="text-end" style="width: 160px;">Total Estimasi</th>
-            <th class="text-end" style="width: 220px;">Tindakan Manajer</th>
-          </tr>
-        </thead>
+        <thead><tr><th>No. PO</th><th>Pemasok</th><th>Pembuat</th><th class="text-end">Total Nilai</th><th class="text-end">Aksi</th></tr></thead>
         <tbody>
           <?php foreach ($pendingApprovalPOs as $po): ?>
           <tr>
-            <td>
-              <a href="/purchase-orders/show/<?= esc($po['id']) ?>" class="fw-bold font-monospace text-primary text-decoration-none">
-                <?= esc($po['po_number']) ?>
-              </a>
-            </td>
-            <td class="text-secondary small font-monospace">
-              <?= date('d M Y', strtotime($po['order_date'])) ?>
-            </td>
-            <td>
-              <div class="fw-semibold text-dark"><?= esc($po['supplier_name']) ?></div>
-              <div class="text-secondary small font-monospace"><?= esc($po['supplier_code']) ?></div>
-            </td>
-            <td>
-              <div class="text-dark small fw-medium"><?= esc($po['creator_name']) ?></div>
-              <div class="text-secondary small"><?= esc(substr($po['created_at'], 0, 16)) ?></div>
-            </td>
-            <td class="text-center">
-              <span class="badge bg-secondary-lt fw-bold"><?= esc($po['total_items']) ?> SKU</span>
-            </td>
-            <td class="text-end font-monospace fw-bold text-dark fs-3">
-              Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?>
-            </td>
-            <td class="text-end">
-              <div class="d-inline-flex align-items-center gap-1">
-                <a href="/purchase-orders/show/<?= esc($po['id']) ?>" class="btn btn-sm btn-outline-secondary" title="Lihat detail rincian produk & harga">
-                  Review
-                </a>
-                <form action="/purchase-orders/approve/<?= esc($po['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin menyetujui (ACC) Pesanan Beli <strong><?= esc($po['po_number']) ?></strong> senilai <strong>Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></strong>?" data-confirm-title="Persetujuan Pesanan Beli (ACC)" data-confirm-btn="Ya, Setujui (ACC)" data-confirm-type="primary">
-                  <button type="submit" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-                    Setujui (ACC)
-                  </button>
-                </form>
-                <button type="button" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalRejectPO_<?= esc($po['id']) ?>" title="Tolak pengajuan pembelian ini">
-                  Tolak
-                </button>
-              </div>
-
-              <!-- Modal Tolak PO dari Dashboard -->
-              <div class="modal modal-blur fade text-start" id="modalRejectPO_<?= esc($po['id']) ?>" tabindex="-1" role="dialog" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document">
-                  <div class="modal-content">
-                    <form action="/purchase-orders/cancel/<?= esc($po['id']) ?>" method="post">
-                      <div class="modal-header">
-                        <h5 class="modal-title text-danger">Tolak Pengajuan PO <?= esc($po['po_number']) ?></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        <p class="text-secondary mb-3">
-                          Apakah Anda yakin ingin menolak pengajuan pesanan beli <strong><?= esc($po['po_number']) ?></strong> senilai <strong>Rp <?= number_format((float)$po['total_amount'], 0, ',', '.') ?></strong>?
-                        </p>
-                        <div class="mb-3">
-                          <label class="form-label required">Alasan Penolakan</label>
-                          <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Sebutkan alasan penolakan (misal: Anggaran operasional dialihkan, harga kemahalan, dsb.)" required></textarea>
-                          <div class="form-text">Alasan penolakan akan dicatat permanen dan dapat ditinjau oleh staf purchasing.</div>
-                        </div>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-danger">Ya, Tolak PO Ini</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </td>
+            <td><code class="text-dark fw-bold"><?= esc($po['po_number']) ?></code></td>
+            <td class="fw-semibold"><?= esc($po['supplier_name']) ?></td>
+            <td class="small text-secondary"><?= esc($po['creator_name']) ?></td>
+            <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></td>
+            <td class="text-end"><a class="btn btn-sm btn-warning fw-semibold" href="/purchase-orders/show/<?= esc($po['id']) ?>">Review / ACC</a></td>
           </tr>
           <?php endforeach; ?>
         </tbody>
       </table>
     </div>
-    <?php if ($pendingPoCount > 5): ?>
-      <div class="card-footer bg-transparent py-2 text-center text-secondary small">
-        Menampilkan 5 dari <strong><?= esc($pendingPoCount) ?></strong> pesanan beli yang menunggu persetujuan Direktur. 
-        <a href="/purchase-orders?status=draft" class="fw-semibold text-primary">Buka semua antrean draft (<?= esc($pendingPoCount) ?> PO) &rarr;</a>
+    <?php if (($pendingPoCount ?? 0) > 5): ?>
+      <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-2">
+        <span class="small text-secondary">Menampilkan 5 dari <?= esc($pendingPoCount) ?> antrean</span>
+        <a href="/purchase-orders?status=draft" class="btn btn-sm btn-outline-warning">Lihat Semua</a>
       </div>
     <?php endif; ?>
   <?php endif; ?>
 </div>
 
-<div class="row g-3">
-  <div class="col-lg-7">
+<!-- Laporan Terpadu (Penjualan, Pembelian, Top Produk, & Kapasitas Gudang) -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0"/><path d="M9 8l1 0"/><path d="M9 12l1 0"/><path d="M9 16l1 0"/><path d="M14 8l1 0"/><path d="M14 12l1 0"/><path d="M14 16l1 0"/><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/></svg>
-          <h3 class="card-title m-0 fw-bold">Ringkasan Sebaran Stok per Gudang</h3>
-        </div>
-        <a href="/inventory" class="btn btn-sm btn-link text-decoration-none p-0">Detail Stok &rarr;</a>
+        <h3 class="card-title m-0 fw-bold">Laporan Penjualan (<?= esc($pLabel) ?>)</h3>
+        <a href="/dashboard/export?type=sales&amp;<?= $exportQueryBase ?>" class="btn btn-sm btn-outline-success d-print-none">Excel</a>
       </div>
-
-      <div class="table-responsive">
-        <table class="table table-vcenter card-table table-hover">
-          <thead>
-            <tr>
-              <th>Kode</th>
-              <th>Nama Gudang</th>
-              <th>Lokasi Operasional</th>
-              <th class="text-center">Ragam SKU</th>
-              <th class="text-end">Total Fisik</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($warehouseSummary as $ws): ?>
-            <tr>
-              <td><code class="text-dark font-monospace fw-bold"><?= esc($ws['code']) ?></code></td>
-              <td><div class="fw-semibold text-dark"><?= esc($ws['name']) ?></div></td>
-              <td class="text-secondary small"><?= esc($ws['location']) ?></td>
-              <td class="text-center font-monospace"><?= esc($ws['itemCount']) ?> SKU</td>
-              <td class="text-end font-monospace fw-bold text-dark"><?= number_format((float) $ws['totalQty'], 0, ',', '.') ?> unit</td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer bg-transparent py-2 text-secondary small d-flex justify-content-between">
-        <span>Status Peringatan Stok Global:</span>
-        <span class="fw-bold <?= $lowStockCount > 0 ? 'text-danger' : 'text-success' ?>">
-          <?= $lowStockCount > 0 ? "{$lowStockCount} SKU di bawah batas minimum" : "Semua produk aman" ?>
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-5">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z"/></svg>
-          <h3 class="card-title m-0 fw-bold">Top 5 Produk Paling Menghasilkan</h3>
-        </div>
-        <a href="/reports/top-products" class="btn btn-sm btn-link text-decoration-none p-0">Semua &rarr;</a>
-      </div>
-
-      <?php if (empty($topProducts)): ?>
-        <div class="card-body text-center py-5 text-secondary">
-          Belum ada riwayat pesanan penjualan bulan ini.
-        </div>
+      <?php if (empty($reportSales)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada data penjualan pada periode ini.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
-            <thead>
-              <tr>
-                <th class="text-center" style="width: 45px;">#</th>
-                <th>Produk</th>
-                <th class="text-center" style="width: 75px;">Qty</th>
-                <th class="text-end">Kontribusi</th>
-              </tr>
-            </thead>
+            <thead><tr><th>No. SO</th><th>Pelanggan</th><th class="text-end">Total</th><th class="text-center">Status</th></tr></thead>
             <tbody>
-              <?php $rank = 1; foreach ($topProducts as $tp): ?>
+              <?php foreach ($reportSales as $rs): $sb = status_badge($rs['status']); ?>
               <tr>
-                <td class="text-center">
-                  <?php if ($rank === 1): ?>
-                    <span class="badge bg-yellow text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">1</span>
-                  <?php elseif ($rank === 2): ?>
-                    <span class="badge bg-secondary text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">2</span>
-                  <?php elseif ($rank === 3): ?>
-                    <span class="badge bg-azure text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">3</span>
-                  <?php else: ?>
-                    <span class="text-muted fw-bold"><?= $rank ?></span>
-                  <?php endif; ?>
-                </td>
-                <td>
-                  <div class="fw-semibold text-dark text-truncate" style="max-width: 150px;" title="<?= esc($tp['name']) ?>"><?= esc($tp['name']) ?></div>
-                  <div class="small text-muted font-monospace"><?= esc($tp['code']) ?></div>
-                </td>
-                <td class="text-center font-monospace fw-bold text-dark">
-                  <?= esc($tp['total_qty']) ?> <span class="small text-muted fw-normal"><?= esc($tp['unit'] ?? '') ?></span>
-                </td>
-                <td class="text-end font-monospace text-primary fw-bold" style="font-size: 0.85rem;">
-                  Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?>
-                </td>
-              </tr>
-              <?php $rank++; endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
-    </div>
-  </div>
-</div>
-
-<?php else: ?>
-<!-- ======================================================================= -->
-<!-- 5. DASHBOARD KHUSUS ADMINISTRATOR (SUPER ADMIN) -->
-<!-- ======================================================================= -->
-
-<div class="page-header d-print-none mt-0 mb-3">
-  <div class="row align-items-center">
-    <div class="col">
-      <div class="page-pretitle text-uppercase font-monospace text-primary fw-semibold" style="letter-spacing: 0.5px;">Pusat Kendali Sistem & Pengaturan</div>
-      <h2 class="page-title fw-bold text-dark">Dashboard Administrator</h2>
-      <div class="text-secondary small mt-1">Pengawasan menyeluruh terhadap performa operasional, katalog produk, valuasi stok, dan hak akses pengguna.</div>
-    </div>
-    <div class="col-auto ms-auto d-print-none">
-      <div class="btn-list">
-        <a href="/users/create" class="btn btn-outline-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 11h6m-3 -3v6"/></svg>
-          + Tambah Pengguna
-        </a>
-        <a href="/inventory/adjust" class="btn btn-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          Penyesuaian Stok (Opname)
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #1d4ed8 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Katalog Produk</span>
-          <span class="avatar avatar-xs rounded bg-blue-lt text-blue">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($productCount) ?> <span class="fs-4 text-muted fw-normal">SKU</span></div>
-        <div class="text-secondary small">Total ragam barang aktif</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #f59e0b !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Valuasi Stok</span>
-          <span class="avatar avatar-xs rounded bg-warning-lt text-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 8v-3a1 1 0 0 0 -1 -1h-10a2 2 0 0 0 0 4h12a1 1 0 0 1 1 1v3m0 4v3a1 1 0 0 1 -1 1h-12a2 2 0 0 1 -2 -2v-12"/><path d="M20 12v4h-4a2 2 0 0 1 0 -4h4"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small">Estimasi modal persediaan fisik</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #2fb344 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Penjualan Bulan Ini</span>
-          <span class="avatar avatar-xs rounded bg-success-lt text-success">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
-        <div class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan jual berhasil</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-sm-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 3px solid #0284c7 !important;">
-      <div class="card-body p-3">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-secondary text-uppercase fw-bold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Pengguna Aktif</span>
-          <span class="avatar avatar-xs rounded bg-azure-lt text-azure">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
-          </span>
-        </div>
-        <div class="h2 mb-1 fw-bold text-dark font-monospace"><?= esc($userCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">User</span></div>
-        <div class="text-secondary small">Akun aktif terdaftar di sistem</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3">
-  <div class="col-lg-7">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-danger" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-          <h3 class="card-title m-0 fw-bold">Peringatan Stok Menipis</h3>
-        </div>
-        <div class="d-flex align-items-center gap-1">
-          <?php if (! empty($lowStock)): ?>
-            <span class="badge bg-danger-lt fw-bold"><?= count($lowStock) ?> Perlu Restock</span>
-            <?php $onOrderCount = count(array_filter($lowStock, static fn($x) => !empty($x['active_po_number']))); ?>
-            <?php if ($onOrderCount > 0): ?>
-              <span class="badge bg-warning-lt fw-bold border border-warning-subtle" title="<?= $onOrderCount ?> produk sudah dalam proses PO"><?= $onOrderCount ?> On Order</span>
-            <?php endif; ?>
-          <?php else: ?>
-            <span class="badge bg-success-lt fw-bold">Semua Aman</span>
-          <?php endif; ?>
-        </div>
-      </div>
-
-      <?php if (empty($lowStock)): ?>
-        <div class="card-body text-center py-5">
-          <div class="text-success mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M9 12l2 2l4 -4"/></svg>
-          </div>
-          <div class="h4 mb-1 text-dark">Kondisi Persediaan Aman</div>
-          <div class="text-secondary small">Seluruh kuantitas fisik produk saat ini berada di atas batas minimum pemesanan ulang.</div>
-        </div>
-      <?php else: ?>
-        <div class="table-responsive">
-          <table class="table table-vcenter card-table table-hover table-striped">
-            <thead>
-              <tr>
-                <th style="width: 100px;">Kode</th>
-                <th>Nama Produk</th>
-                <th class="text-center" style="width: 110px;">Sisa Stok</th>
-                <th class="text-center" style="width: 90px;">Min</th>
-                <th class="text-end" style="width: 120px;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ($lowStock as $p): ?>
-              <tr>
-                <td><code class="text-dark font-monospace fw-bold"><?= esc($p['code']) ?></code></td>
-                <td>
-                  <div class="fw-semibold text-dark"><?= esc($p['name']) ?></div>
-                  <?php if (! empty($p['active_po_number'])): ?>
-                    <div class="mt-1">
-                      <?php if ($p['active_po_status'] === 'approved'): ?>
-                        <span class="badge bg-warning-lt text-warning fw-bold border border-warning-subtle d-inline-flex align-items-center gap-1 px-2 py-0" title="PO <?= esc($p['active_po_number']) ?> (Disetujui) & sedang menunggu penerimaan barang (GR).">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
-                          Sedang Dipesan: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?> &bull; Approved)
-                        </span>
-                      <?php else: ?>
-                        <span class="badge bg-azure-lt text-primary fw-bold border border-info-subtle d-inline-flex align-items-center gap-1 px-2 py-0" title="Draft PO <?= esc($p['active_po_number']) ?> & menunggu persetujuan.">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z"/></svg>
-                          Draft PO: <?= esc($p['active_po_number']) ?> (<?= esc($p['active_po_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?>)
-                        </span>
-                      <?php endif; ?>
-                    </div>
-                  <?php endif; ?>
-                </td>
-                <td class="text-center">
-                  <span class="badge bg-danger-lt fw-bold px-2 py-1"><?= esc($p['stock_qty']) ?> <?= esc($p['unit'] ?? 'unit') ?></span>
-                </td>
-                <td class="text-center text-secondary font-monospace"><?= esc($p['min_stock']) ?></td>
-                <td class="text-end">
-                  <?php 
-                    $suggestedQty = (int) ($p['max_stock'] ?? 0) > 0 
-                      ? max(1, (int)$p['max_stock'] - ((int)$p['stock_qty'] + (int)($p['active_po_qty'] ?? 0))) 
-                      : max(1, (int)$p['min_stock'] - (int)$p['stock_qty']);
-                  ?>
-                  <?php if (! empty($p['active_po_number'])): ?>
-                    <a class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>" title="Lihat PO <?= esc($p['active_po_number']) ?> yang sedang berjalan">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
-                      Lihat PO
-                    </a>
-                  <?php else: ?>
-                    <span class="badge bg-secondary-lt fw-normal text-muted" title="Pemesanan ulang menjadi wewenang tim Purchasing">Perlu PO Purchasing</span>
-                  <?php endif; ?>
-                </td>
+                <td><a href="/sales-orders/show/<?= esc($rs['id']) ?>" class="fw-bold font-monospace"><?= esc($rs['so_number']) ?></a></td>
+                <td class="small fw-medium"><?= esc($rs['customer_name']) ?></td>
+                <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $rs['total_amount'], 0, ',', '.') ?></td>
+                <td class="text-center"><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -1271,58 +688,178 @@
       <?php endif; ?>
     </div>
   </div>
-
-  <div class="col-lg-5">
+  <div class="col-lg-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-primary" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z"/></svg>
-          <h3 class="card-title m-0 fw-bold">Top Produk Terlaris</h3>
-        </div>
-        <a href="/reports/top-products" class="btn btn-sm btn-link text-decoration-none p-0">Semua Laporan &rarr;</a>
+        <h3 class="card-title m-0 fw-bold">Laporan Pembelian (<?= esc($pLabel) ?>)</h3>
+        <a href="/dashboard/export?type=purchase&amp;<?= $exportQueryBase ?>" class="btn btn-sm btn-outline-success d-print-none">Excel</a>
       </div>
-
-      <?php if (empty($topProducts)): ?>
-        <div class="card-body text-center py-5 text-secondary">
-          Belum ada riwayat pesanan penjualan bulan ini.
-        </div>
+      <?php if (empty($reportPurchases)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada data pembelian pada periode ini.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover">
-            <thead>
-              <tr>
-                <th class="text-center" style="width: 45px;">#</th>
-                <th>Produk</th>
-                <th class="text-center" style="width: 90px;">Terjual</th>
-                <th class="text-end">Nominal</th>
-              </tr>
-            </thead>
+            <thead><tr><th>No. PO</th><th>Pemasok</th><th class="text-end">Total</th><th class="text-center">Status</th></tr></thead>
             <tbody>
-              <?php $rank = 1; foreach ($topProducts as $tp): ?>
+              <?php foreach ($reportPurchases as $rp): $sb = status_badge($rp['status']); ?>
               <tr>
-                <td class="text-center">
-                  <?php if ($rank === 1): ?>
-                    <span class="badge bg-yellow text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">1</span>
-                  <?php elseif ($rank === 2): ?>
-                    <span class="badge bg-secondary text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">2</span>
-                  <?php elseif ($rank === 3): ?>
-                    <span class="badge bg-azure text-white rounded-circle p-1" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem;">3</span>
-                  <?php else: ?>
-                    <span class="text-muted fw-bold"><?= $rank ?></span>
-                  <?php endif; ?>
-                </td>
-                <td>
-                  <div class="fw-semibold text-dark text-truncate" style="max-width: 170px;" title="<?= esc($tp['name']) ?>"><?= esc($tp['name']) ?></div>
-                  <div class="small text-muted font-monospace"><?= esc($tp['code']) ?></div>
-                </td>
-                <td class="text-center font-monospace fw-bold text-dark">
-                  <?= esc($tp['total_qty']) ?> <span class="small text-muted fw-normal"><?= esc($tp['unit'] ?? '') ?></span>
-                </td>
-                <td class="text-end font-monospace text-primary fw-bold" style="font-size: 0.85rem;">
-                  Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?>
-                </td>
+                <td><a href="/purchase-orders/show/<?= esc($rp['id']) ?>" class="fw-bold font-monospace"><?= esc($rp['po_number']) ?></a></td>
+                <td class="small fw-medium"><?= esc($rp['supplier_name']) ?></td>
+                <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $rp['total_amount'], 0, ',', '.') ?></td>
+                <td class="text-center"><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
               </tr>
-              <?php $rank++; endforeach; ?>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Produk Paling Laris (<?= esc($pLabel) ?>)</h3></div>
+      <?php if (empty($topProducts)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada penjualan produk pada periode ini.</div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-hover">
+            <thead><tr><th>Produk</th><th class="text-center">Terjual</th><th class="text-end">Total Penjualan</th></tr></thead>
+            <tbody>
+              <?php foreach ($topProducts as $tp): ?>
+              <tr>
+                <td><div class="fw-semibold"><?= esc($tp['name']) ?></div><div class="small text-muted"><?= esc($tp['code']) ?></div></td>
+                <td class="text-center"><span class="badge bg-success-lt fw-bold"><?= esc($tp['total_qty']) ?> <?= esc($tp['unit']) ?></span></td>
+                <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title m-0 fw-bold">Sebaran Stok per Gudang</h3>
+        <a href="/dashboard/export?type=stock&amp;<?= $exportQueryBase ?>" class="btn btn-sm btn-outline-success d-print-none">Export Stok</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table table-hover">
+          <thead><tr><th>Gudang</th><th class="text-center">Jumlah Jenis Produk</th><th class="text-end">Total Unit Fisik</th></tr></thead>
+          <tbody>
+            <?php foreach (($warehouseSummary ?? []) as $ws): ?>
+            <tr>
+              <td><div class="fw-semibold"><?= esc($ws['name']) ?></div><div class="small text-muted"><?= esc($ws['location']) ?></div></td>
+              <td class="text-center"><span class="badge bg-azure-lt"><?= esc($ws['itemCount']) ?> jenis</span></td>
+              <td class="text-end font-monospace fw-bold"><?= number_format((float) $ws['totalQty'], 0, ',', '.') ?> unit</td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?php else: ?>
+<!-- ======================================================================= -->
+<!-- 5. DASHBOARD ADMINISTRATOR                                              -->
+<!-- ======================================================================= -->
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #1d4ed8 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Total Produk Terdaftar</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($productCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Produk</span></div>
+        <div class="text-secondary small"><?= esc($categoryCount ?? 0) ?> Kategori &bull; <?= esc($warehouseCount ?? 0) ?> Gudang</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #f59e0b !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Nilai Persediaan</div>
+        <div class="h2 mb-1 fw-bold text-dark font-monospace">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small">Estimasi modal seluruh stok gudang</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #16a34a !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Penjualan (<?= esc($pLabel) ?>)</div>
+        <div class="h2 mb-1 fw-bold text-success font-monospace">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
+        <div class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan pelanggan</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100 stat-card-hover" style="border-top: 4px solid #0284c7 !important;">
+      <div class="card-body p-3">
+        <div class="text-secondary text-uppercase fw-bold small mb-2">Pengguna Aktif</div>
+        <div class="h1 mb-1 fw-bold text-dark font-monospace"><?= esc($userCount ?? 0) ?> <span class="fs-4 text-muted fw-normal">Akun</span></div>
+        <div class="text-secondary small">Akses lintas peran aktif</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Grafik Penjualan vs Pembelian -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-transparent py-3">
+    <h3 class="card-title m-0 fw-bold">Grafik Penjualan vs Pembelian (<?= esc($pLabel) ?>)</h3>
+  </div>
+  <div class="card-body">
+    <div id="mainDashboardChart" style="min-height: 270px;"></div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Produk dengan Stok Menipis</h3></div>
+      <?php if (empty($lowStock)): ?>
+        <div class="card-body text-center py-4 text-secondary">Seluruh stok aman.</div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-hover">
+            <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Min</th></tr></thead>
+            <tbody>
+              <?php foreach ($lowStock as $p): ?>
+              <tr>
+                <td><div class="fw-semibold"><?= esc($p['name']) ?></div><div class="small text-muted"><?= esc($p['code']) ?></div></td>
+                <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
+                <td class="text-center text-muted"><?= esc($p['min_stock']) ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-transparent py-3"><h3 class="card-title m-0 fw-bold">Produk Paling Laris</h3></div>
+      <?php if (empty($topProducts)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada data penjualan.</div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-hover">
+            <thead><tr><th>Produk</th><th class="text-center">Terjual</th><th class="text-end">Total Penjualan</th></tr></thead>
+            <tbody>
+              <?php foreach ($topProducts as $tp): ?>
+              <tr>
+                <td><div class="fw-semibold"><?= esc($tp['name']) ?></div><div class="small text-muted"><?= esc($tp['code']) ?></div></td>
+                <td class="text-center"><span class="badge bg-success-lt fw-bold"><?= esc($tp['total_qty']) ?> <?= esc($tp['unit']) ?></span></td>
+                <td class="text-end font-monospace fw-bold">Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?></td>
+              </tr>
+              <?php endforeach; ?>
             </tbody>
           </table>
         </div>
@@ -1332,4 +869,147 @@
 </div>
 <?php endif; ?>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Toggle input filter Mingguan / Bulanan / Tahunan
+  const periodSelect = document.getElementById('periodTypeSelect');
+  const weekWrap = document.getElementById('filterWeekWrap');
+  const monthWrap = document.getElementById('filterMonthWrap');
+  const yearWrap = document.getElementById('filterYearWrap');
+  if (periodSelect) {
+    periodSelect.addEventListener('change', function () {
+      const val = this.value;
+      weekWrap.classList.toggle('d-none', val !== 'week');
+      monthWrap.classList.toggle('d-none', val !== 'month');
+      yearWrap.classList.toggle('d-none', val === 'week');
+    });
+  }
+
+  // Render ApexCharts interaktif
+  const chartEl = document.getElementById('mainDashboardChart');
+  if (chartEl && typeof ApexCharts !== 'undefined') {
+    const userRole = <?= json_encode($userRole) ?>;
+    const labels = <?= json_encode($chartData['labels'] ?? []) ?>;
+    const primaryData = <?= json_encode($chartData['primary'] ?? []) ?>;
+    const secondaryData = <?= json_encode($chartData['secondary'] ?? []) ?>;
+
+    let series = [];
+    let colors = ['#1d4ed8', '#f59e0b'];
+    let isCurrency = true;
+
+    if (userRole === 'gudang') {
+      isCurrency = false;
+      series = [
+        { name: 'Barang Masuk (Unit)', data: primaryData },
+        { name: 'Barang Keluar (Unit)', data: secondaryData }
+      ];
+      colors = ['#1d4ed8', '#16a34a'];
+    } else if (userRole === 'sales') {
+      series = [{ name: 'Total Penjualan', data: primaryData }];
+      colors = ['#16a34a'];
+    } else if (userRole === 'purchasing') {
+      series = [{ name: 'Belanja Pembelian', data: secondaryData }];
+      colors = ['#0284c7'];
+    } else {
+      series = [
+        { name: 'Penjualan', data: primaryData },
+        { name: 'Pembelian', data: secondaryData }
+      ];
+      colors = ['#16a34a', '#1d4ed8'];
+    }
+
+    const chart = new ApexCharts(chartEl, {
+      chart: {
+        type: 'area',
+        height: 280,
+        toolbar: { show: false },
+        fontFamily: 'Plus Jakarta Sans, sans-serif'
+      },
+      series: series,
+      colors: colors,
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 2.5 },
+      fill: {
+        type: 'gradient',
+        gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05 }
+      },
+      xaxis: {
+        categories: labels,
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        labels: {
+          formatter: function (val) {
+            if (!isCurrency) return Math.round(val) + ' unit';
+            if (val >= 1000000) return 'Rp ' + (val / 1000000).toFixed(1) + ' jt';
+            if (val >= 1000) return 'Rp ' + (val / 1000).toFixed(0) + ' rb';
+            return 'Rp ' + val;
+          }
+        }
+      },
+      tooltip: {
+        y: {
+          formatter: function (val) {
+            return isCurrency
+              ? 'Rp ' + Math.round(val).toLocaleString('id-ID')
+              : Math.round(val).toLocaleString('id-ID') + ' unit';
+          }
+        }
+      },
+      grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+      legend: { position: 'top', horizontalAlign: 'right' }
+    });
+    chart.render();
+  }
+});
+</script>
+
+<!-- Modal Pengaturan Export PDF (Pilih Data yang Ditampilkan) -->
+<div class="modal modal-blur fade d-print-none" id="exportPdfModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form action="/dashboard/export-pdf" method="get" target="_blank" class="modal-content">
+      <input type="hidden" name="period_type" value="<?= esc($pType) ?>">
+      <input type="hidden" name="year" value="<?= esc($pYear) ?>">
+      <input type="hidden" name="month" value="<?= esc($pMonth) ?>">
+      <input type="hidden" name="week_start" value="<?= esc($pWeek) ?>">
+
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Pengaturan Export Laporan PDF</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info py-2 px-3 small mb-3">
+          <strong>Periode Aktif:</strong> <?= esc($pLabel) ?><br>
+          Dokumen akan dicetak dalam format laporan resmi A4.
+        </div>
+
+        <label class="form-label fw-bold mb-2">Pilih Bagian Data yang Ingin Ditampilkan:</label>
+        <div class="d-flex flex-column gap-2 mb-3">
+          <?php foreach ($roleMeta['pdfOptions'] as $secKey => $secInfo): ?>
+            <label class="form-check form-check-inline border rounded-2 px-3 py-2 m-0 bg-light-lt d-flex align-items-center gap-2" style="cursor: pointer;">
+              <input class="form-check-input m-0" type="checkbox" name="sections[]" value="<?= esc($secKey) ?>" <?= $secInfo['checked'] ? 'checked' : '' ?>>
+              <span class="form-check-label fw-medium text-dark"><?= esc($secInfo['label']) ?></span>
+            </label>
+          <?php endforeach; ?>
+        </div>
+
+        <div>
+          <label class="form-label fw-semibold small">Catatan Tambahan di Dokumen (Opsional)</label>
+          <input type="text" name="report_note" class="form-control form-control-sm" placeholder="Contoh: Laporan evaluasi bulanan untuk rapat direksi">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-danger d-inline-flex align-items-center gap-1" onclick="setTimeout(function(){ var m = bootstrap.Modal.getInstance(document.getElementById('exportPdfModal')); if(m) m.hide(); }, 250);">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"/></svg>
+          Buat &amp; Cetak PDF
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
 <?= $this->endSection() ?>

@@ -12,18 +12,44 @@ class Deliveries extends BaseController
         if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $status = trim((string) ($this->request->getGet('status') ?? ''));
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
         $start = trim((string) ($this->request->getGet('start_date') ?? ''));
         $end = trim((string) ($this->request->getGet('end_date') ?? ''));
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
 
+        $pendingSos = $db->table('sales_orders so')
+            ->select('MIN(so.id) AS id, so.so_number, MIN(so.order_date) AS order_date, MIN(c.name) AS customer_name, MIN(w.name) AS warehouse_name, COUNT(so.id) AS item_count, SUM(so.qty) AS total_qty, MIN(so.notes) AS notes')
+            ->join('customers c', 'c.id = so.customer_id', 'left')
+            ->join('warehouses w', 'w.id = so.warehouse_id', 'left')
+            ->where('so.status', 'confirmed')
+            ->groupBy('so.so_number')
+            ->orderBy('order_date', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        $countRows = $db->query("SELECT COALESCE(status, 'delivered') AS st, COUNT(DISTINCT delivery_number) AS cnt FROM deliveries GROUP BY COALESCE(status, 'delivered')")->getResultArray();
+        $statusCounts = ['all' => 0, 'scheduled' => 0, 'delivered' => 0, 'cancelled' => 0, 'pending_so' => count($pendingSos)];
+        foreach ($countRows as $cr) {
+            $stKey = (string) $cr['st'];
+            $cnt = (int) $cr['cnt'];
+            if (isset($statusCounts[$stKey])) {
+                $statusCounts[$stKey] = $cnt;
+            }
+            $statusCounts['all'] += $cnt;
+        }
+
         $subQuery = $db->table('deliveries d')
-            ->select('MIN(d.id) AS id, d.delivery_number, MIN(so.so_number) AS so_number, MIN(c.name) AS customer_name, MIN(d.delivery_date) AS delivery_date, MIN(d.status) AS status, MIN(d.cancel_reason) AS cancel_reason, MIN(d.notes) AS notes, MIN(u.name) AS deliverer_name, MIN(w.name) AS warehouse_name, MAX(d.created_at) AS created_at')
+            ->select('MIN(d.id) AS id, d.delivery_number, MIN(so.so_number) AS so_number, MIN(c.name) AS customer_name, MIN(d.delivery_date) AS delivery_date, MIN(d.delivery_time) AS delivery_time, MIN(d.status) AS status, MIN(d.cancel_reason) AS cancel_reason, MIN(d.notes) AS notes, MIN(u.name) AS deliverer_name, MIN(w.name) AS warehouse_name, MAX(d.created_at) AS created_at')
             ->join('sales_orders so', 'so.id = d.sales_order_id')
             ->join('customers c', 'c.id = so.customer_id', 'left')
             ->join('users u', 'u.id = d.delivered_by')
             ->join('warehouses w', 'w.id = d.warehouse_id');
+
+        if (in_array($status, ['scheduled', 'delivered', 'cancelled'], true)) {
+            $subQuery->where('d.status', $status);
+        }
 
         if ($warehouseId > 0) {
             $subQuery->where('d.warehouse_id', $warehouseId);
@@ -67,6 +93,9 @@ class Deliveries extends BaseController
         return view('deliveries/index', [
             'title' => 'Pengiriman',
             'items' => $items,
+            'pendingSos' => $pendingSos,
+            'status' => $status,
+            'statusCounts' => $statusCounts,
             'q' => $q,
             'warehouses' => $warehouses,
             'warehouseId' => $warehouseId,
@@ -80,7 +109,15 @@ class Deliveries extends BaseController
         if ($r = $this->requireRole(['gudang'], '/deliveries', 'Hanya Staff Gudang yang bisa mencatat Pengiriman.')) return $r;
         $db = \Config\Database::connect();
         $soId = (int) ($this->request->getGet('sales_order_id') ?? 0);
-        $sos = $db->table('sales_orders')->select('MIN(id) AS id, so_number, MIN(order_date) AS order_date')->where('status', 'confirmed')->groupBy('so_number')->orderBy('order_date', 'DESC')->get()->getResultArray();
+        $sos = $db->table('sales_orders so')
+            ->select('MIN(so.id) AS id, so.so_number, MIN(so.order_date) AS order_date, MIN(c.name) AS customer_name, MIN(w.name) AS warehouse_name, COUNT(so.id) AS item_count, SUM(so.qty) AS total_qty')
+            ->join('customers c', 'c.id = so.customer_id', 'left')
+            ->join('warehouses w', 'w.id = so.warehouse_id', 'left')
+            ->where('so.status', 'confirmed')
+            ->groupBy('so.so_number')
+            ->orderBy('order_date', 'DESC')
+            ->get()
+            ->getResultArray();
         $so = null;
         $items = [];
         if ($soId) {
@@ -143,6 +180,10 @@ class Deliveries extends BaseController
         if ($r = $this->requireRole(['gudang'], '/deliveries', 'Hanya Staff Gudang yang bisa mencatat Pengiriman.')) return $r;
         $soId = (int) $this->request->getPost('sales_order_id');
         $deliveryDate = $this->request->getPost('delivery_date');
+        $deliveryTime = trim((string) ($this->request->getPost('delivery_time') ?? ''));
+        if (! preg_match('/^\d{2}:\d{2}$/', $deliveryTime)) {
+            $deliveryTime = date('H:i');
+        }
         $deliveryStatus = $this->request->getPost('delivery_status') === 'scheduled' ? 'scheduled' : 'delivered';
         if ($deliveryStatus === 'delivered') {
             $deliveryDate = date('Y-m-d');
@@ -203,7 +244,7 @@ class Deliveries extends BaseController
                 $doRowId = (new DeliveryModel())->insert([
                     'delivery_number' => $doNumber,
                     'sales_order_id' => $line['sales_order_id'], 'warehouse_id' => $warehouseId, 'product_id' => $line['product_id'],
-                    'qty_delivered' => $line['qty_delivered'], 'delivery_date' => $deliveryDate,
+                    'qty_delivered' => $line['qty_delivered'], 'delivery_date' => $deliveryDate, 'delivery_time' => $deliveryTime,
                     'status' => $deliveryStatus,
                     'notes' => $this->request->getPost('notes'), 'delivered_by' => $this->userId(),
                 ], true);
@@ -292,6 +333,7 @@ class Deliveries extends BaseController
         if ($reason === '') {
             return redirect()->to('/deliveries')->with('error', 'Wajib menyertakan alasan pembatalan pengiriman.');
         }
+        $cancelType = $this->request->getPost('cancel_type') === 'cancel_order' ? 'cancel_order' : 'revision';
 
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -333,7 +375,7 @@ class Deliveries extends BaseController
 
             // Cek apakah masih ada DO lain yang aktif pada SO induk
             $soRow = (new SalesOrderModel())->find((int) $do['sales_order_id']);
-            $soCancelled = false;
+            $soAction = 'none';
             if ($soRow) {
                 $otherActiveDoCount = $db->table('deliveries d')
                     ->join('sales_orders so', 'so.id = d.sales_order_id')
@@ -342,53 +384,71 @@ class Deliveries extends BaseController
                     ->countAllResults();
 
                 if ($otherActiveDoCount === 0 && $soRow['status'] !== 'cancelled') {
-                    // Kembalikan seluruh stok yang dulu dipotong saat SO dibuat
-                    $soRows = $db->table('sales_orders')->select('id')->where('so_number', $soRow['so_number'])->get()->getResultArray();
-                    $soRowIds = array_column($soRows, 'id');
-                    if (! empty($soRowIds)) {
-                        $soMovements = $db->table('stock_movements')
-                            ->where('reference_type', 'SALES_ORDER')
-                            ->where('movement_type', 'OUT')
-                            ->whereIn('reference_id', $soRowIds)
-                            ->get()
-                            ->getResultArray();
-                        $stockSvc = new StockService();
-                        foreach ($soMovements as $mov) {
-                            $stockSvc->receiveStock(
-                                (int) $mov['product_id'],
-                                (int) $mov['qty'],
-                                'CANCEL_SALES_ORDER',
-                                (int) $mov['reference_id'],
-                                $this->userId(),
-                                'Batal SO ' . $soRow['so_number'] . ' (via Batal DO ' . $do['delivery_number'] . ')',
-                                (int) $mov['warehouse_id']
-                            );
-                        }
-                    }
-
                     $existingNotes = $soRow['notes'] ? trim($soRow['notes']) : '';
                     $canceller = session()->get('user_name') ?: 'Staff Gudang';
-                    $cancelNote = "[Dibatalkan oleh {$canceller} via Pembatalan DO {$do['delivery_number']} pada " . date('d/m/Y H:i') . "]: " . $reason;
-                    $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 
-                    $db->table('sales_orders')
-                        ->where('so_number', $soRow['so_number'])
-                        ->where('status <>', 'cancelled')
-                        ->update([
-                            'status' => 'cancelled',
-                            'notes' => $updatedNotes,
-                            'updated_at' => date('Y-m-d H:i:s'),
-                        ]);
+                    if ($cancelType === 'cancel_order') {
+                        // Opsi 1: Customer batal total -> kembalikan stok & batalkan SO
+                        $soRows = $db->table('sales_orders')->select('id')->where('so_number', $soRow['so_number'])->get()->getResultArray();
+                        $soRowIds = array_column($soRows, 'id');
+                        if (! empty($soRowIds)) {
+                            $soMovements = $db->table('stock_movements')
+                                ->where('reference_type', 'SALES_ORDER')
+                                ->where('movement_type', 'OUT')
+                                ->whereIn('reference_id', $soRowIds)
+                                ->get()
+                                ->getResultArray();
+                            $stockSvc = new StockService();
+                            foreach ($soMovements as $mov) {
+                                $stockSvc->receiveStock(
+                                    (int) $mov['product_id'],
+                                    (int) $mov['qty'],
+                                    'CANCEL_SALES_ORDER',
+                                    (int) $mov['reference_id'],
+                                    $this->userId(),
+                                    'Batal SO ' . $soRow['so_number'] . ' (via Batal DO ' . $do['delivery_number'] . ')',
+                                    (int) $mov['warehouse_id']
+                                );
+                            }
+                        }
 
-                    $db->table('restock_alerts')
-                        ->where('sales_order_number', $soRow['so_number'])
-                        ->whereIn('status', ['open', 'ordered'])
-                        ->update([
-                            'status' => 'cancelled',
-                            'updated_at' => date('Y-m-d H:i:s'),
-                        ]);
+                        $cancelNote = "[Dibatalkan oleh {$canceller} via Pembatalan DO {$do['delivery_number']} pada " . date('d/m/Y H:i') . "]: " . $reason;
+                        $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 
-                    $soCancelled = true;
+                        $db->table('sales_orders')
+                            ->where('so_number', $soRow['so_number'])
+                            ->where('status <>', 'cancelled')
+                            ->update([
+                                'status' => 'cancelled',
+                                'notes' => $updatedNotes,
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+
+                        $db->table('restock_alerts')
+                            ->where('sales_order_number', $soRow['so_number'])
+                            ->whereIn('status', ['open', 'ordered'])
+                            ->update([
+                                'status' => 'cancelled',
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+
+                        $soAction = 'cancelled';
+                    } else {
+                        // Opsi 2: Customer minta revisi -> SO masuk status Butuh Revisi, stok tetap ditahan hingga Sales simpan revisi
+                        $revNote = "[Butuh Revisi dari {$canceller} via DO {$do['delivery_number']} pada " . date('d/m/Y H:i') . "]: " . $reason;
+                        $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $revNote : $revNote;
+
+                        $db->table('sales_orders')
+                            ->where('so_number', $soRow['so_number'])
+                            ->where('status <>', 'cancelled')
+                            ->update([
+                                'status' => 'revision',
+                                'notes' => $updatedNotes,
+                                'updated_at' => date('Y-m-d H:i:s'),
+                            ]);
+
+                        $soAction = 'revision';
+                    }
                 } elseif ($soRow['status'] === 'delivered') {
                     $db->table('sales_orders')
                         ->where('so_number', $soRow['so_number'])
@@ -398,9 +458,13 @@ class Deliveries extends BaseController
             }
 
             $db->transCommit();
-            $successMsg = $soCancelled
-                ? 'Pengiriman ' . $do['delivery_number'] . ' dan Pesanan Jual ' . $soRow['so_number'] . ' berhasil dibatalkan. Seluruh stok telah dikembalikan ke gudang.'
-                : 'Pengiriman ' . $do['delivery_number'] . ' berhasil dibatalkan.';
+            if ($soAction === 'cancelled') {
+                $successMsg = 'Pengiriman ' . $do['delivery_number'] . ' dan Pesanan Jual ' . $soRow['so_number'] . ' dibatalkan. Seluruh stok telah dikembalikan ke gudang.';
+            } elseif ($soAction === 'revision') {
+                $successMsg = 'Pengiriman ' . $do['delivery_number'] . ' dibatalkan. Pesanan Jual ' . $soRow['so_number'] . ' kini berstatus Butuh Revisi untuk ditindaklanjuti Staff Sales.';
+            } else {
+                $successMsg = 'Pengiriman ' . $do['delivery_number'] . ' berhasil dibatalkan.';
+            }
             return redirect()->to('/deliveries')->with('success', $successMsg);
         } catch (\Throwable $e) {
             $db->transRollback();

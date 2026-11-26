@@ -19,6 +19,12 @@
       </a>
     </li>
     <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $status === 'revision' ? 'active bg-warning text-white fw-bold' : (! empty($statusCounts['revision']) ? 'text-warning fw-bold border border-warning-subtle' : 'text-secondary') ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'revision', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
+        Butuh Revisi
+        <span class="badge ms-1 <?= $status === 'revision' ? 'bg-white text-warning' : (! empty($statusCounts['revision']) ? 'bg-warning text-white' : 'bg-secondary-lt') ?>"><?= esc($statusCounts['revision'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link px-3 py-1 <?= $status === 'confirmed' ? 'active bg-primary text-white fw-bold' : (! empty($statusCounts['confirmed']) ? 'text-primary fw-bold border border-primary-subtle' : 'text-secondary') ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'confirmed', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
         Dikonfirmasi
         <span class="badge ms-1 <?= $status === 'confirmed' ? 'bg-white text-primary' : (! empty($statusCounts['confirmed']) ? 'bg-primary text-white' : 'bg-secondary-lt') ?>"><?= esc($statusCounts['confirmed'] ?? 0) ?></span>

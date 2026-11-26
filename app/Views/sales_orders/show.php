@@ -3,6 +3,44 @@
 
 <?php $st = status_badge($so['status']); ?>
 
+<?php
+$soStatus = $so['status'];
+$soSteps = [
+  ['key' => 'draft',     'label' => '1. Draf Pesanan'],
+  ['key' => 'confirmed', 'label' => '2. Dikonfirmasi'],
+  ['key' => 'shipped',   'label' => '3. Dikirim (DO)'],
+  ['key' => 'completed', 'label' => '4. Selesai'],
+];
+$soOrder = ['draft' => 0, 'revision' => 1, 'confirmed' => 1, 'shipped' => 2, 'completed' => 3];
+$curIdx = $soOrder[$soStatus] ?? -1;
+?>
+<div class="erp-stepper">
+  <?php foreach ($soSteps as $idx => $step):
+    $cls = '';
+    if ($soStatus === 'cancelled') {
+      $cls = $idx === 0 ? 'is-danger' : '';
+    } elseif ($soStatus === 'revision' && $idx === 1) {
+      $cls = 'is-warn';
+    } elseif ($idx < $curIdx || ($soStatus === 'completed' && $idx === 3)) {
+      $cls = 'is-done';
+    } elseif ($idx === $curIdx) {
+      $cls = 'is-active';
+    }
+    $stepLabel = ($soStatus === 'revision' && $idx === 1) ? '2. Butuh Revisi' : $step['label'];
+  ?>
+    <div class="erp-step <?= $cls ?>">
+      <span class="erp-step-dot"><?= $cls === 'is-done' ? '✓' : ($idx + 1) ?></span>
+      <span class="erp-step-label"><?= esc($stepLabel) ?></span>
+    </div>
+  <?php endforeach; ?>
+  <?php if ($soStatus === 'cancelled'): ?>
+    <div class="erp-step is-danger">
+      <span class="erp-step-dot">✕</span>
+      <span class="erp-step-label">Dibatalkan</span>
+    </div>
+  <?php endif; ?>
+</div>
+
 <!-- Kartu Ringkasan Informasi Pesanan -->
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-4">
@@ -31,7 +69,22 @@
           </a>
         <?php endif; ?>
 
-        <?php if (($so['status'] === 'draft' || $so['status'] === 'confirmed') && session()->get('user_role') === 'sales'): ?>
+        <?php
+          $hasActiveDelivery = false;
+          foreach (($deliveries ?? []) as $dlv) {
+              if (($dlv['status'] ?? 'delivered') !== 'cancelled') {
+                  $hasActiveDelivery = true;
+                  break;
+              }
+          }
+        ?>
+        <?php if (in_array($so['status'], ['draft', 'confirmed', 'revision'], true) && session()->get('user_role') === 'sales'): ?>
+          <?php if (! $hasActiveDelivery): ?>
+            <a href="/sales-orders/edit/<?= esc($so['id']) ?>" class="btn <?= $so['status'] === 'revision' ? 'btn-warning' : 'btn-outline-primary' ?>">
+              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
+              Revisi / Edit Pesanan
+            </a>
+          <?php endif; ?>
           <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalCancelSO">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
             Batalkan Pesanan
@@ -44,6 +97,7 @@
     <?php
       $rawNotes = (string) ($so['notes'] ?? '');
       $cancelNote = '';
+      $revisionNote = '';
       $initialNotes = [];
       if ($rawNotes !== '') {
           foreach (explode("\n", $rawNotes) as $line) {
@@ -51,6 +105,8 @@
               $clean = ltrim($trimmed, '[');
               if (str_starts_with($clean, 'Ditolak') || str_starts_with($clean, 'Dibatalkan') || stripos($clean, 'alasan') !== false) {
                   $cancelNote .= ($cancelNote !== '' ? "\n" : '') . $trimmed;
+              } elseif (str_starts_with($clean, 'Butuh Revisi')) {
+                  $revisionNote .= ($revisionNote !== '' ? "\n" : '') . $trimmed;
               } elseif ($trimmed !== '') {
                   $initialNotes[] = $trimmed;
               }
@@ -62,6 +118,17 @@
       }
       $initialNotesStr = implode("\n", $initialNotes);
     ?>
+
+    <!-- Banner Peringatan Jika Pesanan Butuh Revisi dari Gudang -->
+    <?php if ($so['status'] === 'revision'): ?>
+      <div class="alert alert-warning mb-3 d-flex align-items-start gap-2 border-warning" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon text-warning" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+        <div>
+          <div class="fw-bold text-dark">Pesanan Ini Membutuhkan Revisi (Permintaan Pelanggan via Gudang)</div>
+          <div class="small mt-1 text-dark" style="white-space: pre-line;"><?= esc($revisionNote ?: ($rawNotes ?: 'Silakan periksa dan revisi daftar barang pada pesanan ini.')) ?></div>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <!-- Banner Peringatan Jika Pesanan Dibatalkan -->
     <?php if ($so['status'] === 'cancelled'): ?>
@@ -198,7 +265,7 @@
           </td>
           <td>
             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-secondary me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/></svg>
-            <?= date('d M Y', strtotime($d['delivery_date'])) ?>
+            <?= date('d M Y', strtotime($d['delivery_date'])) ?><?= ! empty($d['delivery_time']) ? ' &bull; ' . esc($d['delivery_time']) . ' WIB' : '' ?>
           </td>
           <td>
             <?php $ds = $d['status'] ?? 'delivered'; $dsb = status_badge($ds); ?>

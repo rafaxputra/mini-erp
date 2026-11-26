@@ -11,6 +11,8 @@ $routes->get('/', static function () {
 });
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
+    $routes->get('dashboard/export', 'Dashboard::export');
+    $routes->get('dashboard/export-pdf', 'Dashboard::exportPdf');
     $routes->get('categories', 'Categories::index');
     $routes->get('categories/create', 'Categories::create');
     $routes->post('categories/store', 'Categories::store');
@@ -71,6 +73,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('sales-orders', 'SalesOrders::index');
     $routes->get('sales-orders/create', 'SalesOrders::create');
     $routes->post('sales-orders/store', 'SalesOrders::store');
+    $routes->get('sales-orders/edit/(:num)', 'SalesOrders::edit/$1');
+    $routes->post('sales-orders/update/(:num)', 'SalesOrders::update/$1');
     $routes->get('sales-orders/show/(:num)', 'SalesOrders::show/$1');
     $routes->post('sales-orders/confirm/(:num)', 'SalesOrders::confirm/$1');
     $routes->post('sales-orders/cancel/(:num)', 'SalesOrders::cancel/$1');
@@ -81,12 +85,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->post('deliveries/cancel/(:num)', 'Deliveries::cancel/$1');
     $routes->get('inventory', 'Inventory::index');
     $routes->get('inventory/movements', 'Inventory::movements');
-    $routes->get('inventory/adjust', 'Inventory::adjust');
-    $routes->post('inventory/adjust', 'Inventory::adjustPost');
-    $routes->get('reports', 'Reports::index');
-    $routes->get('reports/purchase', 'Reports::purchase');
-    $routes->get('reports/sales', 'Reports::sales');
-    $routes->get('reports/stock', 'Reports::stock');
-    $routes->get('reports/top-products', 'Reports::topProducts');
+    $routes->get('reports', static fn () => redirect()->to('/dashboard'));
+    $routes->get('reports/(:any)', static fn () => redirect()->to('/dashboard'));
 });
 

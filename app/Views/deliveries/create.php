@@ -23,21 +23,21 @@
           <form action="/deliveries/create" method="get">
             <div class="mb-3">
               <label class="form-label required">Nomor Pesanan Jual (Status Dikonfirmasi)</label>
-              <select name="sales_order_id" class="form-select" required>
-                <option value="">-- Pilih Pesanan Jual --</option>
+              <select name="sales_order_id" class="form-select js-searchable" onchange="if(this.value) this.form.submit();" required>
+                <option value="">-- Ketik Nomor SO atau Nama Pelanggan --</option>
                 <?php foreach ($sos as $s): ?>
                   <option value="<?= esc($s['id']) ?>">
-                    <?= esc($s['so_number']) ?> - Tanggal: <?= esc($s['order_date']) ?>
+                    <?= esc($s['so_number']) ?> — <?= esc($s['customer_name'] ?? '-') ?> • <?= esc($s['warehouse_name'] ?? 'Gudang') ?> (<?= date('d/m/Y', strtotime($s['order_date'])) ?> • <?= (int) ($s['item_count'] ?? 0) ?> item, <?= (int) ($s['total_qty'] ?? 0) ?> unit)
                   </option>
                 <?php endforeach; ?>
               </select>
               <div class="form-text text-secondary mt-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm me-1 text-info" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z"/></svg>
-                Hanya Pesanan Jual dengan status <strong>Dikonfirmasi</strong> yang dapat diproses pengiriman barangnya dari gudang.
+                Pilih Pesanan Jual berstatus <strong>Dikonfirmasi</strong> — daftar barang akan langsung terbuka otomatis.
               </div>
             </div>
             <div class="d-flex justify-content-end gap-2">
-              <a href="/deliveries" class="btn btn-secondary">Batal</a>
+              <a href="/deliveries" class="btn btn-outline-secondary">Batal</a>
               <button class="btn btn-primary" type="submit">
                 Lanjutkan Pengiriman
                 <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></svg>
@@ -128,18 +128,23 @@
       <div class="card-body">
         <div class="row g-3 mb-3">
           <?php $minDeliveryDate = max(date('Y-m-d'), (string) $so['order_date']); ?>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label required">Tanggal Kirim</label>
             <input type="date" name="delivery_date" id="deliveryDateInput" class="form-control bg-light" value="<?= date('Y-m-d') ?>" min="<?= esc($minDeliveryDate) ?>" readonly required>
             <div class="form-text" id="deliveryDateHelp">Terkunci otomatis ke hari ini karena pengiriman langsung dilakukan hari ini.</div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-2">
+            <label class="form-label required">Jam Kirim</label>
+            <input type="time" name="delivery_time" id="deliveryTimeInput" class="form-control" value="<?= date('H:i') ?>" required>
+            <div class="form-text">Jam keberangkatan.</div>
+          </div>
+          <div class="col-md-3">
             <label class="form-label required">Status Pengiriman</label>
             <select name="delivery_status" id="deliveryStatusSelect" class="form-select" required>
               <option value="scheduled">Terjadwal (Jadwalkan Pengiriman)</option>
               <option value="delivered" selected>Terkirim (Langsung Kirim Hari Ini)</option>
             </select>
-            <div class="form-text">Pilih <strong>Terjadwal</strong> jika pengiriman dijadwalkan untuk nanti / hari libur.</div>
+            <div class="form-text">Pilih <strong>Terjadwal</strong> untuk kirim nanti / hari libur.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label required">Gudang Pengirim</label>

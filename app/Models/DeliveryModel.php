@@ -8,7 +8,7 @@ class DeliveryModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['delivery_number', 'sales_order_id', 'warehouse_id', 'product_id', 'qty_delivered', 'delivery_date', 'status', 'cancel_reason', 'cancelled_at', 'notes', 'delivered_by'];
+    protected $allowedFields = ['delivery_number', 'sales_order_id', 'warehouse_id', 'product_id', 'qty_delivered', 'delivery_date', 'delivery_time', 'status', 'cancel_reason', 'cancelled_at', 'notes', 'delivered_by'];
 
     public function deliveredQtyForSoRow(int $salesOrderId): int
     {

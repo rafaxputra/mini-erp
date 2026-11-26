@@ -1,28 +1,25 @@
 <?= $this->extend('layout/main') ?>
 <?= $this->section('content') ?>
 
-<?php $filterActive = (int) ($product_id ?? 0) !== 0 || (int) ($warehouse_id ?? 0) !== 0 || ! empty($movement_type) || ! empty($start_date) || ! empty($end_date); ?>
+<?php $filterActive = ($q ?? '') !== '' || (int) ($product_id ?? 0) !== 0 || (int) ($warehouse_id ?? 0) !== 0 || ! empty($movement_type) || ! empty($start_date) || ! empty($end_date); ?>
 
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-3">
     <form action="/inventory/movements" method="get">
       <div class="row g-2 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small text-secondary mb-1">Produk</label>
-          <select name="product_id" class="form-select form-select-sm">
-            <option value="0">Semua Produk</option>
-            <?php foreach ($products as $p): ?>
-              <option value="<?= esc($p['id']) ?>" <?= (int) $product_id === (int) $p['id'] ? 'selected' : '' ?>><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
-            <?php endforeach; ?>
-          </select>
+          <label class="form-label small text-secondary mb-1">Pencarian Produk</label>
+          <div class="input-icon">
+            <span class="input-icon-addon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
+            <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nama atau kode..." value="<?= esc($q ?? '') ?>">
+          </div>
         </div>
         <div class="col-md-2">
           <label class="form-label small text-secondary mb-1">Jenis Mutasi</label>
           <select name="movement_type" class="form-select form-select-sm">
             <option value="">Semua Jenis</option>
-            <option value="IN" <?= ($movement_type ?? '') === 'IN' ? 'selected' : '' ?>>⬇️ Masuk (IN)</option>
-            <option value="OUT" <?= ($movement_type ?? '') === 'OUT' ? 'selected' : '' ?>>⬆️ Keluar (OUT)</option>
-            <option value="ADJUSTMENT" <?= ($movement_type ?? '') === 'ADJUSTMENT' ? 'selected' : '' ?>>⚙️ Koreksi (ADJUST)</option>
+            <option value="IN" <?= ($movement_type ?? '') === 'IN' ? 'selected' : '' ?>>Masuk (IN)</option>
+            <option value="OUT" <?= ($movement_type ?? '') === 'OUT' ? 'selected' : '' ?>>Keluar (OUT)</option>
           </select>
         </div>
         <div class="col-md-2">
@@ -60,15 +57,16 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8v5l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h-5"/></svg>
       </div>
       <div class="h4 mb-1">Belum ada mutasi stok</div>
-      <div class="text-secondary small">Mutasi tercatat saat barang diterima, dikirim, atau dikoreksi.</div>
+      <div class="text-secondary small">Mutasi tercatat otomatis saat barang diterima (GR) atau dialokasikan/dikirim (SO/DO).</div>
     </div>
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-vcenter card-table table-hover table-striped">
         <thead>
           <tr>
-            <th style="width: 170px;">Waktu</th>
-            <th>Produk</th>
+            <th style="width: 145px;">Waktu</th>
+            <th style="width: 100px;">Kode</th>
+            <th>Nama Produk</th>
             <th>Gudang</th>
             <th>Jenis</th>
             <th>Referensi</th>
@@ -82,8 +80,9 @@
         <tbody>
         <?php foreach ($items as $it): ?>
         <tr>
-          <td class="text-secondary small font-monospace"><?= date('d/m/Y H:i', strtotime($it['created_at'])) ?></td>
-          <td class="fw-semibold text-dark"><code class="text-dark font-monospace"><?= esc($it['code']) ?></code> <?= esc($it['product_name']) ?></td>
+          <td class="text-secondary small font-monospace text-nowrap"><?= date('d/m/Y H:i', strtotime($it['created_at'])) ?></td>
+          <td><code class="text-dark font-monospace fw-bold text-nowrap"><?= esc($it['code']) ?></code></td>
+          <td class="fw-semibold text-dark"><?= esc($it['product_name']) ?></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
           <td>
             <?php if ($it['movement_type'] === 'IN'): ?>

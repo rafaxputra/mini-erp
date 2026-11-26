@@ -259,8 +259,8 @@ class MainSeeder extends Seeder
             ],
         ];
 
-        // Masukkan data produk & catat saldo awal per gudang dengan timestamp realistis
-        $initialMovementDate = date('Y-m-d H:i:s', strtotime('-12 days 08:30:00'));
+        // Masukkan data produk (stok awal 0, seluruh mutasi masuk berasal dari PO -> GR)
+        $initialMovementDate = date('Y-m-d H:i:s', strtotime('first day of -2 months 08:00:00'));
 
         $unitMap = [
             'pcs' => 1, 'rim' => 2, 'box' => 3, 'pack' => 4, 'set' => 5,
@@ -269,7 +269,6 @@ class MainSeeder extends Seeder
         ];
 
         foreach ($catalog as $item) {
-            $totalStock = array_sum($item['stocks']);
             $unitCode = $item['unit'] === 'pak' ? 'pack' : $item['unit'];
             $unitId = $unitMap[$item['unit']] ?? 1;
 
@@ -282,262 +281,294 @@ class MainSeeder extends Seeder
                 'unit' => $unitCode,
                 'purchase_price' => $item['purchase_price'],
                 'selling_price' => $item['selling_price'],
-                'stock_qty' => $totalStock,
+                'stock_qty' => 0,
                 'min_stock' => $item['min_stock'],
                 'max_stock' => $item['max_stock'] ?? ($item['min_stock'] * 10),
                 'is_active' => true,
                 'created_at' => $initialMovementDate,
                 'updated_at' => $initialMovementDate,
             ]);
-
-            foreach ($item['stocks'] as $whId => $qty) {
-                if ($qty > 0) {
-                    $this->db->table('stock_movements')->insert([
-                        'product_id' => $item['id'],
-                        'warehouse_id' => $whId,
-                        'movement_type' => 'ADJUSTMENT',
-                        'reference_type' => 'STOCK_AWAL',
-                        'reference_id' => 0,
-                        'qty' => $qty,
-                        'qty_before' => 0,
-                        'qty_after' => $qty,
-                        'notes' => 'Saldo awal migrasi fisik produk baru',
-                        'created_by' => 1,
-                        'created_at' => $initialMovementDate,
-                    ]);
-                }
-            }
         }
         $this->db->query("SELECT setval('products_id_seq', (SELECT MAX(id) FROM products))");
 
         // -------------------------------------------------------------
         // 7. TRANSAKSI REALISTIS: PESANAN PEMBELIAN & PENERIMAAN BARANG
+        //    (Seluruh stok awal masuk murni dari PO -> GR, tanpa koreksi)
         // -------------------------------------------------------------
-        $d8 = date('Y-m-d', strtotime('-8 days'));
-        $d7 = date('Y-m-d', strtotime('-7 days'));
-        $d6 = date('Y-m-d', strtotime('-6 days'));
-        $d5 = date('Y-m-d', strtotime('-5 days'));
-        $d4 = date('Y-m-d', strtotime('-4 days'));
-        $d3 = date('Y-m-d', strtotime('-3 days'));
-        $d2 = date('Y-m-d', strtotime('-2 days'));
-        $d1 = date('Y-m-d', strtotime('-1 day'));
+        $d14 = date('Y-m-d', strtotime('-14 days'));
+        $d13 = date('Y-m-d', strtotime('-13 days'));
+        $d12 = date('Y-m-d', strtotime('-12 days'));
+        $d11 = date('Y-m-d', strtotime('-11 days'));
+        $d10 = date('Y-m-d', strtotime('-10 days'));
+        $d9  = date('Y-m-d', strtotime('-9 days'));
+        $d8  = date('Y-m-d', strtotime('-8 days'));
+        $d7  = date('Y-m-d', strtotime('-7 days'));
+        $d6  = date('Y-m-d', strtotime('-6 days'));
+        $d5  = date('Y-m-d', strtotime('-5 days'));
+        $d4  = date('Y-m-d', strtotime('-4 days'));
+        $d3  = date('Y-m-d', strtotime('-3 days'));
+        $d2  = date('Y-m-d', strtotime('-2 days'));
+        $d1  = date('Y-m-d', strtotime('-1 day'));
 
-        $n8 = date('Ymd', strtotime('-8 days'));
-        $n7 = date('Ymd', strtotime('-7 days'));
-        $n6 = date('Ymd', strtotime('-6 days'));
-        $n5 = date('Ymd', strtotime('-5 days'));
-        $n4 = date('Ymd', strtotime('-4 days'));
-        $n3 = date('Ymd', strtotime('-3 days'));
-        $n2 = date('Ymd', strtotime('-2 days'));
-        $n1 = date('Ymd', strtotime('-1 day'));
+        $n14 = date('Ymd', strtotime('-14 days'));
+        $n13 = date('Ymd', strtotime('-13 days'));
+        $n12 = date('Ymd', strtotime('-12 days'));
+        $n11 = date('Ymd', strtotime('-11 days'));
+        $n10 = date('Ymd', strtotime('-10 days'));
+        $n9  = date('Ymd', strtotime('-9 days'));
+        $n8  = date('Ymd', strtotime('-8 days'));
+        $n7  = date('Ymd', strtotime('-7 days'));
+        $n6  = date('Ymd', strtotime('-6 days'));
+        $n5  = date('Ymd', strtotime('-5 days'));
+        $n4  = date('Ymd', strtotime('-4 days'));
+        $n3  = date('Ymd', strtotime('-3 days'));
+        $n2  = date('Ymd', strtotime('-2 days'));
+        $n1  = date('Ymd', strtotime('-1 day'));
 
-        // PO 1: Diterima Penuh di GUDANG UTAMA (Pulpen Hitam x20 & Kertas A4 PaperOne x30)
-        $po1Num = 'PO-' . $n8 . '-001';
+        $seedPoReceived = function (string $poNum, int $supplierId, int $warehouseId, string $orderDate, string $recDate, string $poNotes, string $grNotes, array $lines) {
+            $batch = [];
+            foreach ($lines as [$pid, $qty, $price]) {
+                $batch[] = [
+                    'po_number' => $poNum, 'supplier_id' => $supplierId, 'product_id' => $pid,
+                    'qty' => $qty, 'unit_price' => $price, 'order_date' => $orderDate,
+                    'status' => 'received', 'notes' => $poNotes, 'created_by' => 2,
+                    'created_at' => $orderDate . ' 09:15:00', 'updated_at' => $recDate . ' 10:30:00',
+                ];
+            }
+            $this->db->table('purchase_orders')->insertBatch($batch);
+            $poItems = $this->db->table('purchase_orders')->where('po_number', $poNum)->get()->getResultArray();
+            $grNum = 'GR-' . str_replace('-', '', $recDate) . '-' . substr($poNum, -3);
+            foreach ($poItems as $item) {
+                $this->db->table('goods_receipts')->insert([
+                    'gr_number' => $grNum, 'purchase_order_id' => $item['id'], 'warehouse_id' => $warehouseId,
+                    'product_id' => $item['product_id'], 'qty_received' => $item['qty'], 'receipt_date' => $recDate,
+                    'notes' => $grNotes, 'received_by' => 3,
+                    'created_at' => $recDate . ' 10:30:00', 'updated_at' => $recDate . ' 10:30:00',
+                ]);
+                $grId = $this->db->insertID();
+                $this->applyStockIn($item['product_id'], $warehouseId, $item['qty'], 'PURCHASE_RECEIPT', $grId, $grNotes . ' (' . $poNum . ')', 3, $recDate . ' 10:30:00');
+            }
+        };
+
+        // PO 1..6: Pengadaan Lengkap ke 3 Gudang (~Rp 32,9 jt)
+        $seedPoReceived('PO-' . $n14 . '-001', 1, 1, $d14, $d13, 'Pengadaan alat tulis kantor pusat', 'Penerimaan ATK PT Sinar Jaya di Gudang Utama', [
+            [1, 70, 15000], [2, 35, 15000], [3, 45, 12000], [4, 30, 25000], [5, 40, 10000], [6, 25, 7000], [7, 14, 32000],
+        ]);
+        $seedPoReceived('PO-' . $n13 . '-001', 2, 1, $d13, $d12, 'Pengadaan kertas & buku Gudang Utama', 'Penerimaan kertas CV Makmur Abadi di Gudang Utama', [
+            [8, 140, 32000], [9, 100, 36000], [10, 65, 35000], [12, 35, 18000],
+        ]);
+        $seedPoReceived('PO-' . $n11 . '-001', 3, 1, $d11, $d10, 'Pengadaan perlengkapan kantor & arsip', 'Penerimaan perlengkapan PT Graha Pena di Gudang Utama', [
+            [13, 18, 45000], [14, 50, 14000], [15, 60, 22000], [16, 35, 32000], [17, 70, 8500], [18, 35, 16000], [19, 25, 18000], [20, 6, 175000],
+        ]);
+        $seedPoReceived('PO-' . $n10 . '-001', 5, 1, $d10, $d9, 'Pengadaan tinta printer & perangkat komputer', 'Penerimaan perangkat PT Digital Print Star di Gudang Utama', [
+            [11, 20, 58000], [21, 22, 65000], [22, 12, 85000], [23, 6, 260000],
+        ]);
+        $seedPoReceived('PO-' . $n8 . '-001', 2, 2, $d8, $d7, 'Pasokan stok Cabang Sidoarjo', 'Penerimaan stok di Gudang Cabang Sidoarjo', [
+            [8, 45, 32000], [9, 40, 36000], [17, 45, 8500], [1, 40, 15000], [4, 25, 25000], [13, 15, 45000],
+        ]);
+        $seedPoReceived('PO-' . $n7 . '-001', 1, 3, $d7, $d6, 'Pasokan Hub Surabaya Timur', 'Penerimaan stok di Hub Surabaya Timur', [
+            [9, 30, 36000], [2, 30, 15000], [15, 35, 22000], [18, 30, 16000], [11, 15, 58000],
+        ]);
+
+        // PO 7: Status APPROVED (Menunggu Barang Datang)
+        $po7Num = 'PO-' . $n3 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'product_id' => 1, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
-            ['po_number' => $po1Num, 'supplier_id' => 1, 'product_id' => 8, 'qty' => 30, 'unit_price' => 32000, 'order_date' => $d8, 'status' => 'received', 'notes' => 'Pengadaan rutin kantor pusat', 'created_by' => 2, 'created_at' => $d8 . ' 09:15:00', 'updated_at' => $d7 . ' 10:30:00'],
+            ['po_number' => $po7Num, 'supplier_id' => 5, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po7Num, 'supplier_id' => 5, 'product_id' => 11, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
         ]);
-        $po1Items = $this->db->table('purchase_orders')->where('po_number', $po1Num)->get()->getResultArray();
-        $gr1Num = 'GR-' . date('Ymd', strtotime('-7 days')) . '-001';
-        foreach ($po1Items as $item) {
-            $this->db->table('goods_receipts')->insert([
-                'gr_number' => $gr1Num, 'purchase_order_id' => $item['id'], 'warehouse_id' => 1,
-                'product_id' => $item['product_id'], 'qty_received' => $item['qty'], 'receipt_date' => $d7,
-                'notes' => 'Penerimaan PO ' . $po1Num . ' lengkap dan baik', 'received_by' => 3,
-                'created_at' => $d7 . ' 10:30:00', 'updated_at' => $d7 . ' 10:30:00',
-            ]);
-            $grId = $this->db->insertID();
-            $this->applyStockIn($item['product_id'], 1, $item['qty'], 'PURCHASE_RECEIPT', $grId, 'Terima barang PO ' . $po1Num, 3, $d7 . ' 10:30:00');
-        }
 
-        // PO 2: Diterima Penuh di GUDANG CABANG SIDOARJO (Kertas A4 SiDU x25 & Stapler Kangaro x10)
-        $po2Num = 'PO-' . $n6 . '-001';
+        // PO 8: Status DRAFT (Menunggu Persetujuan Manajemen)
+        $po8Num = 'PO-' . $n1 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'product_id' => 9, 'qty' => 25, 'unit_price' => 36000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
-            ['po_number' => $po2Num, 'supplier_id' => 2, 'product_id' => 13, 'qty' => 10, 'unit_price' => 45000, 'order_date' => $d6, 'status' => 'received', 'notes' => 'Pasokan kebutuhan cabang Sidoarjo', 'created_by' => 2, 'created_at' => $d6 . ' 11:00:00', 'updated_at' => $d5 . ' 14:15:00'],
+            ['po_number' => $po8Num, 'supplier_id' => 3, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
+            ['po_number' => $po8Num, 'supplier_id' => 3, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
         ]);
-        $po2Items = $this->db->table('purchase_orders')->where('po_number', $po2Num)->get()->getResultArray();
-        $gr2Num = 'GR-' . date('Ymd', strtotime('-5 days')) . '-001';
-        foreach ($po2Items as $item) {
-            $this->db->table('goods_receipts')->insert([
-                'gr_number' => $gr2Num, 'purchase_order_id' => $item['id'], 'warehouse_id' => 2,
-                'product_id' => $item['product_id'], 'qty_received' => $item['qty'], 'receipt_date' => $d5,
-                'notes' => 'Penerimaan di Gudang Sidoarjo via truk supplier', 'received_by' => 3,
-                'created_at' => $d5 . ' 14:15:00', 'updated_at' => $d5 . ' 14:15:00',
-            ]);
-            $grId = $this->db->insertID();
-            $this->applyStockIn($item['product_id'], 2, $item['qty'], 'PURCHASE_RECEIPT', $grId, 'Terima barang PO ' . $po2Num, 3, $d5 . ' 14:15:00');
-        }
 
-        // PO 3: Status APPROVED (Menunggu Barang Datang - Gudang Ditentukan saat GR)
-        $po3Num = 'PO-' . $n3 . '-001';
+        // PO 9: Status CANCELLED
+        $po9Num = 'PO-' . $n8 . '-002';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 11, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-        ]);
-
-        // PO 4: Status DRAFT (Menunggu Persetujuan Admin / Manajemen)
-        $po4Num = 'PO-' . $n1 . '-001';
-        $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'product_id' => 20, 'qty' => 5, 'unit_price' => 175000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock whiteboard besar kantor pusat', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
-            ['po_number' => $po4Num, 'supplier_id' => 3, 'product_id' => 23, 'qty' => 4, 'unit_price' => 260000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Rencana restock toner HP laser', 'created_by' => 2, 'created_at' => $d1 . ' 15:45:00', 'updated_at' => $d1 . ' 15:45:00'],
-        ]);
-
-        // PO 5: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
-        $po5Num = 'PO-' . $n8 . '-002';
-        $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po5Num, 'supplier_id' => 4, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
+            ['po_number' => $po9Num, 'supplier_id' => 4, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
         ]);
 
         // -------------------------------------------------------------
-        // 8. TRANSAKSI REALISTIS: PESANAN PENJUALAN & PRODUK TERLARIS
+        // 8. TRANSAKSI REALISTIS: PESANAN PENJUALAN & PENGIRIMAN (~Rp 43,2 jt)
         // -------------------------------------------------------------
-        // SO 1: Terkirim Penuh dari GUDANG UTAMA (Pelanggan: PT Maju Bersama Logistik)
-        // Penjualan besar Kertas A4 (50 rim) & Pulpen Hitam (40 pack)
-        $so1Num = 'SO-' . $n6 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so1Num, 'customer_id' => 2, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 50, 'unit_price' => 46000, 'order_date' => $d6, 'status' => 'delivered', 'notes' => 'Pengadaan kertas kuartal akhir divisi operasional', 'created_by' => 4, 'created_at' => $d6 . ' 09:30:00', 'updated_at' => $d5 . ' 10:00:00'],
-            ['so_number' => $so1Num, 'customer_id' => 2, 'warehouse_id' => 1, 'product_id' => 1, 'qty' => 40, 'unit_price' => 25000, 'order_date' => $d6, 'status' => 'delivered', 'notes' => 'Pengadaan pulpen kantor', 'created_by' => 4, 'created_at' => $d6 . ' 09:30:00', 'updated_at' => $d5 . ' 10:00:00'],
-        ]);
-        $so1Items = $this->db->table('sales_orders')->where('so_number', $so1Num)->get()->getResultArray();
-        $do1Num = 'DO-' . date('Ymd', strtotime('-5 days')) . '-001';
-        foreach ($so1Items as $item) {
-            $this->db->table('deliveries')->insert([
-                'delivery_number' => $do1Num, 'sales_order_id' => $item['id'], 'warehouse_id' => 1,
-                'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $d5,
-                'notes' => 'Diterima oleh Pak Slamet (Logistik SIER Surabaya)', 'delivered_by' => 3,
-                'created_at' => $d5 . ' 10:00:00', 'updated_at' => $d5 . ' 10:00:00',
-            ]);
-            $doId = $this->db->insertID();
-            $this->applyStockOut($item['product_id'], 1, $item['qty'], 'SALES_DELIVERY', $doId, 'Kirim pesanan SO ' . $so1Num, 3, $d5 . ' 10:00:00');
-        }
-
-        // SO 2: Terkirim Penuh dari GUDANG CABANG SIDOARJO (Pelanggan: Toko Buku Salemba Indah)
-        // Penjualan Kertas SiDU (35 rim), Lakban Bening (30 roll), Spidol Whiteboard (20 pack)
-        $so2Num = 'SO-' . $n5 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so2Num, 'customer_id' => 1, 'warehouse_id' => 2, 'product_id' => 9, 'qty' => 35, 'unit_price' => 52000, 'order_date' => $d5, 'status' => 'delivered', 'notes' => 'Pesanan mingguan toko buku Sidoarjo', 'created_by' => 4, 'created_at' => $d5 . ' 11:00:00', 'updated_at' => $d4 . ' 13:30:00'],
-            ['so_number' => $so2Num, 'customer_id' => 1, 'warehouse_id' => 2, 'product_id' => 17, 'qty' => 30, 'unit_price' => 15000, 'order_date' => $d5, 'status' => 'delivered', 'notes' => 'Pesanan lakban packing toko', 'created_by' => 4, 'created_at' => $d5 . ' 11:00:00', 'updated_at' => $d4 . ' 13:30:00'],
-            ['so_number' => $so2Num, 'customer_id' => 1, 'warehouse_id' => 2, 'product_id' => 4, 'qty' => 20, 'unit_price' => 40000, 'order_date' => $d5, 'status' => 'delivered', 'notes' => 'Spidol display toko', 'created_by' => 4, 'created_at' => $d5 . ' 11:00:00', 'updated_at' => $d4 . ' 13:30:00'],
-        ]);
-        $so2Items = $this->db->table('sales_orders')->where('so_number', $so2Num)->get()->getResultArray();
-        $do2Num = 'DO-' . date('Ymd', strtotime('-4 days')) . '-001';
-        foreach ($so2Items as $item) {
-            $this->db->table('deliveries')->insert([
-                'delivery_number' => $do2Num, 'sales_order_id' => $item['id'], 'warehouse_id' => 2,
-                'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $d4,
-                'notes' => 'Diambil langsung menggunakan pick-up toko Salemba', 'delivered_by' => 3,
-                'created_at' => $d4 . ' 13:30:00', 'updated_at' => $d4 . ' 13:30:00',
-            ]);
-            $doId = $this->db->insertID();
-            $this->applyStockOut($item['product_id'], 2, $item['qty'], 'SALES_DELIVERY', $doId, 'Kirim pesanan SO ' . $so2Num, 3, $d4 . ' 13:30:00');
-        }
-
-        // SO 3: Terkirim Penuh dari GUDANG HUB SURABAYA TIMUR (Pelanggan: PT Berkah Perkasa Teknik)
-        // Penjualan Map Plastik (25 pack), Klip Kertas (20 pak), Mouse USB (12 pcs)
-        $so3Num = 'SO-' . $n4 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 15, 'qty' => 25, 'unit_price' => 38000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Perlengkapan tender proyek', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
-            ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 18, 'qty' => 20, 'unit_price' => 26000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Klip kertas berkas', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
-            ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 11, 'qty' => 12, 'unit_price' => 95000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Peremajaan periferal laptop staf lapangan', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
-        ]);
-        $so3Items = $this->db->table('sales_orders')->where('so_number', $so3Num)->get()->getResultArray();
-        $do3Num = 'DO-' . date('Ymd', strtotime('-3 days')) . '-001';
-        foreach ($so3Items as $item) {
-            $this->db->table('deliveries')->insert([
-                'delivery_number' => $do3Num, 'sales_order_id' => $item['id'], 'warehouse_id' => 3,
-                'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $d3,
-                'notes' => 'Dikirim kurir ekspedisi internal ke Mayjen Sungkono', 'delivered_by' => 3,
-                'created_at' => $d3 . ' 11:00:00', 'updated_at' => $d3 . ' 11:00:00',
-            ]);
-            $doId = $this->db->insertID();
-            $this->applyStockOut($item['product_id'], 3, $item['qty'], 'SALES_DELIVERY', $doId, 'Kirim pesanan SO ' . $so3Num, 3, $d3 . ' 11:00:00');
-        }
-
-        // SO 4: Terkirim Penuh dari GUDANG UTAMA (Pelanggan: PT Cakra Buana Raya)
-        // Penjualan Kertas A4 (40 rim) & Kertas F4 Folio (25 rim)
-        $so4Num = 'SO-' . $n3 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so4Num, 'customer_id' => 7, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 40, 'unit_price' => 46000, 'order_date' => $d3, 'status' => 'delivered', 'notes' => 'Pengadaan kertas pabrik Gresik', 'created_by' => 4, 'created_at' => $d3 . ' 13:45:00', 'updated_at' => $d2 . ' 14:20:00'],
-            ['so_number' => $so4Num, 'customer_id' => 7, 'warehouse_id' => 1, 'product_id' => 10, 'qty' => 25, 'unit_price' => 50000, 'order_date' => $d3, 'status' => 'delivered', 'notes' => 'Kertas folio dokumen legal', 'created_by' => 4, 'created_at' => $d3 . ' 13:45:00', 'updated_at' => $d2 . ' 14:20:00'],
-        ]);
-        $so4Items = $this->db->table('sales_orders')->where('so_number', $so4Num)->get()->getResultArray();
-        $do4Num = 'DO-' . date('Ymd', strtotime('-2 days')) . '-001';
-        foreach ($so4Items as $item) {
-            $this->db->table('deliveries')->insert([
-                'delivery_number' => $do4Num, 'sales_order_id' => $item['id'], 'warehouse_id' => 1,
-                'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $d2,
-                'notes' => 'Dikirim armada pick-up kantor ke Kawasan Industri Gresik', 'delivered_by' => 3,
-                'created_at' => $d2 . ' 14:20:00', 'updated_at' => $d2 . ' 14:20:00',
-            ]);
-            $doId = $this->db->insertID();
-            $this->applyStockOut($item['product_id'], 1, $item['qty'], 'SALES_DELIVERY', $doId, 'Kirim pesanan SO ' . $so4Num, 3, $d2 . ' 14:20:00');
-        }
-
-        // SO 5: Terkirim Penuh dari GUDANG CABANG SIDOARJO (Pelanggan: CV Pustaka Mandiri Edukasi)
-        // Penjualan Pulpen Hitam (30 pack), Pensil 2B (25 pack), Penghapus (20 pack)
-        $so5Num = 'SO-' . $n2 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so5Num, 'customer_id' => 5, 'warehouse_id' => 2, 'product_id' => 1, 'qty' => 30, 'unit_price' => 25000, 'order_date' => $d2, 'status' => 'delivered', 'notes' => 'Kebutuhan paket ujian bimbingan belajar', 'created_by' => 4, 'created_at' => $d2 . ' 08:30:00', 'updated_at' => $d1 . ' 09:45:00'],
-            ['so_number' => $so5Num, 'customer_id' => 5, 'warehouse_id' => 2, 'product_id' => 3, 'qty' => 25, 'unit_price' => 20000, 'order_date' => $d2, 'status' => 'delivered', 'notes' => 'Pensil 2B ujian', 'created_by' => 4, 'created_at' => $d2 . ' 08:30:00', 'updated_at' => $d1 . ' 09:45:00'],
-            ['so_number' => $so5Num, 'customer_id' => 5, 'warehouse_id' => 2, 'product_id' => 5, 'qty' => 20, 'unit_price' => 18000, 'order_date' => $d2, 'status' => 'delivered', 'notes' => 'Penghapus ujian', 'created_by' => 4, 'created_at' => $d2 . ' 08:30:00', 'updated_at' => $d1 . ' 09:45:00'],
-        ]);
-        $so5Items = $this->db->table('sales_orders')->where('so_number', $so5Num)->get()->getResultArray();
-        $do5Num = 'DO-' . date('Ymd', strtotime('-1 day')) . '-001';
-        foreach ($so5Items as $item) {
-            $this->db->table('deliveries')->insert([
-                'delivery_number' => $do5Num, 'sales_order_id' => $item['id'], 'warehouse_id' => 2,
-                'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $d1,
-                'notes' => 'Diterima staf logistik Pustaka Mandiri Malang', 'delivered_by' => 3,
-                'created_at' => $d1 . ' 09:45:00', 'updated_at' => $d1 . ' 09:45:00',
-            ]);
-            $doId = $this->db->insertID();
-            $this->applyStockOut($item['product_id'], 2, $item['qty'], 'SALES_DELIVERY', $doId, 'Kirim pesanan SO ' . $so5Num, 3, $d1 . ' 09:45:00');
-        }
-
-        // SO 6: Status CONFIRMED (Siap Kirim dari Gudang Sidoarjo)
-        // Lakban Bening (25 roll) & Stapler Kangaro (10 pcs)
-        $so6Num = 'SO-' . $n1 . '-001';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so6Num, 'customer_id' => 6, 'warehouse_id' => 2, 'product_id' => 17, 'qty' => 25, 'unit_price' => 15000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Toko Mandiri Jaya Krian - Menunggu jadwal pickup', 'created_by' => 4, 'created_at' => $d1 . ' 10:30:00', 'updated_at' => $d1 . ' 11:15:00'],
-            ['so_number' => $so6Num, 'customer_id' => 6, 'warehouse_id' => 2, 'product_id' => 13, 'qty' => 10, 'unit_price' => 75000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Stapler besar kebutuhan toko', 'created_by' => 4, 'created_at' => $d1 . ' 10:30:00', 'updated_at' => $d1 . ' 11:15:00'],
-        ]);
-
-        // SO 7: Status CONFIRMED (Siap Kirim dari Hub Surabaya Timur)
-        // Kertas SiDU (15 rim) & Pulpen Biru (20 pack)
-        $so7Num = 'SO-' . $n1 . '-002';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so7Num, 'customer_id' => 3, 'warehouse_id' => 3, 'product_id' => 9, 'qty' => 15, 'unit_price' => 52000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Toko Sinar Abadi Kediri - Siap dikirim kargo', 'created_by' => 4, 'created_at' => $d1 . ' 14:00:00', 'updated_at' => $d1 . ' 15:00:00'],
-            ['so_number' => $so7Num, 'customer_id' => 3, 'warehouse_id' => 3, 'product_id' => 2, 'qty' => 20, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Pulpen biru pesanan toko', 'created_by' => 4, 'created_at' => $d1 . ' 14:00:00', 'updated_at' => $d1 . ' 15:00:00'],
-        ]);
-
-        // SO 8: Status DRAFT (Draft Order Kemarin / Menunggu Konfirmasi Pelanggan)
-        $so8Num = 'SO-' . $n1 . '-003';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 12, 'qty' => 15, 'unit_price' => 30000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Pesanan buku kas koperasi tahunan', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 14, 'qty' => 20, 'unit_price' => 24000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Isi staples', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
-            ['so_number' => $so8Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 19, 'qty' => 10, 'unit_price' => 32000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Gunting kantor', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
-        ]);
-
-        // SO 9: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
-        $so9Num = 'SO-' . $n4 . '-002';
-        $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so9Num, 'customer_id' => 2, 'warehouse_id' => 1, 'product_id' => 6, 'qty' => 30, 'unit_price' => 14000, 'order_date' => $d4, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh pelanggan: PT Maju Bersama membatalkan pesanan penggaris karena alokasi anggaran dialihkan ke kertas.', 'created_by' => 4, 'created_at' => $d4 . ' 16:30:00', 'updated_at' => $d3 . ' 08:15:00'],
-        ]);
+        $seedSoDelivered = function (string $soNum, int $customerId, int $warehouseId, string $orderDate, string $delDate, string $soNotes, string $doNotes, array $lines) {
+            $batch = [];
+            foreach ($lines as [$pid, $qty, $price]) {
+                $batch[] = [
+                    'so_number' => $soNum, 'customer_id' => $customerId, 'warehouse_id' => $warehouseId,
+                    'product_id' => $pid, 'qty' => $qty, 'unit_price' => $price, 'order_date' => $orderDate,
+                    'status' => 'delivered', 'notes' => $soNotes, 'created_by' => 4,
+                    'created_at' => $orderDate . ' 09:30:00', 'updated_at' => $delDate . ' 10:30:00',
+                ];
+            }
+            $this->db->table('sales_orders')->insertBatch($batch);
+            $soItems = $this->db->table('sales_orders')->where('so_number', $soNum)->get()->getResultArray();
+            $doNum = 'DO-' . str_replace('-', '', $delDate) . '-' . substr($soNum, -3);
+            foreach ($soItems as $item) {
+                $this->db->table('deliveries')->insert([
+                    'delivery_number' => $doNum, 'sales_order_id' => $item['id'], 'warehouse_id' => $warehouseId,
+                    'product_id' => $item['product_id'], 'qty_delivered' => $item['qty'], 'delivery_date' => $delDate,
+                    'delivery_time' => '10:30', 'status' => 'delivered',
+                    'notes' => $doNotes, 'delivered_by' => 3,
+                    'created_at' => $delDate . ' 10:30:00', 'updated_at' => $delDate . ' 10:30:00',
+                ]);
+                $this->applyStockOut($item['product_id'], $warehouseId, $item['qty'], 'SALES_ORDER', $item['id'], $doNotes . ' (' . $soNum . ')', 4, $orderDate . ' 09:30:00');
+            }
+        };
 
         // -------------------------------------------------------------
-        // 9. PENYESUAIAN STOK OPERASIONAL (STOCK ADJUSTMENT)
+        // 7B. RIWAYAT 2 BULAN SEBELUMNYA (SEPTEMBER & OKTOBER) + AWAL NOVEMBER
+        //     Disebar merata tiap 2-3 hari agar grafik tren bulanan realistis
         // -------------------------------------------------------------
-        // Koreksi 1: Selisih minus karena lakban rusak kemasan saat bongkar di Gudang Sidoarjo
-        $adjDate1 = date('Y-m-d H:i:s', strtotime('-4 days 16:20:00'));
-        $this->applyStockAdjustment(17, 2, -2, 'Koreksi stok: 2 roll lakban robek/rusak terkena benda tajam saat bongkar muat', 3, $adjDate1);
+        $m2Start = strtotime('first day of -2 months');
+        $septPos = [
+            ['02', 1, 1, 'Pengadaan awal bulan ATK kantor pusat', [[8, 45, 32000], [1, 35, 15000], [15, 25, 22000]]],
+            ['06', 2, 2, 'Pasokan kertas Cabang Sidoarjo', [[9, 40, 36000], [10, 25, 35000], [17, 40, 8500]]],
+            ['11', 3, 1, 'Pengadaan perlengkapan arsip & tinta', [[14, 30, 14000], [21, 12, 65000], [11, 8, 58000]]],
+            ['16', 1, 3, 'Pasokan Hub Surabaya Timur', [[8, 35, 32000], [9, 30, 36000], [4, 20, 25000]]],
+            ['21', 5, 1, 'Restock tengah-akhir bulan Gudang Utama', [[1, 30, 15000], [15, 20, 22000], [13, 10, 45000]]],
+            ['25', 2, 2, 'Pengadaan akhir bulan Cabang Sidoarjo', [[10, 20, 35000], [17, 30, 8500], [18, 25, 16000]]],
+        ];
+        foreach ($septPos as $idx => [$day, $supId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m2Start) . $day;
+            $gd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedPoReceived('PO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $supId, $whId, $od, $gd, $note, 'Penerimaan ' . $note, $lines);
+        }
 
-        // Koreksi 2: Selisih lebih hasil stock opname fisik di Gudang Surabaya Timur
-        $adjDate2 = date('Y-m-d H:i:s', strtotime('-2 days 17:00:00'));
-        $this->applyStockAdjustment(5, 3, 5, 'Koreksi stock opname: Ditemukan 1 pack isi 5pcs belum tercatat di kartu stok', 3, $adjDate2);
+        $septSos = [
+            ['04', 2, 1, 'Order rutin PT Maju Bersama', [[8, 35, 46000], [1, 25, 25000], [15, 18, 38000]]],
+            ['08', 1, 2, 'Order mingguan Toko Salemba', [[9, 30, 52000], [10, 18, 50000], [17, 30, 15000]]],
+            ['13', 4, 1, 'Pengadaan proyek PT Berkah Perkasa', [[14, 24, 24000], [21, 10, 110000], [11, 6, 95000]]],
+            ['18', 7, 3, 'Order kertas PT Cakra Buana', [[8, 30, 46000], [9, 25, 52000], [4, 15, 40000]]],
+            ['23', 5, 1, 'Pesanan ATK Pustaka Mandiri', [[1, 25, 25000], [15, 18, 38000], [13, 8, 75000]]],
+            ['27', 6, 2, 'Order akhir bulan Toko Mandiri Jaya', [[10, 18, 50000], [17, 25, 15000], [18, 20, 26000]]],
+        ];
+        foreach ($septSos as $idx => [$day, $custId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m2Start) . $day;
+            $dd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedSoDelivered('SO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $custId, $whId, $od, $dd, $note, 'Pengiriman ' . $note, $lines);
+        }
+
+        $m1Start = strtotime('first day of -1 month');
+        $octPos = [
+            ['02', 2, 1, 'Pengadaan kertas awal Oktober', [[8, 50, 32000], [9, 40, 36000], [16, 20, 32000]]],
+            ['07', 1, 3, 'Pasokan ATK Hub Surabaya Timur', [[2, 35, 15000], [3, 30, 12000], [18, 30, 16000]]],
+            ['12', 5, 1, 'Restock tinta & toner Gudang Utama', [[22, 10, 85000], [23, 5, 260000], [13, 12, 45000]]],
+            ['17', 2, 2, 'Pasokan kertas & spidol Sidoarjo', [[8, 40, 32000], [4, 25, 25000], [17, 35, 8500]]],
+            ['22', 3, 1, 'Pengadaan perlengkapan arsip Oktober', [[9, 30, 36000], [15, 30, 22000], [19, 20, 18000]]],
+            ['27', 1, 3, 'Pengadaan akhir bulan Hub Timur', [[2, 25, 15000], [11, 10, 58000], [12, 20, 18000]]],
+        ];
+        foreach ($octPos as $idx => [$day, $supId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m1Start) . $day;
+            $gd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedPoReceived('PO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $supId, $whId, $od, $gd, $note, 'Penerimaan ' . $note, $lines);
+        }
+
+        $octSos = [
+            ['04', 7, 1, 'Order kertas PT Cakra Buana', [[8, 42, 46000], [9, 32, 52000], [16, 16, 55000]]],
+            ['09', 5, 3, 'Pesanan ATK CV Pustaka Mandiri', [[2, 28, 25000], [3, 24, 20000], [18, 24, 26000]]],
+            ['14', 4, 1, 'Pengadaan tinta & stapler PT Berkah', [[22, 8, 145000], [23, 4, 395000], [13, 10, 75000]]],
+            ['19', 1, 2, 'Order rutin Toko Buku Salemba', [[8, 35, 46000], [4, 20, 40000], [17, 28, 15000]]],
+            ['24', 2, 1, 'Order perlengkapan PT Maju Bersama', [[9, 25, 52000], [15, 25, 38000], [19, 16, 32000]]],
+            ['29', 3, 3, 'Order akhir bulan Toko Sinar Abadi', [[2, 20, 25000], [11, 8, 95000], [12, 16, 30000]]],
+        ];
+        foreach ($octSos as $idx => [$day, $custId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m1Start) . $day;
+            $dd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedSoDelivered('SO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $custId, $whId, $od, $dd, $note, 'Pengiriman ' . $note, $lines);
+        }
+
+        // Awal November (tgl 2 - 10) agar grafik bulan berjalan terisi penuh sejak awal bulan
+        $m0Start = strtotime('first day of this month');
+        $earlyNovPos = [
+            ['02', 1, 1, 'Pengadaan awal November Gudang Utama', [[8, 40, 32000], [1, 30, 15000], [17, 35, 8500]]],
+            ['06', 2, 2, 'Pasokan awal November Sidoarjo', [[9, 30, 36000], [15, 25, 22000], [4, 20, 25000]]],
+        ];
+        foreach ($earlyNovPos as $idx => [$day, $supId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m0Start) . $day;
+            $gd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedPoReceived('PO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $supId, $whId, $od, $gd, $note, 'Penerimaan ' . $note, $lines);
+        }
+        $earlyNovSos = [
+            ['04', 2, 1, 'Order awal November PT Maju Bersama', [[8, 35, 46000], [1, 25, 25000], [17, 25, 15000]]],
+            ['08', 6, 2, 'Order awal November Toko Mandiri', [[9, 25, 52000], [15, 20, 38000], [4, 15, 40000]]],
+        ];
+        foreach ($earlyNovSos as $idx => [$day, $custId, $whId, $note, $lines]) {
+            $od = date('Y-m-', $m0Start) . $day;
+            $dd = date('Y-m-d', strtotime($od . ' +1 day'));
+            $seedSoDelivered('SO-' . str_replace('-', '', $od) . '-00' . ($idx + 1), $custId, $whId, $od, $dd, $note, 'Pengiriman ' . $note, $lines);
+        }
+
+        // Bulan Berjalan (November) SO Delivered:
+
+        $seedSoDelivered('SO-' . $n9 . '-001', 2, 1, $d9, $d8, 'Pengadaan kertas & alat tulis operasional kuartal akhir', 'Diterima oleh Pak Slamet (Logistik SIER Surabaya)', [
+            [8, 85, 46000], [1, 45, 25000], [14, 30, 24000],
+        ]);
+        $seedSoDelivered('SO-' . $n7 . '-001', 7, 1, $d7, $d6, 'Pengadaan kertas & perlengkapan kantor pabrik Gresik', 'Dikirim armada pick-up kantor ke Kawasan Industri Gresik', [
+            [9, 70, 52000], [10, 45, 50000], [20, 5, 285000], [23, 4, 395000],
+        ]);
+        $seedSoDelivered('SO-' . $n6 . '-001', 1, 2, $d6, $d5, 'Pesanan mingguan Toko Buku Salemba Indah', 'Diambil langsung menggunakan pick-up toko Salemba', [
+            [8, 30, 46000], [9, 25, 52000], [17, 30, 15000], [4, 15, 40000],
+        ]);
+        $seedSoDelivered('SO-' . $n5 . '-001', 4, 3, $d5, $d4, 'Perlengkapan tender proyek PT Berkah Perkasa Teknik', 'Dikirim kurir internal ke Mayjen Sungkono', [
+            [15, 20, 38000], [18, 15, 26000], [11, 12, 95000],
+        ]);
+        $seedSoDelivered('SO-' . $n4 . '-001', 5, 1, $d4, $d3, 'Kebutuhan paket ujian & komputer bimbingan belajar', 'Diterima staf logistik Pustaka Mandiri Malang', [
+            [3, 25, 20000], [5, 20, 18000], [7, 10, 52000], [22, 8, 145000], [11, 17, 95000],
+        ]);
+        $seedSoDelivered('SO-' . $n2 . '-001', 7, 1, $d2, $d1, 'Repeat order tinta, amplop & perlengkapan divisi admin', 'Diterima bagian gudang PT Cakra Buana Raya', [
+            [16, 20, 55000], [21, 14, 110000], [12, 18, 30000], [19, 12, 32000], [2, 20, 25000],
+        ]);
+        $seedSoDelivered('SO-' . $n3 . '-002', 2, 1, $d3, $d2, 'Pengadaan tambahan kertas, map & perlengkapan arsip kantor', 'Diterima oleh bagian logistik PT Maju Bersama', [
+            [8, 30, 46000], [9, 20, 52000], [10, 15, 50000], [15, 30, 38000], [17, 40, 15000], [18, 25, 26000], [4, 20, 40000], [13, 12, 75000],
+        ]);
+        $seedSoDelivered('SO-' . $n2 . '-003', 3, 2, $d2, $d1, 'Pesanan grosir perlengkapan toko cabang Sidoarjo', 'Dikirim ekspedisi lokal ke Toko Sinar Abadi', [
+            [8, 12, 46000], [9, 12, 52000], [1, 30, 25000], [4, 15, 40000], [17, 20, 15000],
+        ]);
+
+        // SO 7: Status CONFIRMED (Siap Kirim dari Gudang Sidoarjo - stok dialokasikan saat konfirmasi)
+        $so7Num = 'SO-' . $n1 . '-001';
+        $this->db->table('sales_orders')->insertBatch([
+            ['so_number' => $so7Num, 'customer_id' => 6, 'warehouse_id' => 2, 'product_id' => 17, 'qty' => 20, 'unit_price' => 15000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Toko Mandiri Jaya Krian - Menunggu jadwal pickup', 'created_by' => 4, 'created_at' => $d1 . ' 10:30:00', 'updated_at' => $d1 . ' 11:15:00'],
+            ['so_number' => $so7Num, 'customer_id' => 6, 'warehouse_id' => 2, 'product_id' => 13, 'qty' => 8, 'unit_price' => 75000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Stapler besar kebutuhan toko', 'created_by' => 4, 'created_at' => $d1 . ' 10:30:00', 'updated_at' => $d1 . ' 11:15:00'],
+        ]);
+        foreach ($this->db->table('sales_orders')->where('so_number', $so7Num)->get()->getResultArray() as $item) {
+            $this->applyStockOut($item['product_id'], 2, $item['qty'], 'SALES_ORDER', $item['id'], 'Alokasi stok untuk pesanan dikonfirmasi (' . $so7Num . ')', 4, $d1 . ' 11:15:00');
+        }
+
+        // SO 8: Status CONFIRMED (Siap Kirim dari Hub Surabaya Timur)
+        $so8Num = 'SO-' . $n1 . '-002';
+        $this->db->table('sales_orders')->insertBatch([
+            ['so_number' => $so8Num, 'customer_id' => 3, 'warehouse_id' => 3, 'product_id' => 9, 'qty' => 15, 'unit_price' => 52000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Toko Sinar Abadi Kediri - Siap dikirim kargo', 'created_by' => 4, 'created_at' => $d1 . ' 14:00:00', 'updated_at' => $d1 . ' 15:00:00'],
+            ['so_number' => $so8Num, 'customer_id' => 3, 'warehouse_id' => 3, 'product_id' => 2, 'qty' => 15, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Pulpen biru pesanan toko', 'created_by' => 4, 'created_at' => $d1 . ' 14:00:00', 'updated_at' => $d1 . ' 15:00:00'],
+        ]);
+        foreach ($this->db->table('sales_orders')->where('so_number', $so8Num)->get()->getResultArray() as $item) {
+            $this->applyStockOut($item['product_id'], 3, $item['qty'], 'SALES_ORDER', $item['id'], 'Alokasi stok untuk pesanan dikonfirmasi (' . $so8Num . ')', 4, $d1 . ' 15:00:00');
+        }
+
+        // SO 9: Status REVISION (Butuh Revisi oleh Sales)
+        $so9Num = 'SO-' . $n2 . '-002';
+        $this->db->table('sales_orders')->insertBatch([
+            ['so_number' => $so9Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 15, 'qty' => 20, 'unit_price' => 38000, 'order_date' => $d2, 'status' => 'revision', 'notes' => 'Pelanggan minta ubah jumlah map zipper sebelum dikirim ulang', 'created_by' => 4, 'created_at' => $d2 . ' 13:00:00', 'updated_at' => $d1 . ' 16:00:00'],
+        ]);
+
+        // SO 10: Status DRAFT (Menunggu Konfirmasi Pelanggan)
+        $so10Num = 'SO-' . $n1 . '-003';
+        $this->db->table('sales_orders')->insertBatch([
+            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 30, 'unit_price' => 46000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Penawaran kertas HVS koperasi tahunan', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 1, 'qty' => 20, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Penawaran pulpen koperasi', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+        ]);
+
+        // SO 11: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
+        $so11Num = 'SO-' . $n4 . '-002';
+        $this->db->table('sales_orders')->insertBatch([
+            ['so_number' => $so11Num, 'customer_id' => 2, 'warehouse_id' => 1, 'product_id' => 6, 'qty' => 30, 'unit_price' => 14000, 'order_date' => $d4, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh pelanggan: PT Maju Bersama membatalkan pesanan penggaris karena alokasi anggaran dialihkan ke kertas.', 'created_by' => 4, 'created_at' => $d4 . ' 16:30:00', 'updated_at' => $d3 . ' 08:15:00'],
+        ]);
 
         // -------------------------------------------------------------
-        // 10. REKONSILIASI AKHIR SALDO PRODUK (STOCK RECONCILIATION)
+        // 9. REKONSILIASI AKHIR SALDO PRODUK (STOCK RECONCILIATION)
         // -------------------------------------------------------------
         // Pastikan kolom products.stock_qty sama persis dengan total saldo fisik dari semua gudang
         $allProducts = $this->db->table('products')->get()->getResultArray();
@@ -582,27 +613,6 @@ class MainSeeder extends Seeder
             'reference_type' => $refType,
             'reference_id' => $refId,
             'qty' => $qty,
-            'qty_before' => $before,
-            'qty_after' => $after,
-            'notes' => $notes,
-            'created_by' => $userId,
-            'created_at' => $timestamp,
-        ]);
-    }
-
-    private function applyStockAdjustment(int $productId, int $warehouseId, int $delta, string $notes, int $userId, string $timestamp): void
-    {
-        $lastMovement = $this->db->query('SELECT qty_after FROM stock_movements WHERE product_id = ? AND warehouse_id = ? ORDER BY created_at DESC, id DESC LIMIT 1', [$productId, $warehouseId])->getRowArray();
-        $before = $lastMovement ? (int) $lastMovement['qty_after'] : 0;
-        $after = max(0, $before + $delta);
-
-        $this->db->table('stock_movements')->insert([
-            'product_id' => $productId,
-            'warehouse_id' => $warehouseId,
-            'movement_type' => 'ADJUSTMENT',
-            'reference_type' => 'MANUAL_ADJUSTMENT',
-            'reference_id' => 0,
-            'qty' => abs($delta),
             'qty_before' => $before,
             'qty_after' => $after,
             'notes' => $notes,

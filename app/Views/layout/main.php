@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/css/tabler.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 <link href="<?= base_url('css/app.css') ?>" rel="stylesheet">
 </head>
@@ -97,6 +98,22 @@ foreach (array_slice($nameParts, 0, 2) as $part) {
 if ($initials === '') {
     $initials = 'U';
 }
+
+$navBadges = ['so_revision' => 0, 'po_draft' => 0, 'do_scheduled' => 0];
+try {
+    $navDb = \Config\Database::connect();
+    if (in_array($role, ['admin', 'sales', 'manajemen'], true)) {
+        $navBadges['so_revision'] = (int) ($navDb->query("SELECT COUNT(DISTINCT so_number) AS c FROM sales_orders WHERE status = 'revision'")->getRow('c') ?? 0);
+    }
+    if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)) {
+        $navBadges['po_draft'] = (int) ($navDb->query("SELECT COUNT(DISTINCT po_number) AS c FROM purchase_orders WHERE status = 'draft'")->getRow('c') ?? 0);
+    }
+    if (in_array($role, ['admin', 'gudang', 'manajemen'], true)) {
+        $navBadges['do_scheduled'] = (int) ($navDb->query("SELECT COUNT(DISTINCT delivery_number) AS c FROM deliveries WHERE status = 'scheduled'")->getRow('c') ?? 0);
+    }
+} catch (\Throwable $e) {
+    // Abaikan jika tabel belum tersedia
+}
 ?>
 <div class="page">
   <aside class="navbar navbar-vertical navbar-expand-lg">
@@ -140,7 +157,10 @@ if ($initials === '') {
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
               <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
-                <a class="dropdown-item <?= $navActive('purchase-orders') ?>" href="/purchase-orders">Pesanan Pembelian (PO)</a>
+                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('purchase-orders') ?>" href="/purchase-orders">
+                  <span>Pesanan Pembelian (PO)</span>
+                  <?php if ($navBadges['po_draft'] > 0): ?><span class="badge bg-amber text-dark ms-2"><?= $navBadges['po_draft'] ?></span><?php endif; ?>
+                </a>
               <?php endif; ?>
               <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
                 <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
@@ -156,10 +176,16 @@ if ($initials === '') {
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
               <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
-                <a class="dropdown-item <?= $navActive('sales-orders') ?>" href="/sales-orders">Pesanan Penjualan (SO)</a>
+                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('sales-orders') ?>" href="/sales-orders">
+                  <span>Pesanan Penjualan (SO)</span>
+                  <?php if ($navBadges['so_revision'] > 0): ?><span class="badge bg-warning text-dark ms-2" title="Butuh Revisi"><?= $navBadges['so_revision'] ?></span><?php endif; ?>
+                </a>
               <?php endif; ?>
               <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
-                <a class="dropdown-item <?= $navActive('deliveries') ?>" href="/deliveries">Pengiriman Barang (DO)</a>
+                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('deliveries') ?>" href="/deliveries">
+                  <span>Pengiriman Barang (DO)</span>
+                  <?php if ($navBadges['do_scheduled'] > 0): ?><span class="badge bg-azure text-white ms-2" title="Dijadwalkan"><?= $navBadges['do_scheduled'] ?></span><?php endif; ?>
+                </a>
               <?php endif; ?>
             </div>
           </li>
@@ -174,17 +200,8 @@ if ($initials === '') {
               <?php if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)): ?>
                 <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
               <?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('inventory/adjust') ?>" href="/inventory/adjust">Penyesuaian Stok</a><?php endif; ?>
             </div>
           </li>
-          <?php if (in_array($role, ['admin', 'manajemen', 'sales'], true)): ?>
-          <li class="nav-item">
-            <a class="nav-link <?= $navActive('reports') ?>" href="/reports">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /> <path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10" /> <path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -14" /> <path d="M4 20h14" /> </svg></span>
-              <span class="nav-link-title">Laporan</span>
-            </a>
-          </li>
-          <?php endif; ?>
           <?php if ($role === 'admin'): ?>
           <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>">
@@ -261,8 +278,39 @@ if ($initials === '') {
 </div>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.7.5/dist/js/tabler.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.49.1/dist/apexcharts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// Helper global untuk mengubah select panjang menjadi dropdown searchable (ketik manual & pilih)
+window.initSearchableSelect = function (el) {
+  if (!el || typeof TomSelect === 'undefined' || el.tomselect) return null;
+  let emptyOpt = el.querySelector('option[value=""]');
+  if (!emptyOpt) {
+    const zeroOpt = el.querySelector('option[value="0"]');
+    if (zeroOpt && /^(Semua|--)/i.test(zeroOpt.textContent.trim())) {
+      emptyOpt = zeroOpt;
+      emptyOpt.value = '';
+    }
+  }
+  const placeholderText = emptyOpt ? emptyOpt.textContent.trim() : 'Ketik untuk mencari...';
+  if (emptyOpt) {
+    emptyOpt.textContent = '';
+  }
+  return new TomSelect(el, {
+    create: false,
+    allowEmptyOption: false,
+    placeholder: placeholderText,
+    dropdownParent: 'body',
+    sortField: { field: 'text', direction: 'asc' },
+    render: {
+      no_results: function () {
+        return '<div class="no-results p-2 text-muted small">Data tidak ditemukan</div>';
+      }
+    }
+  });
+};
+
 // Ganti alert bawaan browser dengan modal SweetAlert2 yang lebih elegan
 window.alert = function (message) {
   if (typeof Swal !== 'undefined') {
@@ -279,6 +327,9 @@ window.alert = function (message) {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('select.js-searchable').forEach(function (el) {
+    window.initSearchableSelect(el);
+  });
   <?php $isAuthPage = ! session()->get('user_id') || ($currentPath === 'auth/login' || $currentPath === 'auth'); ?>
   <?php if (! $isAuthPage): ?>
   // Notifikasi Flash message (khusus halaman internal setelah login)

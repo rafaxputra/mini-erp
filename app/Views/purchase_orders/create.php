@@ -46,8 +46,8 @@
       <div class="row g-3">
         <div class="col-md-7">
           <label class="form-label required">Pemasok</label>
-          <select name="supplier_id" class="form-select" required>
-            <option value="">-- Pilih Pemasok --</option>
+          <select name="supplier_id" class="form-select js-searchable" required>
+            <option value="">-- Ketik / Pilih Pemasok --</option>
             <?php foreach ($suppliers as $s): ?>
               <option value="<?= esc($s['id']) ?>"><?= esc($s['code']) ?> - <?= esc($s['name']) ?></option>
             <?php endforeach; ?>
@@ -73,7 +73,7 @@
       <h3 class="card-title m-0 fw-bold">Daftar Produk yang Dipesan</h3>
       <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-        Tambah Baris Produk
+        Tambah Baris Produk <kbd class="erp-kbd ms-1">Alt+T</kbd>
       </button>
     </div>
     <div class="table-responsive">
@@ -81,9 +81,11 @@
         <thead class="table-light">
           <tr>
             <th>Pilih Produk</th>
-            <th style="width: 180px;">Jumlah</th>
-            <th style="width: 220px;">Harga Satuan Beli</th>
-            <th class="text-end" style="width: 200px;">Subtotal</th>
+            <th class="text-center" style="width: 120px;">Stok Total</th>
+            <th class="text-center" style="width: 135px;">Maks. Kapasitas</th>
+            <th class="text-center" style="width: 175px;">Jumlah</th>
+            <th style="width: 210px;">Harga Satuan Beli</th>
+            <th class="text-end" style="width: 170px;">Subtotal</th>
             <th style="width: 60px;" class="text-center">Aksi</th>
           </tr>
         </thead>
@@ -104,8 +106,8 @@
           ?>
           <tr>
             <td>
-              <select name="product_id[]" class="form-select product-select" required>
-                <option value="">-- Pilih Produk --</option>
+              <select name="product_id[]" class="form-select product-select js-searchable" required>
+                <option value="">-- Ketik / Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
                   <option value="<?= esc($p['id']) ?>" 
                     data-price="<?= (int) $p['purchase_price'] ?>"
@@ -115,11 +117,17 @@
                     data-max-stock="<?= (int) $p['max_stock'] ?>"
                     data-on-order="<?= (int) $p['on_order_qty'] ?>"
                     <?= ($initProductId && (int)$p['id'] === (int)$initProductId) ? 'selected' : '' ?>>
-                    <?= esc($p['code']) ?> - <?= esc($p['name']) ?> (Fisik: <?= esc($p['stock_qty']) ?><?= $p['max_stock'] > 0 ? ' / Max: ' . esc($p['max_stock']) : '' ?><?= $p['on_order_qty'] > 0 ? ', On-Order: ' . esc($p['on_order_qty']) : '' ?>)
+                    <?= esc($p['code']) ?> - <?= esc($p['name']) ?>
                   </option>
                 <?php endforeach; ?>
               </select>
-              <div class="product-info-note small mt-1 text-muted"></div>
+            </td>
+            <td style="vertical-align: top;">
+              <input type="text" class="form-control text-center readonly-stat-box po-stock-box" value="-" readonly tabindex="-1" title="Total stok fisik di semua gudang">
+            </td>
+            <td style="vertical-align: top;">
+              <input type="text" class="form-control text-center readonly-stat-box po-max-box" value="-" readonly tabindex="-1" title="Kapasitas maksimum penyimpanan produk">
+              <div class="po-on-order-note small text-center mt-1"></div>
             </td>
             <td style="vertical-align: top;">
               <div class="input-group" style="min-width: 165px;">
@@ -144,7 +152,7 @@
         </tbody>
         <tfoot class="table-light">
           <tr>
-            <td colspan="3" class="text-end fw-bold fs-3">Total Estimasi Nilai PO:</td>
+            <td colspan="5" class="text-end fw-bold fs-3">Total Estimasi Nilai PO:</td>
             <td class="text-end fw-bold fs-2 text-primary" id="totalAmount"><?= $initSubtotal > 0 ? 'Rp ' . number_format($initSubtotal, 0, ',', '.') : 'Rp 0' ?></td>
             <td></td>
           </tr>
@@ -156,9 +164,9 @@
   <div class="d-flex align-items-center gap-2">
     <button type="submit" class="btn btn-primary px-4">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h8l4 4v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg>
-      Simpan & Buat Pesanan Beli
+      Simpan &amp; Buat Pesanan Beli <kbd class="erp-kbd ms-1">Ctrl+S</kbd>
     </button>
-    <a class="btn btn-secondary" href="/purchase-orders">Batal</a>
+    <a class="btn btn-outline-secondary" href="/purchase-orders">Batal</a>
   </div>
 </form>
 
@@ -224,6 +232,9 @@ function updateProductDropdowns() {
         opt.hidden = false;
       }
     });
+    if (sel.tomselect) {
+      sel.tomselect.sync();
+    }
   });
 
   // Kunci tombol tambah jika seluruh produk katalog sudah dimasukkan
@@ -242,14 +253,20 @@ function updateProductDropdowns() {
 
 function validateRowStock(row) {
   const sel = row.querySelector('.product-select');
-  const opt = sel.options[sel.selectedIndex];
-  const infoEl = row.querySelector('.product-info-note');
+  const opt = Array.from(sel.options).find(o => o.value === sel.value);
+  const stockBox = row.querySelector('.po-stock-box');
+  const maxBox = row.querySelector('.po-max-box');
+  const onOrderNote = row.querySelector('.po-on-order-note');
   const warnEl = row.querySelector('.qty-warning');
   const unitLabel = row.querySelector('.unit-label');
   const qtyInput = row.querySelector('.qty');
 
+  if (stockBox) stockBox.classList.remove('is-stock-ok', 'is-stock-empty');
+
   if (!opt || !opt.value) {
-    if (infoEl) infoEl.innerHTML = '';
+    if (stockBox) stockBox.value = '-';
+    if (maxBox) maxBox.value = '-';
+    if (onOrderNote) onOrderNote.innerHTML = '';
     if (warnEl) { warnEl.style.display = 'none'; warnEl.textContent = ''; }
     if (unitLabel) unitLabel.textContent = 'unit';
     qtyInput.classList.remove('is-invalid');
@@ -264,15 +281,16 @@ function validateRowStock(row) {
   const qty = parseInt(qtyInput.value || '0', 10);
 
   if (unitLabel) unitLabel.textContent = unit;
-
-  let infoHtml = `Stok fisik: <strong>${stock} ${unit}</strong>`;
-  if (maxStock > 0) {
-    infoHtml += ` &bull; Kapasitas max: <strong>${maxStock} ${unit}</strong>`;
+  if (stockBox) {
+    stockBox.value = stock.toLocaleString('id-ID');
+    stockBox.classList.add(stock > 0 ? 'is-stock-ok' : 'is-stock-empty');
   }
-  if (onOrder > 0) {
-    infoHtml += ` &bull; <span class="badge bg-warning-lt">PO Aktif: ${onOrder} ${unit}</span>`;
+  if (maxBox) {
+    maxBox.value = maxStock > 0 ? maxStock.toLocaleString('id-ID') : '∞';
   }
-  if (infoEl) infoEl.innerHTML = infoHtml;
+  if (onOrderNote) {
+    onOrderNote.innerHTML = onOrder > 0 ? `<span class="badge bg-warning-lt">PO Aktif: ${onOrder}</span>` : '';
+  }
 
   if (maxStock > 0) {
     const totalProjected = stock + onOrder;
@@ -306,9 +324,10 @@ function bindRowEvents(row) {
   const qtyInput = row.querySelector('.qty');
 
   sel.addEventListener('change', function () {
-    const opt = sel.options[sel.selectedIndex];
+    const opt = Array.from(sel.options).find(o => o.value === sel.value);
     const defPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
-    priceInput.value = parseInt(defPrice, 10).toLocaleString('id-ID').replace(/,/g, '.');
+    const numPrice = parseInt(defPrice, 10) || 0;
+    priceInput.value = numPrice > 0 ? numPrice.toLocaleString('id-ID').replace(/,/g, '.') : '';
     updateProductDropdowns();
     validateRowStock(row);
     recalc();
@@ -351,21 +370,41 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    const firstRow = tbody.querySelector('tr');
-    const newRow = firstRow.cloneNode(true);
+    let opts = '<option value="">-- Ketik / Pilih Produk --</option>';
+    products.forEach(function (p) {
+      opts += `<option value="${p.id}" data-price="${p.price}" data-unit="${p.unit}" data-stock="${p.stock}" data-min-stock="${p.min_stock}" data-max-stock="${p.max_stock}" data-on-order="${p.on_order}">${p.code} - ${p.name}</option>`;
+    });
 
-    newRow.querySelector('.product-select').value = '';
-    newRow.querySelector('.qty').value = '1';
-    newRow.querySelector('.qty').classList.remove('is-invalid');
-    newRow.querySelector('.price').value = '';
-    newRow.querySelector('.subtotal').textContent = 'Rp 0';
-    newRow.querySelector('.product-info-note').innerHTML = '';
-    const warn = newRow.querySelector('.qty-warning');
-    if (warn) { warn.style.display = 'none'; warn.textContent = ''; }
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = '<td><select name="product_id[]" class="form-select product-select js-searchable" required>' + opts + '</select></td>'
+      + '<td style="vertical-align: top;"><input type="text" class="form-control text-center readonly-stat-box po-stock-box" value="-" readonly tabindex="-1" title="Total stok fisik di semua gudang"></td>'
+      + '<td style="vertical-align: top;"><input type="text" class="form-control text-center readonly-stat-box po-max-box" value="-" readonly tabindex="-1" title="Kapasitas maksimum penyimpanan produk"><div class="po-on-order-note small text-center mt-1"></div></td>'
+      + '<td style="vertical-align: top;"><div class="input-group" style="min-width: 165px;"><input type="number" name="qty[]" class="form-control qty text-center px-2" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required><span class="input-group-text unit-label text-muted small px-2">unit</span></div><div class="qty-warning small text-danger mt-1 fw-semibold" style="display:none;"></div></td>'
+      + '<td style="vertical-align: top;"><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price js-rupiah" placeholder="0" required></div></td>'
+      + '<td class="subtotal text-end font-monospace">Rp 0</td>'
+      + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button></td>';
 
     tbody.appendChild(newRow);
+    const newSelect = newRow.querySelector('.product-select');
+    if (typeof window.initSearchableSelect === 'function') {
+      window.initSearchableSelect(newSelect);
+    }
     bindRowEvents(newRow);
     updateProductDropdowns();
+    if (newSelect && newSelect.tomselect) {
+      newSelect.tomselect.focus();
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey && (e.key === 't' || e.key === 'T')) {
+      e.preventDefault();
+      const btn = document.getElementById('addRowBtn');
+      if (btn && !btn.disabled) btn.click();
+    } else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      document.getElementById('poForm').requestSubmit();
+    }
   });
 
   document.getElementById('poForm').addEventListener('submit', function (e) {

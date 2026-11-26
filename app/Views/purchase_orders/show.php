@@ -3,6 +3,40 @@
 
 <?php $st = status_badge($po['status']); ?>
 
+<?php
+$poStatus = $po['status'];
+$poSteps = [
+  ['key' => 'draft',    'label' => '1. Draf Pengajuan'],
+  ['key' => 'approved', 'label' => '2. Disetujui (ACC)'],
+  ['key' => 'received', 'label' => '3. Diterima di Gudang'],
+];
+$poOrder = ['draft' => 0, 'approved' => 1, 'received' => 2];
+$curIdx = $poOrder[$poStatus] ?? -1;
+?>
+<div class="erp-stepper">
+  <?php foreach ($poSteps as $idx => $step):
+    $cls = '';
+    if ($poStatus === 'cancelled') {
+      $cls = $idx === 0 ? 'is-danger' : '';
+    } elseif ($idx < $curIdx || ($poStatus === 'received' && $idx === 2)) {
+      $cls = 'is-done';
+    } elseif ($idx === $curIdx) {
+      $cls = 'is-active';
+    }
+  ?>
+    <div class="erp-step <?= $cls ?>">
+      <span class="erp-step-dot"><?= $cls === 'is-done' ? '✓' : ($idx + 1) ?></span>
+      <span class="erp-step-label"><?= esc($step['label']) ?></span>
+    </div>
+  <?php endforeach; ?>
+  <?php if ($poStatus === 'cancelled'): ?>
+    <div class="erp-step is-danger">
+      <span class="erp-step-dot">✕</span>
+      <span class="erp-step-label">Dibatalkan</span>
+    </div>
+  <?php endif; ?>
+</div>
+
 <!-- Kartu Ringkasan Informasi Pesanan -->
 <div class="card mb-3 border-0 shadow-sm">
   <div class="card-body p-4">

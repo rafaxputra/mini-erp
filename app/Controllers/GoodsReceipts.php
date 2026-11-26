@@ -12,11 +12,21 @@ class GoodsReceipts extends BaseController
         if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Barang Masuk.')) return $r;
         $db = \Config\Database::connect();
         $q = trim((string) ($this->request->getGet('q') ?? ''));
+        $status = trim((string) ($this->request->getGet('status') ?? ''));
         $warehouseId = (int) ($this->request->getGet('warehouse_id') ?? 0);
         $start = trim((string) ($this->request->getGet('start_date') ?? ''));
         $end = trim((string) ($this->request->getGet('end_date') ?? ''));
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
+
+        $pendingPos = $db->table('purchase_orders po')
+            ->select('MIN(po.id) AS id, po.po_number, MIN(po.order_date) AS order_date, MIN(s.name) AS supplier_name, COUNT(po.id) AS item_count, SUM(po.qty) AS total_qty, MIN(po.notes) AS notes')
+            ->join('suppliers s', 's.id = po.supplier_id', 'left')
+            ->where('po.status', 'approved')
+            ->groupBy('po.po_number')
+            ->orderBy('order_date', 'DESC')
+            ->get()
+            ->getResultArray();
 
         $subQuery = $db->table('goods_receipts gr')
             ->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(s.name) AS supplier_name, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')
@@ -64,9 +74,14 @@ class GoodsReceipts extends BaseController
             'to' => min($total, $page * $perPage),
         ];
 
+        $allGrCount = (int) ($db->query("SELECT COUNT(DISTINCT gr_number) AS c FROM goods_receipts")->getRow('c') ?? 0);
+
         return view('goods_receipts/index', [
             'title' => 'Barang Masuk',
             'items' => $items,
+            'pendingPos' => $pendingPos,
+            'status' => $status,
+            'statusCounts' => ['all' => $allGrCount, 'pending_po' => count($pendingPos)],
             'q' => $q,
             'warehouses' => $warehouses,
             'warehouseId' => $warehouseId,
@@ -80,7 +95,14 @@ class GoodsReceipts extends BaseController
         if ($r = $this->requireRole(['gudang'], '/goods-receipts', 'Hanya Staff Gudang yang bisa mencatat Barang Masuk.')) return $r;
         $db = \Config\Database::connect();
         $poId = (int) ($this->request->getGet('purchase_order_id') ?? 0);
-        $pos = $db->table('purchase_orders')->select('MIN(id) AS id, po_number, MIN(order_date) AS order_date')->where('status', 'approved')->groupBy('po_number')->orderBy('order_date', 'DESC')->get()->getResultArray();
+        $pos = $db->table('purchase_orders po')
+            ->select('MIN(po.id) AS id, po.po_number, MIN(po.order_date) AS order_date, MIN(s.name) AS supplier_name, COUNT(po.id) AS item_count, SUM(po.qty) AS total_qty')
+            ->join('suppliers s', 's.id = po.supplier_id', 'left')
+            ->where('po.status', 'approved')
+            ->groupBy('po.po_number')
+            ->orderBy('order_date', 'DESC')
+            ->get()
+            ->getResultArray();
         $po = null;
         $items = [];
         if ($poId) {

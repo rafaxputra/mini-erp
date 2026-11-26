@@ -32,8 +32,8 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label required">Pelanggan</label>
-          <select name="customer_id" class="form-select" required autofocus>
-            <option value="">-- Pilih Pelanggan --</option>
+          <select name="customer_id" class="form-select js-searchable" required autofocus>
+            <option value="">-- Ketik / Pilih Pelanggan --</option>
             <?php foreach ($customers as $c): ?>
               <option value="<?= esc($c['id']) ?>"><?= esc($c['code']) ?> - <?= esc($c['name']) ?></option>
             <?php endforeach; ?>
@@ -67,7 +67,7 @@
       <h3 class="card-title m-0 fw-bold">Daftar Produk yang Dijual</h3>
       <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-        Tambah Baris Produk
+        Tambah Baris Produk <kbd class="erp-kbd ms-1">Alt+T</kbd>
       </button>
     </div>
     <div class="table-responsive">
@@ -75,21 +75,29 @@
         <thead class="table-light">
           <tr>
             <th>Pilih Produk</th>
-            <th style="width: 170px;">Jumlah</th>
-            <th style="width: 220px;">Harga Satuan Jual</th>
-            <th class="text-end" style="width: 200px;">Subtotal</th>
+            <th class="text-center" style="width: 120px;">Stok Gudang</th>
+            <th class="text-center" style="width: 120px;">Stok Total</th>
+            <th class="text-center" style="width: 140px;">Jumlah</th>
+            <th style="width: 210px;">Harga Satuan Jual</th>
+            <th class="text-end" style="width: 170px;">Subtotal</th>
             <th style="width: 60px;" class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody id="detailRows">
           <tr>
             <td>
-              <select name="product_id[]" class="form-select product-select" required>
-                <option value="">-- Pilih Produk --</option>
+              <select name="product_id[]" class="form-select product-select js-searchable" required>
+                <option value="">-- Ketik / Pilih Produk --</option>
                 <?php foreach ($products as $p): ?>
-                  <option value="<?= esc($p['id']) ?>" data-price="<?= (int) $p['selling_price'] ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?> (stok <?= esc($p['stock_qty']) ?>)</option>
+                  <option value="<?= esc($p['id']) ?>" data-price="<?= (int) $p['selling_price'] ?>"><?= esc($p['code']) ?> - <?= esc($p['name']) ?></option>
                 <?php endforeach; ?>
               </select>
+            </td>
+            <td>
+              <input type="text" class="form-control text-center readonly-stat-box wh-stock-box" value="-" readonly tabindex="-1" title="Stok tersedia di gudang terpilih">
+            </td>
+            <td>
+              <input type="text" class="form-control text-center readonly-stat-box total-stock-box" value="-" readonly tabindex="-1" title="Total stok di seluruh gudang">
             </td>
             <td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required></td>
             <td>
@@ -144,12 +152,33 @@ function getSelectedWarehouseInfo() {
 }
 
 function buildProductOptionText(p, wh) {
-  const whStock = getWarehouseStock(wh.id, p.id);
-  if (whStock > 0) {
-    return `${p.code} - ${p.name} (Stok di ${wh.name}: ${whStock} | Total: ${p.stock})`;
-  } else {
-    return `${p.code} - ${p.name} (STOK KOSONG di ${wh.name} | Total: ${p.stock})`;
+  return `${p.code} - ${p.name}`;
+}
+
+function updateRowProductInfo(row) {
+  const sel = row.querySelector('.product-select');
+  const whBox = row.querySelector('.wh-stock-box');
+  const totalBox = row.querySelector('.total-stock-box');
+  if (!sel || !whBox || !totalBox) return;
+
+  whBox.classList.remove('is-stock-ok', 'is-stock-empty');
+  if (!sel.value) {
+    whBox.value = '-';
+    totalBox.value = '-';
+    return;
   }
+  const wh = getSelectedWarehouseInfo();
+  const pid = parseInt(sel.value);
+  const prod = products.find(p => p.id === pid);
+  if (!prod) {
+    whBox.value = '-';
+    totalBox.value = '-';
+    return;
+  }
+  const whStock = getWarehouseStock(wh.id, pid);
+  whBox.value = whStock.toLocaleString('id-ID');
+  whBox.classList.add(whStock > 0 ? 'is-stock-ok' : 'is-stock-empty');
+  totalBox.value = (parseInt(prod.stock, 10) || 0).toLocaleString('id-ID');
 }
 
 function checkQtyStockWarning(row) {
@@ -195,6 +224,7 @@ function syncAllProductStockLabels() {
 
     const row = sel.closest('tr');
     if (row) {
+      updateRowProductInfo(row);
       checkQtyStockWarning(row);
     }
   });
@@ -256,6 +286,9 @@ function updateProductDropdowns() {
         opt.hidden = false;
       }
     });
+    if (sel.tomselect) {
+      sel.tomselect.sync();
+    }
   });
 
   const addBtn = document.getElementById('addRowBtn');
@@ -292,18 +325,26 @@ function addRow() {
     const label = buildProductOptionText(p, wh);
     opts += '<option value="' + p.id + '" data-price="' + Math.round(p.price) + '" data-stock="' + whStock + '">' + label + '</option>';
   });
-  row.innerHTML = '<td><select name="product_id[]" class="form-select product-select" required>' + opts + '</select></td>'
+  row.innerHTML = '<td><select name="product_id[]" class="form-select product-select js-searchable" required>' + opts + '</select></td>'
+    + '<td><input type="text" class="form-control text-center readonly-stat-box wh-stock-box" value="-" readonly tabindex="-1" title="Stok tersedia di gudang terpilih"></td>'
+    + '<td><input type="text" class="form-control text-center readonly-stat-box total-stock-box" value="-" readonly tabindex="-1" title="Total stok di seluruh gudang"></td>'
     + '<td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required></td>'
     + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" placeholder="0" required></div></td>'
     + '<td class="subtotal text-end font-monospace">Rp 0</td>'
     + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button></td>';
   tbody.appendChild(row);
+  const newSelect = row.querySelector('.product-select');
+  if (typeof window.initSearchableSelect === 'function') {
+    window.initSearchableSelect(newSelect);
+  }
   row.querySelector('.product-select').addEventListener('change', function () {
-    const sel = this.options[this.selectedIndex];
+    const sel = this;
+    const opt = Array.from(sel.options).find(o => o.value === sel.value);
     const priceEl = row.querySelector('.price');
-    const rawPrice = sel ? (sel.getAttribute('data-price') || '0') : '0';
+    const rawPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
     priceEl.value = parseInt(rawPrice, 10) || 0;
     formatRupiahInput(priceEl);
+    updateRowProductInfo(row);
     updateProductDropdowns();
     recalc();
   });
@@ -311,7 +352,22 @@ function addRow() {
   bindPrice(row.querySelector('.price'));
   updateProductDropdowns();
   recalc();
+  if (newSelect && newSelect.tomselect) {
+    newSelect.tomselect.focus();
+  }
 }
+
+document.addEventListener('keydown', function (e) {
+  if (e.altKey && (e.key === 't' || e.key === 'T')) {
+    e.preventDefault();
+    const btn = document.getElementById('addRowBtn');
+    if (btn && !btn.disabled) btn.click();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    const form = document.querySelector('form[action="/sales-orders/store"]');
+    if (form) form.requestSubmit();
+  }
+});
 
 document.getElementById('warehouseSelect').addEventListener('change', function () {
   syncAllProductStockLabels();
@@ -325,11 +381,12 @@ document.querySelectorAll('#detailRows .price').forEach(function (el) { bindPric
 document.querySelectorAll('#detailRows .product-select').forEach(function (sel) {
   sel.addEventListener('change', function () {
     const row = this.closest('tr');
-    const opt = this.options[this.selectedIndex];
+    const opt = Array.from(this.options).find(o => o.value === this.value);
     const priceEl = row.querySelector('.price');
     const rawPrice = opt ? (opt.getAttribute('data-price') || '0') : '0';
     priceEl.value = parseInt(rawPrice, 10) || 0;
     formatRupiahInput(priceEl);
+    updateRowProductInfo(row);
     updateProductDropdowns();
     recalc();
   });
