@@ -9,7 +9,7 @@ class MainSeeder extends Seeder
     public function run()
     {
         $tables = [
-            'stock_movements', 'deliveries', 'sales_orders', 'goods_receipts',
+            'restock_alerts', 'stock_movements', 'deliveries', 'sales_orders', 'goods_receipts',
             'purchase_orders', 'products', 'units', 'customers', 'suppliers',
             'categories', 'users', 'roles', 'warehouses',
         ];
@@ -85,7 +85,6 @@ class MainSeeder extends Seeder
             ['id' => 3, 'name' => 'Perlengkapan Kantor', 'description' => 'Stapler, map, amplop, klip kertas, dan perlengkapan meja', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 4, 'name' => 'Tinta dan Toner', 'description' => 'Tinta printer dye universal dan toner cartridge laser', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 5, 'name' => 'Peralatan Komputer', 'description' => 'Mouse, flashdisk, dan periferal penunjang kantor', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 6, 'name' => 'Fasilitas & Kebersihan', 'description' => 'Tisu, tempat sampah, dan sarana kebersihan kantor', 'created_at' => $now, 'updated_at' => $now],
         ]);
         $this->db->query("SELECT setval('categories_id_seq', (SELECT MAX(id) FROM categories))");
 
@@ -105,7 +104,6 @@ class MainSeeder extends Seeder
             ['id' => 10, 'code' => 'liter', 'name' => 'Liter (Ltr)', 'description' => 'Satuan volume cairan', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 11, 'code' => 'meter', 'name' => 'Meter (M)', 'description' => 'Satuan panjang / kabel', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 12, 'code' => 'lusin', 'name' => 'Lusin (12 Pcs)', 'description' => 'Satuan grosir 12 unit', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 13, 'code' => 'lembar', 'name' => 'Lembar', 'description' => 'Satuan lembaran tipis', 'created_at' => $now, 'updated_at' => $now],
         ]);
         $this->db->query("SELECT setval('units_id_seq', (SELECT MAX(id) FROM units))");
 
@@ -118,7 +116,6 @@ class MainSeeder extends Seeder
             ['id' => 3, 'code' => 'SUP-003', 'name' => 'PT Graha Pena Distribusi', 'phone' => '031-8287700', 'email' => 'distribusi@grahapena.test', 'address' => 'Jl. Ahmad Yani No. 88, Surabaya', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 4, 'code' => 'SUP-004', 'name' => 'CV Cahaya Office Logistik', 'phone' => '0341-492100', 'email' => 'kontak@cahayaoffice.test', 'address' => 'Jl. Soekarno Hatta No. 12, Malang', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 5, 'code' => 'SUP-005', 'name' => 'PT Digital Print Star', 'phone' => '021-6543210', 'email' => 'supply@digitalprintstar.test', 'address' => 'Mangga Dua Square Lt. 2, Jakarta Pusat', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 6, 'code' => 'SUP-006', 'name' => 'Toko Sentral ATK Grosir', 'phone' => '0354-682300', 'email' => 'sentralatkgrosir@test.com', 'address' => 'Jl. Dhoho No. 70, Kediri', 'created_at' => $now, 'updated_at' => $now],
         ]);
         $this->db->query("SELECT setval('suppliers_id_seq', (SELECT MAX(id) FROM suppliers))");
 
@@ -192,11 +189,10 @@ class MainSeeder extends Seeder
                 'category_id' => 2, 'unit' => 'rim', 'purchase_price' => 35000, 'selling_price' => 50000, 'min_stock' => 20, 'max_stock' => 350,
                 'stocks' => [1 => 70, 2 => 35, 3 => 0],
             ],
-            // [STOK MENIPIS 2]: Sisa 6 pack <= Batas Minimum 10
             [
-                'id' => 11, 'code' => 'PRD-011', 'name' => 'Kertas Foto Glossy A4 20 Lembar',
-                'category_id' => 2, 'unit' => 'pack', 'purchase_price' => 28000, 'selling_price' => 45000, 'min_stock' => 10, 'max_stock' => 80,
-                'stocks' => [1 => 6, 2 => 0, 3 => 0],
+                'id' => 11, 'code' => 'PRD-011', 'name' => 'Mouse USB Optik Logitech B100',
+                'category_id' => 5, 'unit' => 'pcs', 'purchase_price' => 58000, 'selling_price' => 95000, 'min_stock' => 8, 'max_stock' => 100,
+                'stocks' => [1 => 25, 2 => 0, 3 => 20],
             ],
             [
                 'id' => 12, 'code' => 'PRD-012', 'name' => 'Buku Kas / Ekspedisi Hardcover',
@@ -260,11 +256,6 @@ class MainSeeder extends Seeder
                 'id' => 23, 'code' => 'PRD-023', 'name' => 'Toner Cartridge Laser Hitam HP 85A',
                 'category_id' => 4, 'unit' => 'pcs', 'purchase_price' => 260000, 'selling_price' => 395000, 'min_stock' => 3, 'max_stock' => 25,
                 'stocks' => [1 => 2, 2 => 0, 3 => 0],
-            ],
-            [
-                'id' => 24, 'code' => 'PRD-024', 'name' => 'Mouse USB Optik Logitech B100',
-                'category_id' => 5, 'unit' => 'pcs', 'purchase_price' => 58000, 'selling_price' => 95000, 'min_stock' => 8, 'max_stock' => 100,
-                'stocks' => [1 => 25, 2 => 0, 3 => 20],
             ],
         ];
 
@@ -382,7 +373,7 @@ class MainSeeder extends Seeder
         $po3Num = 'PO-' . $n3 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
             ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 24, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po3Num, 'supplier_id' => 5, 'product_id' => 11, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
         ]);
 
         // PO 4: Status DRAFT (Menunggu Persetujuan Admin / Manajemen)
@@ -395,7 +386,7 @@ class MainSeeder extends Seeder
         // PO 5: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
         $po5Num = 'PO-' . $n8 . '-002';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po5Num, 'supplier_id' => 6, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier Sentral ATK kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
+            ['po_number' => $po5Num, 'supplier_id' => 4, 'product_id' => 6, 'qty' => 50, 'unit_price' => 7000, 'order_date' => $d8, 'status' => 'cancelled', 'notes' => 'Dibatalkan oleh staf purchasing: Supplier kehabisan stok fisik merek yang diminta.', 'created_by' => 2, 'created_at' => $d8 . ' 16:00:00', 'updated_at' => $d7 . ' 09:00:00'],
         ]);
 
         // -------------------------------------------------------------
@@ -448,7 +439,7 @@ class MainSeeder extends Seeder
         $this->db->table('sales_orders')->insertBatch([
             ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 15, 'qty' => 25, 'unit_price' => 38000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Perlengkapan tender proyek', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
             ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 18, 'qty' => 20, 'unit_price' => 26000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Klip kertas berkas', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
-            ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 24, 'qty' => 12, 'unit_price' => 95000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Peremajaan periferal laptop staf lapangan', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
+            ['so_number' => $so3Num, 'customer_id' => 4, 'warehouse_id' => 3, 'product_id' => 11, 'qty' => 12, 'unit_price' => 95000, 'order_date' => $d4, 'status' => 'delivered', 'notes' => 'Peremajaan periferal laptop staf lapangan', 'created_by' => 4, 'created_at' => $d4 . ' 10:15:00', 'updated_at' => $d3 . ' 11:00:00'],
         ]);
         $so3Items = $this->db->table('sales_orders')->where('so_number', $so3Num)->get()->getResultArray();
         $do3Num = 'DO-' . date('Ymd', strtotime('-3 days')) . '-001';
