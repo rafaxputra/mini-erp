@@ -93,14 +93,33 @@ class Deliveries extends BaseController
             }
             $items = $db->table('sales_orders so')->select('so.id, so.product_id, so.qty, so.unit_price, p.code, p.name AS product_name, p.unit, p.stock_qty, COALESCE((SELECT SUM(d.qty_delivered) FROM deliveries d WHERE d.sales_order_id = so.id AND d.status <> \'cancelled\'), 0) AS delivered_qty')->join('products p', 'p.id = so.product_id')->where('so.so_number', $so['so_number'])->orderBy('so.id', 'ASC')->get()->getResultArray();
             
-            // Hitung stok fisik aktual spesifik di gudang asal pengiriman SO
+            // Hitung stok siap kirim untuk SO ini: sisa alokasi yang sudah dipotong di SO + stok bebas baru di gudang
             $stockSvc = new \App\Libraries\StockService();
             foreach ($items as &$it) {
-                $it['warehouse_stock'] = $stockSvc->stockInWarehouse((int) $it['product_id'], (int) $so['warehouse_id']);
+                $freeWhStock = $stockSvc->stockInWarehouse((int) $it['product_id'], (int) $so['warehouse_id']);
+                $soDeducted = (int) ($db->query("SELECT COALESCE(SUM(qty), 0) AS total FROM stock_movements WHERE reference_type = 'SALES_ORDER' AND movement_type = 'OUT' AND reference_id = ?", [(int) $it['id']])->getRowArray()['total']);
+                $allocatedRemaining = max(0, $soDeducted - (int) $it['delivered_qty']);
+                $it['allocated_remaining'] = $allocatedRemaining;
+                $it['free_wh_stock'] = $freeWhStock;
+                $it['warehouse_stock'] = $allocatedRemaining + $freeWhStock;
             }
             unset($it);
+            $shortageAlerts = $db->table('restock_alerts ra')
+                ->select('ra.*, p.code AS product_code, p.name AS product_name')
+                ->join('products p', 'p.id = ra.product_id')
+                ->where('ra.sales_order_number', $so['so_number'])
+                ->whereIn('ra.status', ['open', 'ordered'])
+                ->get()
+                ->getResultArray();
         }
-        return view('deliveries/create', ['title' => 'Buat Pengiriman', 'sos' => $sos, 'so' => $so, 'items' => $items, 'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll()]);
+        return view('deliveries/create', [
+            'title' => 'Buat Pengiriman',
+            'sos' => $sos,
+            'so' => $so,
+            'items' => $items,
+            'shortageAlerts' => $shortageAlerts ?? [],
+            'warehouses' => (new WarehouseModel())->orderBy('name', 'ASC')->findAll(),
+        ]);
     }
     public function store()
     {

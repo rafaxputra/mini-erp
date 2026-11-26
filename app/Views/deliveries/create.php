@@ -55,6 +55,25 @@
     <input type="hidden" name="sales_order_id" value="<?= esc($so['id']) ?>">
 
     <!-- Kartu Informasi SO -->
+    <?php if (! empty($shortageAlerts)): ?>
+      <div class="alert alert-warning mb-3 border-warning shadow-sm">
+        <div class="d-flex align-items-start gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon text-warning mt-1" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+          <div>
+            <div class="fw-bold text-dark">Pesanan Memiliki Kekurangan Stok (Menunggu Pengadaan Purchasing)</div>
+            <div class="small text-secondary mt-1">
+              Anda tetap dapat mengirim stok yang sudah tersedia secara parsial, atau menahan (<em>hold</em>) pengiriman hingga barang tambahan tiba melalui Penerimaan Barang (GR):
+              <ul class="mb-0 mt-1 ps-3">
+                <?php foreach ($shortageAlerts as $al): ?>
+                  <li><strong><?= esc($al['product_code']) ?> - <?= esc($al['product_name']) ?></strong>: kurang <strong><?= esc($al['shortage_qty']) ?> unit</strong> (Status Pengadaan: <span class="badge bg-warning-lt"><?= $al['status'] === 'ordered' ? 'Sudah Dipesan (PO)' : 'Menunggu Purchasing' ?></span>)</li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="card mb-3 border-0 shadow-sm">
       <div class="card-body p-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pb-3 border-bottom mb-3">
