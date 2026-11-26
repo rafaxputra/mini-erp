@@ -85,10 +85,12 @@ class Inventory extends BaseController
         $end = (string) ($this->request->getGet('end_date') ?? '');
 
         $builder = $db->table('stock_movements sm')
-            ->select('sm.*, p.code, p.name AS product_name, u.name AS user_name, w.name AS warehouse_name')
+            ->select('sm.*, p.code, p.name AS product_name, u.name AS user_name, w.name AS warehouse_name, gr_ref.purchase_order_id AS ref_po_id, gr_ref.gr_number AS ref_gr_number, so_ref.so_number AS ref_so_number')
             ->join('products p', 'p.id = sm.product_id')
             ->join('users u', 'u.id = sm.created_by')
-            ->join('warehouses w', 'w.id = sm.warehouse_id');
+            ->join('warehouses w', 'w.id = sm.warehouse_id')
+            ->join('goods_receipts gr_ref', "gr_ref.id = sm.reference_id AND sm.reference_type = 'PURCHASE_RECEIPT'", 'left')
+            ->join('sales_orders so_ref', "so_ref.id = sm.reference_id AND sm.reference_type = 'SALES_ORDER'", 'left');
 
         if ($q !== '') {
             $builder->groupStart()

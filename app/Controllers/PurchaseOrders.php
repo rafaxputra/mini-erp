@@ -17,7 +17,7 @@ class PurchaseOrders extends BaseController
         if (! in_array($status, $statuses, true)) $status = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(8);
         $total = count($this->poListBuilder($q, $status, $start, $end)->get()->getResultArray());
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);
@@ -235,13 +235,23 @@ class PurchaseOrders extends BaseController
         $receipts = $db->table('goods_receipts gr')->select('MIN(gr.id) AS id, gr.gr_number, MIN(gr.receipt_date) AS receipt_date')->whereIn('gr.purchase_order_id', array_column($items, 'id'))->groupBy('gr.gr_number')->orderBy('receipt_date', 'DESC')->get()->getResultArray();
         return view('purchase_orders/show', ['title' => 'Detail Pesanan Beli', 'po' => $po, 'items' => $items, 'receipts' => $receipts]);
     }
+    protected function resolveReturnUrl(string $fallback): string
+    {
+        $returnTo = trim((string) $this->request->getPost('return_to'));
+        if ($returnTo !== '' && str_starts_with($returnTo, '/') && ! str_starts_with($returnTo, '//')) {
+            return $returnTo;
+        }
+        return $fallback;
+    }
+
     public function approve($id)
     {
         if ($r = $this->requireRole(['manajemen'], '/purchase-orders', 'Hanya Manajer yang berhak menyetujui (ACC) Pesanan Beli (Sistem Approval 1 Pintu).')) return $r;
+        $redirectTarget = $this->resolveReturnUrl('/purchase-orders/show/' . $id);
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] !== 'draft') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Hanya PO berstatus Draft yang bisa di-approve (ACC).');
+            return redirect()->to($redirectTarget)->with('error', 'Hanya PO berstatus Draft yang bisa di-approve (ACC).');
         }
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -250,25 +260,26 @@ class PurchaseOrders extends BaseController
             $db->transCommit();
         } catch (\Throwable $e) {
             $db->transRollback();
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal menyetujui Pesanan Beli.');
+            return redirect()->to($redirectTarget)->with('error', 'Gagal menyetujui Pesanan Beli.');
         }
-        return redirect()->to('/purchase-orders/show/' . $id)->with('success', 'Pesanan Beli berhasil disetujui (ACC). Stok siap diterima oleh petugas Gudang saat barang tiba.');
+        return redirect()->to($redirectTarget)->with('success', 'Pesanan Beli berhasil disetujui (ACC). Stok siap diterima oleh petugas Gudang saat barang tiba.');
     }
     public function cancel($id)
     {
         if ($r = $this->requireRole(['purchasing', 'manajemen'], '/purchase-orders', 'Hanya Staff Purchasing dan Manajemen yang bisa membatalkan atau menolak Pesanan Beli.')) return $r;
+        $redirectTarget = $this->resolveReturnUrl('/purchase-orders/show/' . $id);
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] === 'received') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO yang sudah diterima penuh tidak bisa dibatalkan.');
+            return redirect()->to($redirectTarget)->with('error', 'PO yang sudah diterima penuh tidak bisa dibatalkan.');
         }
         if ($po['status'] === 'cancelled') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'PO sudah dibatalkan/ditolak.');
+            return redirect()->to($redirectTarget)->with('error', 'PO sudah dibatalkan/ditolak.');
         }
 
         $reason = trim((string) $this->request->getPost('cancel_reason'));
         if ($reason === '') {
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Wajib menyertakan alasan pembatalan/penolakan pesanan.');
+            return redirect()->to($redirectTarget)->with('error', 'Wajib menyertakan alasan pembatalan/penolakan pesanan.');
         }
 
         $userRole = session()->get('user_role');
@@ -292,11 +303,11 @@ class PurchaseOrders extends BaseController
             $db->transCommit();
         } catch (\Throwable $e) {
             $db->transRollback();
-            return redirect()->to('/purchase-orders/show/' . $id)->with('error', 'Gagal membatalkan/menolak Pesanan Beli.');
+            return redirect()->to($redirectTarget)->with('error', 'Gagal membatalkan/menolak Pesanan Beli.');
         }
         $successMsg = $userRole === 'manajemen' 
             ? 'Pesanan Beli berhasil ditolak beserta alasan penolakannya.' 
             : 'Pesanan Beli berhasil dibatalkan beserta alasannya.';
-        return redirect()->to('/purchase-orders/show/' . $id)->with('success', $successMsg);
+        return redirect()->to($redirectTarget)->with('success', $successMsg);
     }
 }

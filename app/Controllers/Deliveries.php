@@ -19,18 +19,37 @@ class Deliveries extends BaseController
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
 
-        $pendingSos = $db->table('sales_orders so')
+        $pendingSoQuery = $db->table('sales_orders so')
             ->select('MIN(so.id) AS id, so.so_number, MIN(so.order_date) AS order_date, MIN(c.name) AS customer_name, MIN(w.name) AS warehouse_name, COUNT(so.id) AS item_count, SUM(so.qty) AS total_qty, MIN(so.notes) AS notes')
             ->join('customers c', 'c.id = so.customer_id', 'left')
             ->join('warehouses w', 'w.id = so.warehouse_id', 'left')
-            ->where('so.status', 'confirmed')
-            ->groupBy('so.so_number')
-            ->orderBy('order_date', 'DESC')
-            ->get()
-            ->getResultArray();
+            ->where('so.status', 'confirmed');
+
+        if ($status === 'pending_so') {
+            if ($warehouseId > 0) {
+                $pendingSoQuery->where('so.warehouse_id', $warehouseId);
+            }
+            if ($start !== '') {
+                $pendingSoQuery->where('so.order_date >=', $start);
+            }
+            if ($end !== '') {
+                $pendingSoQuery->where('so.order_date <=', $end);
+            }
+        }
+
+        $pendingSoQuery->groupBy('so.so_number');
+
+        if ($status === 'pending_so' && $q !== '') {
+            $pendingSoQuery->havingLike('so.so_number', $q, 'both', null, true)
+                ->orHavingLike('MIN(c.name)', $q, 'both', null, true)
+                ->orHavingLike('MIN(w.name)', $q, 'both', null, true);
+        }
+
+        $pendingSos = $pendingSoQuery->orderBy('order_date', 'DESC')->get()->getResultArray();
+        $pendingSoTotalCount = (int) ($db->query("SELECT COUNT(DISTINCT so_number) AS c FROM sales_orders WHERE status = 'confirmed'")->getRow('c') ?? 0);
 
         $countRows = $db->query("SELECT COALESCE(status, 'delivered') AS st, COUNT(DISTINCT delivery_number) AS cnt FROM deliveries GROUP BY COALESCE(status, 'delivered')")->getResultArray();
-        $statusCounts = ['all' => 0, 'scheduled' => 0, 'delivered' => 0, 'cancelled' => 0, 'pending_so' => count($pendingSos)];
+        $statusCounts = ['all' => 0, 'scheduled' => 0, 'delivered' => 0, 'cancelled' => 0, 'pending_so' => $pendingSoTotalCount];
         foreach ($countRows as $cr) {
             $stKey = (string) $cr['st'];
             $cnt = (int) $cr['cnt'];
@@ -72,7 +91,7 @@ class Deliveries extends BaseController
 
         $allRows = $subQuery->orderBy('delivery_date', 'DESC')->orderBy('created_at', 'DESC')->get()->getResultArray();
         $total = count($allRows);
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(7);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);
         if ($page < 1) $page = 1;

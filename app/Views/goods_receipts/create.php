@@ -93,13 +93,27 @@
     </div>
 
     <!-- Kartu Detail Barang Masuk -->
+    <?php
+      $totalOrdered = array_sum(array_map(static fn($r) => (int) $r['qty'], $items));
+      $totalAlready = array_sum(array_map(static fn($r) => (int) $r['received_qty'], $items));
+      $pctAlready = $totalOrdered > 0 ? round(($totalAlready / $totalOrdered) * 100) : 0;
+    ?>
     <div class="card mb-3 border-0 shadow-sm">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0 fw-bold">Konfirmasi Jumlah Barang yang Diterima Fisik</h3>
-        <button type="button" class="btn btn-sm btn-outline-info" onclick="fillAllRemaining()">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-          Terima Semua Sisa
-        </button>
+      <div class="card-header bg-transparent py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <h3 class="card-title m-0 fw-bold">Konfirmasi Jumlah Barang yang Diterima Fisik</h3>
+          <div class="small text-secondary mt-1">Progress Sebelumnya: <strong><?= $totalAlready ?> / <?= $totalOrdered ?></strong> unit (<?= $pctAlready ?>%)</div>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllReceived()">Kosongkan</button>
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillAllRemaining()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+            Terima Semua Sisa
+          </button>
+        </div>
+      </div>
+      <div class="progress progress-sm rounded-0" style="height: 4px;">
+        <div class="progress-bar bg-success" style="width: <?= $pctAlready ?>%"></div>
       </div>
       <div class="table-responsive">
         <table class="table table-vcenter table-striped mb-0">
@@ -164,6 +178,13 @@ function fillAllRemaining() {
   document.querySelectorAll('.received-input').forEach(function (inp) {
     if (!inp.readOnly) {
       inp.value = inp.dataset.max || 0;
+    }
+  });
+}
+function clearAllReceived() {
+  document.querySelectorAll('.received-input').forEach(function (inp) {
+    if (!inp.readOnly) {
+      inp.value = 0;
     }
   });
 }

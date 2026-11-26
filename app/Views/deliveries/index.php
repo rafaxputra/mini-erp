@@ -43,6 +43,49 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
   </ul>
 </div>
 
+<div class="card mb-3 border-0 shadow-sm">
+  <div class="card-body p-3">
+    <form action="/deliveries" method="get">
+      <input type="hidden" name="status" value="<?= esc($curStatus) ?>">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small text-secondary mb-1">Pencarian</label>
+          <div class="input-icon">
+            <span class="input-icon-addon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="<?= $curStatus === 'pending_so' ? 'No. SO atau pelanggan...' : 'No. DO, SO, pelanggan...' ?>" value="<?= esc($q ?? '') ?>">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small text-secondary mb-1">Gudang Pengirim</label>
+          <select name="warehouse_id" class="form-select form-select-sm">
+            <option value="0">Semua Gudang</option>
+            <?php foreach ($warehouses as $wh): ?>
+              <option value="<?= esc($wh['id']) ?>" <?= (int) ($warehouseId ?? 0) === (int) $wh['id'] ? 'selected' : '' ?>><?= esc($wh['name']) ?> (<?= esc($wh['code']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-secondary mb-1">Dari Tanggal</label>
+          <input type="date" name="start_date" class="form-control form-control-sm" value="<?= esc($start_date ?? '') ?>">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-secondary mb-1">Sampai Tanggal</label>
+          <input type="date" name="end_date" class="form-control form-control-sm" value="<?= esc($end_date ?? '') ?>">
+        </div>
+        <div class="col-md-2 d-flex gap-2 justify-content-end">
+          <button class="btn btn-sm btn-primary" type="submit">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+            Filter
+          </button>
+          <?php if ($filterActive): ?>
+            <a class="btn btn-sm btn-outline-secondary" href="/deliveries<?= $curStatus !== '' ? '?status=' . urlencode($curStatus) : '' ?>">Reset</a>
+          <?php endif; ?>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <?php if ($curStatus === 'pending_so'): ?>
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-transparent py-3">
@@ -91,51 +134,6 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
   <?php endif; ?>
 </div>
 <?php else: ?>
-
-<div class="card mb-3 border-0 shadow-sm">
-  <div class="card-body p-3">
-    <form action="/deliveries" method="get">
-      <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-          <label class="form-label small text-secondary mb-1">Pencarian</label>
-          <div class="input-icon">
-            <span class="input-icon-addon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
-            <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="No. DO, SO, pelanggan..." value="<?= esc($q ?? '') ?>">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label small text-secondary mb-1">Gudang Pengirim</label>
-          <select name="warehouse_id" class="form-select form-select-sm">
-            <option value="0">Semua Gudang</option>
-            <?php foreach ($warehouses as $wh): ?>
-              <option value="<?= esc($wh['id']) ?>" <?= (int) ($warehouseId ?? 0) === (int) $wh['id'] ? 'selected' : '' ?>><?= esc($wh['name']) ?> (<?= esc($wh['code']) ?>)</option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label small text-secondary mb-1">Dari Tanggal</label>
-          <input type="date" name="start_date" class="form-control form-control-sm" value="<?= esc($start_date ?? '') ?>">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label small text-secondary mb-1">Sampai Tanggal</label>
-          <input type="date" name="end_date" class="form-control form-control-sm" value="<?= esc($end_date ?? '') ?>">
-        </div>
-        <div class="col-md-2 d-flex gap-2 justify-content-end">
-          <button class="btn btn-sm btn-primary" type="submit">Filter</button>
-          <?php if ($filterActive): ?>
-            <a class="btn btn-sm btn-outline-secondary" href="/deliveries">Reset</a>
-          <?php endif; ?>
-          <?php if (session()->get('user_role') === 'gudang'): ?>
-            <a class="btn btn-sm btn-success d-inline-flex align-items-center gap-1" href="/deliveries/create">
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-              Kirim
-            </a>
-          <?php endif; ?>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
@@ -206,36 +204,7 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
       </table>
     </div>
 
-    <?php if (isset($pager)): ?>
-    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center py-2 bg-transparent gap-2">
-      <span class="text-muted small">Menampilkan <?= esc($pager['from']) ?> sampai <?= esc($pager['to']) ?> dari <?= esc($pager['total']) ?> Pengiriman</span>
-      <?php if ($pager['lastPage'] > 1): ?>
-        <ul class="pagination pagination-sm m-0">
-          <li class="page-item <?= $pager['page'] <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_merge($filterQuery, ['page' => max(1, $pager['page'] - 1)])) ?>">&laquo;</a>
-          </li>
-          <?php 
-          $pages = []; 
-          for ($p = 1; $p <= $pager['lastPage']; $p++) { 
-            if ($p === 1 || $p === $pager['lastPage'] || abs($p - $pager['page']) <= 1) $pages[] = $p; 
-          } 
-          $pages = array_values(array_unique($pages)); 
-          $prev = 0; 
-          foreach ($pages as $p): 
-            if ($p - $prev > 1): ?>
-              <li class="page-item disabled"><span class="page-link">...</span></li>
-            <?php endif; ?>
-            <li class="page-item <?= $p === $pager['page'] ? 'active' : '' ?>">
-              <a class="page-link" href="?<?= http_build_query(array_merge($filterQuery, ['page' => $p])) ?>"><?= esc($p) ?></a>
-            </li>
-          <?php $prev = $p; endforeach; ?>
-          <li class="page-item <?= $pager['page'] >= $pager['lastPage'] ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_merge($filterQuery, ['page' => min($pager['lastPage'], $pager['page'] + 1)])) ?>">&raquo;</a>
-          </li>
-        </ul>
-      <?php endif; ?>
-    </div>
-    <?php endif; ?>
+    <?= view('partials/pagination', ['pager' => $pager ?? null, 'query' => $filterQuery, 'label' => 'Pengiriman']) ?>
   <?php endif; ?>
 </div>
 

@@ -9,7 +9,7 @@
         <span class="input-icon-addon">
           <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
         </span>
-        <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nama, kode, kategori..." aria-label="Cari produk" value="<?= esc($q ?? '') ?>">
+        <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari nama, kode, kategori..." aria-label="Cari produk" value="<?= esc($q ?? '') ?>">
       </div>
       <?php if (! empty($q)): ?>
         <a href="/products" class="btn btn-sm btn-outline-secondary" title="Reset filter pencarian">Reset</a>
@@ -56,8 +56,13 @@
           <td class="fw-semibold text-dark"><?= esc($it['name']) ?></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['category_name']) ?></span></td>
           <td class="text-muted small"><?= esc($it['unit']) ?></td>
-          <td class="text-end text-muted font-monospace">Rp <?= number_format((float) $it['purchase_price'], 0, ',', '.') ?></td>
-          <td class="text-end fw-semibold text-dark font-monospace">Rp <?= number_format((float) $it['selling_price'], 0, ',', '.') ?></td>
+          <td class="text-end text-muted tabular-nums">Rp <?= number_format((float) $it['purchase_price'], 0, ',', '.') ?></td>
+          <td class="text-end tabular-nums">
+            <div class="fw-semibold text-dark">Rp <?= number_format((float) $it['selling_price'], 0, ',', '.') ?></div>
+            <?php $buyP = (float) $it['purchase_price']; $sellP = (float) $it['selling_price']; if ($buyP > 0 && $sellP > 0): $marginPct = round((($sellP - $buyP) / $buyP) * 100, 1); ?>
+              <span class="badge <?= $marginPct >= 15 ? 'bg-success-lt' : 'bg-warning-lt' ?> mt-1" style="font-size:0.68rem;">Margin <?= number_format($marginPct, 1, ',', '.') ?>%</span>
+            <?php endif; ?>
+          </td>
           <td class="text-center">
             <?php if ((int) $it['stock_qty'] <= (int) $it['min_stock']): ?>
               <span class="badge bg-danger-lt fw-bold" title="Stok menipis atau di bawah batas minimum!"><?= esc($it['stock_qty']) ?></span>
@@ -91,36 +96,7 @@
       </table>
     </div>
 
-    <?php if (isset($pager)): ?>
-    <div class="card-footer d-flex flex-wrap justify-content-between align-items-center py-2 bg-transparent gap-2">
-      <span class="text-muted small">Menampilkan <?= esc($pager['from']) ?> sampai <?= esc($pager['to']) ?> dari <?= esc($pager['total']) ?> Produk</span>
-      <?php if ($pager['lastPage'] > 1): ?>
-        <ul class="pagination pagination-sm m-0">
-          <li class="page-item <?= $pager['page'] <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_filter(['q' => $q ?? '', 'page' => max(1, $pager['page'] - 1)])) ?>">&laquo;</a>
-          </li>
-          <?php 
-          $pages = []; 
-          for ($p = 1; $p <= $pager['lastPage']; $p++) { 
-            if ($p === 1 || $p === $pager['lastPage'] || abs($p - $pager['page']) <= 1) $pages[] = $p; 
-          } 
-          $pages = array_values(array_unique($pages)); 
-          $prev = 0; 
-          foreach ($pages as $p): 
-            if ($p - $prev > 1): ?>
-              <li class="page-item disabled"><span class="page-link">...</span></li>
-            <?php endif; ?>
-            <li class="page-item <?= $p === $pager['page'] ? 'active' : '' ?>">
-              <a class="page-link" href="?<?= http_build_query(array_filter(['q' => $q ?? '', 'page' => $p])) ?>"><?= esc($p) ?></a>
-            </li>
-          <?php $prev = $p; endforeach; ?>
-          <li class="page-item <?= $pager['page'] >= $pager['lastPage'] ? 'disabled' : '' ?>">
-            <a class="page-link" href="?<?= http_build_query(array_filter(['q' => $q ?? '', 'page' => min($pager['lastPage'], $pager['page'] + 1)])) ?>">&raquo;</a>
-          </li>
-        </ul>
-      <?php endif; ?>
-    </div>
-    <?php endif; ?>
+    <?= view('partials/pagination', ['pager' => $pager ?? null, 'query' => ['q' => $q ?? ''], 'label' => 'Produk']) ?>
   <?php endif; ?>
 </div>
 

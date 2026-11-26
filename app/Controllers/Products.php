@@ -19,7 +19,7 @@ class Products extends BaseController
         }
 
         $total = $builder->countAllResults(false);
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(8);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);
         if ($page < 1) $page = 1;

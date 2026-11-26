@@ -15,6 +15,22 @@ abstract class BaseController extends Controller
         parent::initController($request, $response, $logger);
         $this->session = session();
     }
+    protected function resolvePerPage(int $default = 8): int
+    {
+        $ctrl = strtolower(class_basename(static::class));
+        $sessionKey = 'erp_per_page_' . $ctrl;
+        $req = (int) ($this->request->getGet('per_page') ?? 0);
+        if (in_array($req, [7, 8, 10, 15, 25, 50], true)) {
+            session()->set($sessionKey, $req);
+            return $req;
+        }
+        $saved = (int) (session()->get($sessionKey) ?? 0);
+        if (in_array($saved, [7, 8, 10, 15, 25, 50], true)) {
+            return $saved;
+        }
+        return $default;
+    }
+
     protected function userId(): int
     {
         return (int) session()->get('user_id');

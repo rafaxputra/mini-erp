@@ -11,6 +11,9 @@ $routes->get('/', static function () {
 });
 $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('dashboard', 'Dashboard::index');
+    $routes->get('dashboard/quick-search', 'Dashboard::quickSearch');
+    $routes->get('dashboard/po-preview/(:num)', 'Dashboard::poPreview/$1');
+    $routes->get('dashboard/so-preview/(:num)', 'Dashboard::soPreview/$1');
     $routes->get('dashboard/export', 'Dashboard::export');
     $routes->get('dashboard/export-pdf', 'Dashboard::exportPdf');
     $routes->get('categories', 'Categories::index');

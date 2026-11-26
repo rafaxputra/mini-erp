@@ -99,7 +99,7 @@ if ($initials === '') {
     $initials = 'U';
 }
 
-$navBadges = ['so_revision' => 0, 'po_draft' => 0, 'do_scheduled' => 0];
+$navBadges = ['so_revision' => 0, 'po_draft' => 0, 'do_scheduled' => 0, 'restock_open' => 0, 'low_stock' => 0];
 try {
     $navDb = \Config\Database::connect();
     if (in_array($role, ['admin', 'sales', 'manajemen'], true)) {
@@ -107,16 +107,26 @@ try {
     }
     if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)) {
         $navBadges['po_draft'] = (int) ($navDb->query("SELECT COUNT(DISTINCT po_number) AS c FROM purchase_orders WHERE status = 'draft'")->getRow('c') ?? 0);
+        $navBadges['restock_open'] = (int) ($navDb->query("SELECT COUNT(*) AS c FROM restock_alerts WHERE status = 'open'")->getRow('c') ?? 0);
     }
     if (in_array($role, ['admin', 'gudang', 'manajemen'], true)) {
         $navBadges['do_scheduled'] = (int) ($navDb->query("SELECT COUNT(DISTINCT delivery_number) AS c FROM deliveries WHERE status = 'scheduled'")->getRow('c') ?? 0);
     }
+    if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)) {
+        $navBadges['low_stock'] = (int) ($navDb->query("SELECT COUNT(*) AS c FROM products WHERE stock_qty <= min_stock")->getRow('c') ?? 0);
+    }
 } catch (\Throwable $e) {
     // Abaikan jika tabel belum tersedia
 }
+$totalNotifCount = $navBadges['so_revision'] + $navBadges['po_draft'] + $navBadges['do_scheduled'] + $navBadges['restock_open'] + ($navBadges['low_stock'] > 0 ? 1 : 0);
 ?>
+<script>
+if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >= 992) {
+  document.body.classList.add('sidebar-collapsed');
+}
+</script>
 <div class="page">
-  <aside class="navbar navbar-vertical navbar-expand-lg">
+  <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
     <div class="container-fluid">
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle sidebar navigation">
         <span class="navbar-toggler-icon"></span>
@@ -215,19 +225,12 @@ try {
           </li>
           <?php endif; ?>
         </ul>
-        <div class="navbar-side">
-          <div class="d-flex align-items-center px-3 py-2">
-            <span class="avatar avatar-sm me-2 avatar-user-badge"><?= esc($initials) ?></span>
-            <div class="lh-1">
-              <div class="text-white fw-medium"><?= esc($userName) ?></div>
-              <div class="mt-1 role-badge-text"><?= esc($roleLabel) ?></div>
-            </div>
-          </div>
-          <ul class="navbar-nav">
+        <div class="navbar-side mt-auto pt-2 border-top border-secondary border-opacity-25">
+          <ul class="navbar-nav pb-2">
             <li class="nav-item">
-              <a class="nav-link" href="/auth/logout">
+              <a class="nav-link text-danger-subtle" href="/auth/logout">
                 <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" /> <path d="M9 12h12l-3 -3" /> <path d="M18 15l3 -3" /> </svg></span>
-                <span class="nav-link-title">Logout</span>
+                <span class="nav-link-title">Keluar (Logout)</span>
               </a>
             </li>
           </ul>
@@ -236,6 +239,37 @@ try {
     </div>
   </aside>
   <div class="page-wrapper">
+    <!-- Sticky Glass Top Utility Bar -->
+    <header class="erp-topbar d-print-none">
+      <div class="container-xl d-flex align-items-center justify-content-between gap-2 px-0">
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" id="sidebarCollapseBtn" class="btn btn-sm btn-ghost-secondary d-none d-lg-inline-flex align-items-center justify-content-center" title="Ciutkan / Lebarkan Sidebar" style="width:34px;height:34px;padding:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <span class="d-none d-sm-inline-block text-secondary small fw-semibold">
+            <?= esc($roleLabel) ?> &middot; <span class="text-dark">PT Nusantara Distribusi</span>
+          </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 ms-auto">
+          <button type="button" id="erpCmdTrigger" class="erp-cmd-trigger" data-bs-toggle="modal" data-bs-target="#erpCommandModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="flex-grow-1 text-start d-none d-md-inline">Cari SO, PO, Produk...</span>
+            <span class="flex-grow-1 text-start d-inline d-md-none">Cari...</span>
+            <kbd class="erp-kbd d-none d-md-inline">Ctrl K</kbd>
+          </button>
+
+          <div class="d-none d-sm-flex align-items-center gap-2 ps-3 border-start">
+            <span class="avatar avatar-sm avatar-user-badge"><?= esc($initials) ?></span>
+            <div class="lh-1">
+              <div class="small fw-bold text-dark"><?= esc($userName) ?></div>
+              <div class="role-badge-text mt-1"><?= esc($roleLabel) ?></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <?php if ($currentPath !== '' && $currentPath !== 'dashboard'): ?>
     <div class="page-header d-print-none mb-3">
       <div class="container-xl">
@@ -496,8 +530,111 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
+
+  // Sidebar Collapse Toggle
+  const sidebarBtn = document.getElementById('sidebarCollapseBtn');
+  if (sidebarBtn) {
+    sidebarBtn.addEventListener('click', function () {
+      document.body.classList.toggle('sidebar-collapsed');
+      localStorage.setItem('erp_sidebar_collapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+
+  // Command Palette (Ctrl+K / Cmd+K) - 100% reliable via trigger button
+  const cmdModalEl = document.getElementById('erpCommandModal');
+  const cmdTrigger = document.getElementById('erpCmdTrigger');
+  const cmdInput = document.getElementById('erpCmdInput');
+  const cmdResults = document.getElementById('erpCmdResults');
+  if (cmdModalEl && cmdInput && cmdResults) {
+    const defaultHtml = cmdResults.innerHTML;
+    let cmdTimer = null;
+
+    window.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (cmdModalEl.classList.contains('show')) {
+          const closeBtn = cmdModalEl.querySelector('[data-bs-dismiss="modal"]');
+          if (closeBtn) closeBtn.click();
+        } else if (cmdTrigger) {
+          cmdTrigger.click();
+        }
+      }
+    }, true);
+
+    cmdModalEl.addEventListener('shown.bs.modal', function () {
+      cmdInput.value = '';
+      cmdResults.innerHTML = defaultHtml;
+      setTimeout(function () { cmdInput.focus(); }, 30);
+    });
+
+    cmdInput.addEventListener('input', function () {
+      const q = this.value.trim();
+      clearTimeout(cmdTimer);
+      if (q.length < 2) {
+        cmdResults.innerHTML = defaultHtml;
+        return;
+      }
+      cmdTimer = setTimeout(function () {
+        cmdResults.innerHTML = '<div class="text-center py-3 text-secondary small">Mencari...</div>';
+        fetch('/dashboard/quick-search?q=' + encodeURIComponent(q))
+          .then(r => r.json())
+          .then(data => {
+            if (!data.items || data.items.length === 0) {
+              cmdResults.innerHTML = '<div class="text-center py-4 text-secondary small">Tidak ada hasil untuk "' + q.replace(/</g, '&lt;') + '"</div>';
+              return;
+            }
+            cmdResults.innerHTML = data.items.map(item => `
+              <a href="${item.url}" class="erp-cmd-result-item">
+                <div>
+                  <div class="fw-semibold small">${item.title}</div>
+                  <div class="text-secondary" style="font-size:0.75rem;">${item.subtitle}</div>
+                </div>
+                <span class="badge bg-secondary-lt">${item.type}</span>
+              </a>
+            `).join('');
+          })
+          .catch(() => {
+            cmdResults.innerHTML = '<div class="text-center py-3 text-danger small">Gagal memuat hasil pencarian.</div>';
+          });
+      }, 220);
+    });
+  }
 });
 </script>
+
+<?php if (session()->get('user_id')): ?>
+<!-- Command Palette Modal -->
+<div class="modal fade d-print-none" id="erpCommandModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
+    <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header border-bottom py-2 px-3">
+        <div class="input-group input-group-flat w-100">
+          <span class="input-group-text border-0 bg-transparent ps-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </span>
+          <input type="text" id="erpCmdInput" class="form-control border-0 shadow-none" placeholder="Ketik nomor SO, PO, nama produk, atau pelanggan..." autocomplete="off">
+          <span class="input-group-text border-0 bg-transparent"><kbd class="erp-kbd">ESC</kbd></span>
+        </div>
+      </div>
+      <div class="modal-body p-2" id="erpCmdResults" style="max-height: 360px; overflow-y: auto;">
+        <div class="px-2 py-1 text-uppercase text-secondary fw-bold" style="font-size: 0.7rem; letter-spacing: .05em;">Pintasan Cepat</div>
+        <a href="/dashboard" class="erp-cmd-result-item"><span>Dashboard Utama</span><span class="badge bg-primary-lt">Halaman</span></a>
+        <a href="/products" class="erp-cmd-result-item"><span>Katalog Produk</span><span class="badge bg-secondary-lt">Master</span></a>
+        <a href="/inventory" class="erp-cmd-result-item"><span>Stok Persediaan</span><span class="badge bg-secondary-lt">Gudang</span></a>
+        <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
+          <a href="/sales-orders" class="erp-cmd-result-item"><span>Daftar Pesanan Penjualan (SO)</span><span class="badge bg-success-lt">Penjualan</span></a>
+        <?php endif; ?>
+        <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
+          <a href="/purchase-orders" class="erp-cmd-result-item"><span>Daftar Pesanan Pembelian (PO)</span><span class="badge bg-azure-lt">Pembelian</span></a>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <?= $this->renderSection('scripts') ?>
 </body>
 </html>

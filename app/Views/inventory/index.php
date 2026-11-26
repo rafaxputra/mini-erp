@@ -11,7 +11,7 @@
           <label class="form-label small text-secondary mb-1">Pencarian Produk</label>
           <div class="input-icon">
             <span class="input-icon-addon"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg></span>
-            <input type="text" name="q" class="form-control form-control-sm js-table-search" placeholder="Cari nama atau kode..." value="<?= esc($q) ?>">
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Cari nama atau kode..." value="<?= esc($q) ?>">
           </div>
         </div>
         <div class="col-md-2">
@@ -36,9 +36,9 @@
           <label class="form-label small text-secondary mb-1">Status Stok</label>
           <select name="stock_status" class="form-select form-select-sm">
             <option value="">Semua Status</option>
-            <option value="low" <?= ($stockStatus ?? '') === 'low' ? 'selected' : '' ?>>⚠️ Menipis (≤ Min)</option>
-            <option value="out" <?= ($stockStatus ?? '') === 'out' ? 'selected' : '' ?>>❌ Habis (0)</option>
-            <option value="safe" <?= ($stockStatus ?? '') === 'safe' ? 'selected' : '' ?>>✅ Aman (> Min)</option>
+            <option value="low" <?= ($stockStatus ?? '') === 'low' ? 'selected' : '' ?>>Menipis (&le; Min)</option>
+            <option value="out" <?= ($stockStatus ?? '') === 'out' ? 'selected' : '' ?>>Habis (0)</option>
+            <option value="safe" <?= ($stockStatus ?? '') === 'safe' ? 'selected' : '' ?>>Aman (&gt; Min)</option>
           </select>
         </div>
         <div class="col-md-3 d-flex gap-2 justify-content-end align-items-center">

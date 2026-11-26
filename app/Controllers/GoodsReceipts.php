@@ -19,14 +19,29 @@ class GoodsReceipts extends BaseController
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
 
-        $pendingPos = $db->table('purchase_orders po')
+        $pendingPoQuery = $db->table('purchase_orders po')
             ->select('MIN(po.id) AS id, po.po_number, MIN(po.order_date) AS order_date, MIN(s.name) AS supplier_name, COUNT(po.id) AS item_count, SUM(po.qty) AS total_qty, MIN(po.notes) AS notes')
             ->join('suppliers s', 's.id = po.supplier_id', 'left')
-            ->where('po.status', 'approved')
-            ->groupBy('po.po_number')
-            ->orderBy('order_date', 'DESC')
-            ->get()
-            ->getResultArray();
+            ->where('po.status', 'approved');
+
+        if ($status === 'pending_po') {
+            if ($start !== '') {
+                $pendingPoQuery->where('po.order_date >=', $start);
+            }
+            if ($end !== '') {
+                $pendingPoQuery->where('po.order_date <=', $end);
+            }
+        }
+
+        $pendingPoQuery->groupBy('po.po_number');
+
+        if ($status === 'pending_po' && $q !== '') {
+            $pendingPoQuery->havingLike('po.po_number', $q, 'both', null, true)
+                ->orHavingLike('MIN(s.name)', $q, 'both', null, true);
+        }
+
+        $pendingPos = $pendingPoQuery->orderBy('order_date', 'DESC')->get()->getResultArray();
+        $pendingPoTotalCount = (int) ($db->query("SELECT COUNT(DISTINCT po_number) AS c FROM purchase_orders WHERE status = 'approved'")->getRow('c') ?? 0);
 
         $subQuery = $db->table('goods_receipts gr')
             ->select('MIN(gr.id) AS id, gr.gr_number, MIN(po.po_number) AS po_number, MIN(s.name) AS supplier_name, MIN(gr.receipt_date) AS receipt_date, MIN(gr.notes) AS notes, MIN(u.name) AS receiver_name, MIN(w.name) AS warehouse_name, MAX(gr.created_at) AS created_at')
@@ -56,7 +71,7 @@ class GoodsReceipts extends BaseController
 
         $allRows = $subQuery->orderBy('receipt_date', 'DESC')->orderBy('created_at', 'DESC')->get()->getResultArray();
         $total = count($allRows);
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(7);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);
         if ($page < 1) $page = 1;
@@ -81,7 +96,7 @@ class GoodsReceipts extends BaseController
             'items' => $items,
             'pendingPos' => $pendingPos,
             'status' => $status,
-            'statusCounts' => ['all' => $allGrCount, 'pending_po' => count($pendingPos)],
+            'statusCounts' => ['all' => $allGrCount, 'pending_po' => $pendingPoTotalCount],
             'q' => $q,
             'warehouses' => $warehouses,
             'warehouseId' => $warehouseId,

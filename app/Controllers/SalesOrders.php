@@ -17,7 +17,7 @@ class SalesOrders extends BaseController
         if (! in_array($status, $statuses, true)) $status = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(8);
         $total = count($this->soListBuilder($q, $status, $start, $end)->get()->getResultArray());
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);

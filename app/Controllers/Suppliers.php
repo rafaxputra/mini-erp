@@ -18,7 +18,7 @@ class Suppliers extends BaseController
             ->groupEnd();
         }
         $total = $builder->countAllResults(false);
-        $perPage = 10;
+        $perPage = $this->resolvePerPage(10);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = (int) ($this->request->getGet('page') ?? 1);
         if ($page < 1) $page = 1;
