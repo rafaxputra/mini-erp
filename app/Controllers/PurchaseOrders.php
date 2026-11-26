@@ -198,6 +198,11 @@ class PurchaseOrders extends BaseController
                     'created_by' => $this->userId(),
                 ], true);
                 if (! $firstId) $firstId = (int) $id;
+
+                $db->table('restock_alerts')
+                    ->where('product_id', $line['product_id'])
+                    ->where('status', 'open')
+                    ->update(['status' => 'ordered', 'updated_at' => date('Y-m-d H:i:s')]);
             }
             $db->transCommit();
             return redirect()->to('/purchase-orders/show/' . $firstId)->with('success', 'Pesanan Beli berhasil dibuat dengan status Draft. Menunggu persetujuan (ACC) Manajer.');

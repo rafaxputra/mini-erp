@@ -108,12 +108,20 @@
       </div>
       <div class="card-body">
         <div class="row g-3 mb-3">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label required">Tanggal Kirim</label>
             <input type="date" name="delivery_date" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= esc($so['order_date']) ?>" required>
-            <div class="form-text">Minimal sama dengan tanggal pesanan (<?= date('d/m/Y', strtotime($so['order_date'])) ?>).</div>
+            <div class="form-text">Minimal sama dengan tanggal pesanan (<?= date('d/m/Y', strtotime($so['order_date'])) ?>). Dapat memilih tanggal mendatang maupun hari Sabtu/Minggu.</div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
+            <label class="form-label required">Status Pengiriman</label>
+            <select name="delivery_status" class="form-select" required>
+              <option value="scheduled">Terjadwal (Jadwalkan Pengiriman)</option>
+              <option value="delivered" selected>Terkirim (Langsung Kirim Hari Ini)</option>
+            </select>
+            <div class="form-text">Pilih <strong>Terjadwal</strong> jika pengiriman dijadwalkan untuk nanti / hari libur.</div>
+          </div>
+          <div class="col-md-4">
             <label class="form-label required">Gudang Pengirim</label>
             <input type="hidden" name="warehouse_id" value="<?= esc($so['warehouse_id']) ?>">
             <div class="input-group">

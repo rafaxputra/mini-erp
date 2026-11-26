@@ -169,8 +169,10 @@ function checkQtyStockWarning(row) {
   }
 
   if (qty > whStock) {
-    warnEl.textContent = `Melebihi stok di ${wh.name} (tersedia: ${whStock})`;
-    qtyInput.classList.add('is-invalid');
+    const shortage = qty - Math.max(0, whStock);
+    warnEl.className = 'stock-warning text-warning small mt-1 fw-semibold';
+    warnEl.textContent = `Stok di ${wh.name} hanya ${whStock}. Kekurangan ${shortage} unit akan otomatis dikirim sebagai notif pengadaan ke Purchasing.`;
+    qtyInput.classList.remove('is-invalid');
   } else {
     warnEl.textContent = '';
     qtyInput.classList.remove('is-invalid');

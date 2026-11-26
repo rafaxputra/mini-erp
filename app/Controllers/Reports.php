@@ -55,7 +55,7 @@ class Reports extends BaseController
         [$start, $end] = $this->period();
         $db = \Config\Database::connect();
         $sos = $db->table('sales_orders so')->select('so.so_number, so.customer_id, c.name AS customer_name, MIN(so.order_date) AS order_date, MIN(so.status) AS status, SUM(so.qty * so.unit_price) AS total_amount')->join('customers c', 'c.id = so.customer_id')->where('so.order_date >=', $start)->where('so.order_date <=', $end)->groupBy('so.so_number, so.customer_id, c.name')->orderBy('order_date', 'DESC')->get()->getResultArray();
-        $dos = $db->table('deliveries d')->select('d.delivery_number, MIN(so.so_number) AS so_number, MIN(d.delivery_date) AS delivery_date')->join('sales_orders so', 'so.id = d.sales_order_id')->where('d.delivery_date >=', $start)->where('d.delivery_date <=', $end)->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
+        $dos = $db->table('deliveries d')->select('d.delivery_number, MIN(so.so_number) AS so_number, MIN(d.delivery_date) AS delivery_date')->join('sales_orders so', 'so.id = d.sales_order_id')->where('d.status <>', 'cancelled')->where('d.delivery_date >=', $start)->where('d.delivery_date <=', $end)->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
         
         $total = 0;
         $totalCancelled = 0;

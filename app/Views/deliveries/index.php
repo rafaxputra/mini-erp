@@ -68,20 +68,49 @@ $filterActive = ! empty($filterQuery);
             <th style="width: 140px;">Nomor DO</th>
             <th style="width: 140px;">Nomor Pesanan Jual</th>
             <th>Gudang Pengirim</th>
-            <th style="width: 120px;">Tanggal Kirim</th>
+            <th style="width: 115px;">Tanggal Kirim</th>
+            <th style="width: 110px;">Status</th>
             <th>Dikirim Oleh</th>
             <th>Catatan</th>
+            <?php if (session()->get('user_role') === 'gudang'): ?>
+              <th class="text-end" style="width: 180px;">Aksi</th>
+            <?php endif; ?>
           </tr>
         </thead>
         <tbody>
-        <?php foreach ($items as $it): ?>
-        <tr>
+        <?php foreach ($items as $it): 
+          $doStatus = $it['status'] ?? 'delivered';
+          $sb = status_badge($doStatus);
+        ?>
+        <tr class="<?= $doStatus === 'cancelled' ? 'opacity-75' : '' ?>">
           <td><code class="text-primary font-monospace fw-bold"><?= esc($it['delivery_number']) ?></code></td>
           <td><code class="text-dark font-monospace"><?= esc($it['so_number']) ?></code></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
           <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['delivery_date'])) ?></td>
+          <td><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
           <td class="fw-semibold text-dark"><?= esc($it['deliverer_name']) ?></td>
-          <td class="text-secondary small"><?= esc($it['notes']) ?></td>
+          <td class="text-secondary small">
+            <?= esc($it['notes']) ?>
+            <?php if ($doStatus === 'cancelled' && ! empty($it['cancel_reason'])): ?>
+              <div class="text-danger mt-1"><strong>Alasan Batal:</strong> <?= esc($it['cancel_reason']) ?></div>
+            <?php endif; ?>
+          </td>
+          <?php if (session()->get('user_role') === 'gudang'): ?>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <?php if ($doStatus === 'scheduled'): ?>
+                  <form action="/deliveries/complete/<?= esc($it['id']) ?>" method="post" class="d-inline" data-confirm="Tandai pengiriman <strong><?= esc($it['delivery_number']) ?></strong> sudah <strong>Terkirim</strong>?" data-confirm-title="Selesaikan Pengiriman" data-confirm-btn="Ya, Terkirim" data-confirm-type="primary">
+                    <button type="submit" class="btn btn-sm btn-success">Selesaikan</button>
+                  </form>
+                <?php endif; ?>
+                <?php if ($doStatus !== 'cancelled'): ?>
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="openCancelDoModal(<?= (int) $it['id'] ?>, <?= json_encode($it['delivery_number']) ?>)">Batalkan</button>
+                <?php else: ?>
+                  <span class="text-muted small">-</span>
+                <?php endif; ?>
+              </div>
+            </td>
+          <?php endif; ?>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -120,5 +149,43 @@ $filterActive = ! empty($filterQuery);
     <?php endif; ?>
   <?php endif; ?>
 </div>
+
+<?php if (session()->get('user_role') === 'gudang'): ?>
+<!-- Modal Pembatalan DO -->
+<div class="modal modal-blur fade" id="modalCancelDO" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formCancelDO" action="" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger">Batalkan Pengiriman (<span id="cancelDoNumber"></span>)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning small mb-3">
+            Pembatalan Pengiriman (DO) akan mengembalikan status Pesanan Jual (SO) terkait menjadi <strong>Dikonfirmasi</strong> agar dapat diproses ulang atau diubah oleh Sales.
+          </div>
+          <div class="mb-3">
+            <label class="form-label required">Alasan Pembatalan</label>
+            <textarea name="cancel_reason" class="form-control" rows="3" placeholder="Contoh: Pelanggan meminta ganti/tambah barang pada pesanan" required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+          <button type="submit" class="btn btn-danger">Ya, Batalkan DO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openCancelDoModal(id, doNumber) {
+  document.getElementById('cancelDoNumber').textContent = doNumber;
+  document.getElementById('formCancelDO').action = '/deliveries/cancel/' + id;
+  const modal = new bootstrap.Modal(document.getElementById('modalCancelDO'));
+  modal.show();
+}
+</script>
+<?php endif; ?>
 
 <?= $this->endSection() ?>

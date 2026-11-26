@@ -201,7 +201,8 @@
             <?= date('d M Y', strtotime($d['delivery_date'])) ?>
           </td>
           <td>
-            <span class="badge bg-success-lt">Terkirim dari Gudang</span>
+            <?php $ds = $d['status'] ?? 'delivered'; $dsb = status_badge($ds); ?>
+            <span class="badge <?= $dsb['badge'] ?>"><?= esc($ds === 'delivered' ? 'Terkirim dari Gudang' : $dsb['label']) ?></span>
           </td>
         </tr>
         <?php endforeach; ?>

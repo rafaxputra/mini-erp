@@ -24,7 +24,7 @@ class Dashboard extends BaseController
             $doRow = $db->query(
                 "SELECT COUNT(DISTINCT delivery_number) AS total_do, COALESCE(SUM(qty_delivered), 0) AS total_qty_delivered 
                  FROM deliveries 
-                 WHERE delivery_date BETWEEN ? AND ?",
+                 WHERE status <> 'cancelled' AND delivery_date BETWEEN ? AND ?",
                 [$startOfMonth, $endOfMonth]
             )->getRowArray();
 
@@ -150,6 +150,15 @@ class Dashboard extends BaseController
                 ->get()
                 ->getResultArray();
 
+            $restockAlerts = $db->table('restock_alerts ra')
+                ->select('ra.*, p.code AS product_code, p.name AS product_name, p.unit, w.name AS warehouse_name')
+                ->join('products p', 'p.id = ra.product_id')
+                ->join('warehouses w', 'w.id = ra.warehouse_id')
+                ->where('ra.status', 'open')
+                ->orderBy('ra.created_at', 'DESC')
+                ->get()
+                ->getResultArray();
+
             $data = [
                 'title' => 'Dashboard Pengadaan',
                 'role' => $role,
@@ -160,6 +169,7 @@ class Dashboard extends BaseController
                 'supplierCount' => $supplierCount,
                 'lowStock' => $lowStock,
                 'recentPurchases' => $recentPurchases,
+                'restockAlerts' => $restockAlerts,
             ];
             return view('dashboard/index', $data);
         }

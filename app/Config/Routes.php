@@ -77,6 +77,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('deliveries', 'Deliveries::index');
     $routes->get('deliveries/create', 'Deliveries::create');
     $routes->post('deliveries/store', 'Deliveries::store');
+    $routes->post('deliveries/complete/(:num)', 'Deliveries::complete/$1');
+    $routes->post('deliveries/cancel/(:num)', 'Deliveries::cancel/$1');
     $routes->get('inventory', 'Inventory::index');
     $routes->get('inventory/movements', 'Inventory::movements');
     $routes->get('inventory/adjust', 'Inventory::adjust');

@@ -562,6 +562,53 @@
   </div>
 </div>
 
+<?php if (! empty($restockAlerts)): ?>
+<div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #f59e0b !important;">
+  <div class="card-header bg-warning-lt py-3 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon text-warning" width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
+      <h3 class="card-title m-0 fw-bold text-dark">Notifikasi Pengadaan dari Pesanan Jual (Stok Kurang)</h3>
+    </div>
+    <span class="badge bg-warning text-white fw-bold"><?= count($restockAlerts) ?> Permintaan</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>No. SO</th>
+          <th>Produk</th>
+          <th>Gudang</th>
+          <th class="text-center">Diminta</th>
+          <th class="text-center">Tersedia</th>
+          <th class="text-center">Kurang (Min. Beli)</th>
+          <th class="text-end">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($restockAlerts as $al): ?>
+        <tr>
+          <td><code class="text-dark font-monospace fw-bold"><?= esc($al['sales_order_number']) ?></code></td>
+          <td>
+            <div class="fw-semibold text-dark"><?= esc($al['product_name']) ?></div>
+            <div class="small text-muted font-monospace"><?= esc($al['product_code']) ?></div>
+          </td>
+          <td><span class="badge bg-secondary-lt"><?= esc($al['warehouse_name']) ?></span></td>
+          <td class="text-center font-monospace"><?= esc($al['requested_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></td>
+          <td class="text-center font-monospace"><?= esc($al['available_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></td>
+          <td class="text-center"><span class="badge bg-danger-lt fw-bold font-monospace"><?= esc($al['shortage_qty']) ?> <?= esc($al['unit'] ?? 'unit') ?></span></td>
+          <td class="text-end">
+            <a href="/purchase-orders/create?product_id=<?= esc($al['product_id']) ?>&qty=<?= esc($al['shortage_qty']) ?>" class="btn btn-sm btn-primary">
+              Buat PO (Min. <?= esc($al['shortage_qty']) ?>)
+            </a>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
+<?php endif; ?>
+
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm h-100">

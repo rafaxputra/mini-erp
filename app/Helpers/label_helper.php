@@ -11,6 +11,7 @@ if (! function_exists('status_label')) {
             'received' => 'Diterima',
             'cancelled' => 'Dibatalkan',
             'confirmed' => 'Dikonfirmasi',
+            'scheduled' => 'Terjadwal',
             'delivered' => 'Terkirim',
         ][$status] ?? $status;
     }
@@ -22,6 +23,7 @@ if (! function_exists('status_badge_class')) {
             'draft'     => 'bg-secondary-lt',
             'approved'  => 'bg-azure-lt',
             'confirmed' => 'bg-azure-lt',
+            'scheduled' => 'bg-warning-lt',
             'received'  => 'bg-success-lt',
             'delivered' => 'bg-success-lt',
             'completed' => 'bg-success-lt',
@@ -52,7 +54,10 @@ if (! function_exists('reference_label')) {
     {
         return [
             'PURCHASE_RECEIPT' => 'Penerimaan Barang',
+            'SALES_ORDER' => 'Pesanan Jual',
             'SALES_DELIVERY' => 'Pengiriman',
+            'CANCEL_SALES_ORDER' => 'Batal Pesanan Jual',
+            'CANCEL_DELIVERY' => 'Batal Pengiriman',
             'ADJUSTMENT' => 'Koreksi Stok',
             'STOCK_AWAL' => 'Stok Awal',
         ][$type] ?? $type;
