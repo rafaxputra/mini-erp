@@ -208,7 +208,7 @@ class SalesOrders extends BaseController
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         $db = \Config\Database::connect();
         $items = $db->table('sales_orders so')->select('so.id, so.product_id, so.qty, so.unit_price, (so.qty * so.unit_price) AS subtotal, p.code, p.name AS product_name, p.unit, p.stock_qty, COALESCE((SELECT SUM(d.qty_delivered) FROM deliveries d WHERE d.sales_order_id = so.id AND d.status <> \'cancelled\'), 0) AS delivered_qty')->join('products p', 'p.id = so.product_id')->where('so.so_number', $so['so_number'])->orderBy('so.id', 'ASC')->get()->getResultArray();
-        $deliveries = $db->table('deliveries d')->select('MIN(d.id) AS id, d.delivery_number, MIN(d.delivery_date) AS delivery_date, MIN(d.status) AS status')->whereIn('d.sales_order_id', array_column($items, 'id'))->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
+        $deliveries = $db->table('deliveries d')->select('MIN(d.id) AS id, d.delivery_number, MIN(d.delivery_date) AS delivery_date, MIN(d.status) AS status, MIN(d.cancel_reason) AS cancel_reason')->whereIn('d.sales_order_id', array_column($items, 'id'))->groupBy('d.delivery_number')->orderBy('delivery_date', 'DESC')->get()->getResultArray();
         return view('sales_orders/show', ['title' => 'Detail Pesanan Jual', 'so' => $so, 'items' => $items, 'deliveries' => $deliveries]);
     }
     public function confirm($id)

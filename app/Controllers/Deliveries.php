@@ -285,8 +285,8 @@ class Deliveries extends BaseController
         if (! $do) {
             return redirect()->to('/deliveries')->with('error', 'Data pengiriman tidak ditemukan.');
         }
-        if ($do['status'] === 'cancelled') {
-            return redirect()->to('/deliveries')->with('error', 'Pengiriman ini sudah dibatalkan sebelumnya.');
+        if ($do['status'] !== 'scheduled') {
+            return redirect()->to('/deliveries')->with('error', 'Hanya pengiriman berstatus Terjadwal yang dapat dibatalkan. Pengiriman yang sudah Terkirim tidak bisa dibatalkan.');
         }
         $reason = trim((string) $this->request->getPost('cancel_reason'));
         if ($reason === '') {

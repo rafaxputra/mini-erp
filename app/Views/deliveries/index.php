@@ -102,8 +102,6 @@ $filterActive = ! empty($filterQuery);
                   <form action="/deliveries/complete/<?= esc($it['id']) ?>" method="post" class="d-inline" data-confirm="Tandai pengiriman <strong><?= esc($it['delivery_number']) ?></strong> sudah <strong>Terkirim</strong>?" data-confirm-title="Selesaikan Pengiriman" data-confirm-btn="Ya, Terkirim" data-confirm-type="primary">
                     <button type="submit" class="btn btn-sm btn-success">Selesaikan</button>
                   </form>
-                <?php endif; ?>
-                <?php if ($doStatus !== 'cancelled'): ?>
                   <button type="button" class="btn btn-sm btn-outline-danger" onclick="openCancelDoModal(<?= (int) $it['id'] ?>, <?= json_encode($it['delivery_number']) ?>)">Batalkan</button>
                 <?php else: ?>
                   <span class="text-muted small">-</span>

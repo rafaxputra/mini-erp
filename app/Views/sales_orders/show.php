@@ -203,6 +203,9 @@
           <td>
             <?php $ds = $d['status'] ?? 'delivered'; $dsb = status_badge($ds); ?>
             <span class="badge <?= $dsb['badge'] ?>"><?= esc($ds === 'delivered' ? 'Terkirim dari Gudang' : $dsb['label']) ?></span>
+            <?php if ($ds === 'cancelled' && ! empty($d['cancel_reason'])): ?>
+              <div class="text-danger small mt-1"><strong>Alasan Batal:</strong> <?= esc($d['cancel_reason']) ?></div>
+            <?php endif; ?>
           </td>
         </tr>
         <?php endforeach; ?>
