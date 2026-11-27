@@ -13,7 +13,7 @@ class SalesOrders extends BaseController
         $status = (string) ($this->request->getGet('status') ?? '');
         $start = (string) ($this->request->getGet('start_date') ?? '');
         $end = (string) ($this->request->getGet('end_date') ?? '');
-        $statuses = ['draft', 'revision', 'confirmed', 'delivered', 'cancelled'];
+        $statuses = ['revision', 'confirmed', 'delivered', 'cancelled'];
         if (! in_array($status, $statuses, true)) $status = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $start)) $start = '';
         if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $end)) $end = '';
@@ -28,7 +28,6 @@ class SalesOrders extends BaseController
         $db = \Config\Database::connect();
         $statusCounts = [
             'all' => (int) $db->table('sales_orders')->select('so_number')->distinct()->countAllResults(),
-            'draft' => (int) $db->table('sales_orders')->where('status', 'draft')->select('so_number')->distinct()->countAllResults(),
             'revision' => (int) $db->table('sales_orders')->where('status', 'revision')->select('so_number')->distinct()->countAllResults(),
             'confirmed' => (int) $db->table('sales_orders')->where('status', 'confirmed')->select('so_number')->distinct()->countAllResults(),
             'delivered' => (int) $db->table('sales_orders')->where('status', 'delivered')->select('so_number')->distinct()->countAllResults(),
@@ -119,11 +118,12 @@ class SalesOrders extends BaseController
                     throw new \RuntimeException('Baris ' . $row . ': produk tidak ditemukan.');
                 }
                 $prodName = $prod['name'] . ' (' . $prod['code'] . ')';
+                $price = (float) $prod['selling_price'];
                 if ($qty <= 0) {
                     throw new \RuntimeException($prodName . ': jumlah harus lebih dari nol, diisi ' . $qty . '.');
                 }
                 if ($price < 0) {
-                    throw new \RuntimeException($prodName . ': harga satuan tidak boleh negatif, diisi ' . $price . '.');
+                    throw new \RuntimeException($prodName . ': harga jual master produk tidak boleh negatif.');
                 }
                 if ($price < (float) $prod['purchase_price']) {
                     $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');
@@ -159,7 +159,7 @@ class SalesOrders extends BaseController
                     'so_number' => $soNumber,
                     'customer_id' => $customerId, 'warehouse_id' => $warehouseId, 'product_id' => $line['product_id'],
                     'qty' => $line['qty'], 'unit_price' => $line['unit_price'],
-                    'order_date' => $orderDate, 'status' => 'draft',
+                    'order_date' => $orderDate, 'status' => 'confirmed',
                     'notes' => $this->request->getPost('notes'), 'created_by' => $this->userId(),
                 ], true);
                 if (! $firstId) $firstId = (int) $id;
@@ -186,8 +186,8 @@ class SalesOrders extends BaseController
             }
             $db->transCommit();
             $msg = $hasShortage
-                ? 'Pesanan Jual berhasil dibuat. Stok tersedia langsung berkurang dan notifikasi kekurangan stok telah dikirim ke Staff Purchasing.'
-                : 'Pesanan Jual berhasil dibuat. Stok gudang langsung berkurang sesuai jumlah pesanan.';
+                ? 'Pesanan Jual berhasil dibuat & langsung dikonfirmasi. Stok tersedia berkurang dan notifikasi kekurangan stok telah dikirim ke Staff Purchasing.'
+                : 'Pesanan Jual berhasil dibuat & langsung dikonfirmasi. Stok gudang berkurang sesuai jumlah pesanan.';
             return redirect()->to('/sales-orders/show/' . $firstId)->with('success', $msg);
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -214,22 +214,7 @@ class SalesOrders extends BaseController
     }
     public function confirm($id)
     {
-        if ($r = $this->requireRole(['sales'], '/sales-orders', 'Hanya Staff Sales yang bisa confirm Pesanan Jual.')) return $r;
-        $so = (new SalesOrderModel())->find((int) $id);
-        if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
-        if ($so['status'] !== 'draft') {
-            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Hanya pesanan penjualan berstatus Draf yang bisa dikonfirmasi.');
-        }
-        $db = \Config\Database::connect();
-        $db->transBegin();
-        try {
-            $db->table('sales_orders')->where('so_number', $so['so_number'])->where('status', 'draft')->update(['status' => 'confirmed', 'updated_at' => date('Y-m-d H:i:s')]);
-            $db->transCommit();
-        } catch (\Throwable $e) {
-            $db->transRollback();
-            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Gagal confirm Pesanan Jual.');
-        }
-        return redirect()->to('/sales-orders/show/' . $id)->with('success', 'Pesanan Jual berhasil di confirm.');
+        return redirect()->to('/sales-orders/show/' . (int) $id)->with('info', 'Pesanan Jual otomatis berstatus Dikonfirmasi saat dibuat.');
     }
     public function cancel($id)
     {
@@ -455,11 +440,12 @@ class SalesOrders extends BaseController
                     throw new \RuntimeException('Baris ' . $row . ': produk tidak ditemukan.');
                 }
                 $prodName = $prod['name'] . ' (' . $prod['code'] . ')';
+                $price = (float) $prod['selling_price'];
                 if ($qty <= 0) {
                     throw new \RuntimeException($prodName . ': jumlah harus lebih dari nol, diisi ' . $qty . '.');
                 }
                 if ($price < 0) {
-                    throw new \RuntimeException($prodName . ': harga satuan tidak boleh negatif, diisi ' . $price . '.');
+                    throw new \RuntimeException($prodName . ': harga jual master produk tidak boleh negatif.');
                 }
                 if ($price < (float) $prod['purchase_price']) {
                     $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');

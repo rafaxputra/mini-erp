@@ -13,12 +13,6 @@
       </a>
     </li>
     <li class="nav-item">
-      <a class="nav-link px-3 py-1 <?= $status === 'draft' ? 'active fw-bold' : 'text-secondary' ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'draft', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
-        Draf
-        <span class="badge ms-1 <?= $status === 'draft' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['draft'] ?? 0) ?></span>
-      </a>
-    </li>
-    <li class="nav-item">
       <a class="nav-link px-3 py-1 <?= $status === 'revision' ? 'active bg-warning text-white fw-bold' : (! empty($statusCounts['revision']) ? 'text-warning fw-bold border border-warning-subtle' : 'text-secondary') ?>" href="/sales-orders?<?= http_build_query(array_filter(['q' => $q, 'status' => 'revision', 'start_date' => $start_date, 'end_date' => $end_date])) ?>">
         Butuh Revisi
         <span class="badge ms-1 <?= $status === 'revision' ? 'bg-white text-warning' : (! empty($statusCounts['revision']) ? 'bg-warning text-white' : 'bg-secondary-lt') ?>"><?= esc($statusCounts['revision'] ?? 0) ?></span>

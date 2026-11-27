@@ -93,7 +93,7 @@
             <td>
               <div class="input-group">
                 <span class="input-group-text">Rp</span>
-                <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" value="<?= number_format((float) $it['unit_price'], 0, ',', '.') ?>" placeholder="0" required>
+                <input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" value="<?= number_format((float) $it['unit_price'], 0, ',', '.') ?>" placeholder="0" readonly tabindex="-1" style="background-color: #f8fafc; cursor: not-allowed;" title="Harga satuan jual mengikuti harga master produk" required>
               </div>
             </td>
             <td class="subtotal text-end font-monospace">Rp 0</td>
@@ -190,8 +190,30 @@ function checkQtyStockWarning(row) {
 
   if (qty > whStock) {
     const shortage = qty - Math.max(0, whStock);
+    const whSelect = document.getElementById('warehouseSelect');
+    const enoughAlts = [];
+    const partialAlts = [];
+    if (whSelect) {
+      Array.from(whSelect.options).forEach(function (opt) {
+        const otherId = parseInt(opt.value) || 0;
+        if (!otherId || otherId === wh.id) return;
+        const otherStock = getWarehouseStock(otherId, pid);
+        const otherName = opt.text.split('(')[0].trim();
+        if (otherStock >= qty) {
+          enoughAlts.push(`${otherName} (${otherStock})`);
+        } else if (otherStock > 0) {
+          partialAlts.push(`${otherName} (${otherStock})`);
+        }
+      });
+    }
     warnEl.className = 'stock-warning text-warning small mt-1 fw-semibold';
-    warnEl.textContent = `Stok di ${wh.name} hanya ${whStock}. Kekurangan ${shortage} unit akan otomatis dikirim sebagai notif pengadaan ke Purchasing.`;
+    if (enoughAlts.length > 0) {
+      warnEl.textContent = `Stok di ${wh.name} hanya ${whStock}, tetapi cukup di ${enoughAlts.join(', ')}. Pertimbangkan ganti Gudang Pengirim, atau lanjut simpan untuk minta pengadaan ${shortage} unit.`;
+    } else if (partialAlts.length > 0) {
+      warnEl.textContent = `Stok di ${wh.name} hanya ${whStock} (gudang lain: ${partialAlts.join(', ')}). Kekurangan ${shortage} unit akan dikirim ke Purchasing.`;
+    } else {
+      warnEl.textContent = `Stok di ${wh.name} hanya ${whStock}. Kekurangan ${shortage} unit akan otomatis dikirim ke Purchasing.`;
+    }
     qtyInput.classList.remove('is-invalid');
   } else {
     warnEl.textContent = '';
@@ -278,6 +300,11 @@ function updateProductDropdowns() {
     });
     if (sel.tomselect) {
       sel.tomselect.sync();
+      Object.keys(sel.tomselect.options).forEach(function (k) {
+        const shouldDisable = k !== '' && k !== currentVal && selectedValues.includes(k);
+        sel.tomselect.options[k].disabled = shouldDisable;
+      });
+      sel.tomselect.refreshOptions(false);
     }
   });
 
@@ -319,7 +346,7 @@ function addRow() {
     + '<td><input type="text" class="form-control text-center readonly-stat-box wh-stock-box" value="-" readonly tabindex="-1" title="Stok tersedia di gudang terpilih"></td>'
     + '<td><input type="text" class="form-control text-center readonly-stat-box total-stock-box" value="-" readonly tabindex="-1" title="Total stok di seluruh gudang"></td>'
     + '<td><input type="number" name="qty[]" class="form-control qty text-center" min="1" value="1" style="min-width: 80px; font-weight: 600; font-size: 0.95rem;" required></td>'
-    + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" placeholder="0" required></div></td>'
+    + '<td><div class="input-group"><span class="input-group-text">Rp</span><input type="text" inputmode="numeric" name="unit_price[]" class="form-control price font-monospace js-rupiah" placeholder="0" readonly tabindex="-1" style="background-color: #f8fafc; cursor: not-allowed;" title="Harga satuan jual mengikuti harga master produk" required></div></td>'
     + '<td class="subtotal text-end font-monospace">Rp 0</td>'
     + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this);" title="Hapus baris"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg></button></td>';
   tbody.appendChild(row);

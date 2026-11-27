@@ -124,7 +124,7 @@ class Dashboard extends BaseController
                  GROUP BY status",
                 [$startDate, $endDate]
             )->getResultArray();
-            $statusMap = ['draft' => 0, 'revision' => 0, 'confirmed' => 0, 'delivered' => 0, 'cancelled' => 0];
+            $statusMap = ['confirmed' => 0, 'delivered' => 0, 'revision' => 0, 'cancelled' => 0];
             foreach ($statusRows as $sr) {
                 if (isset($statusMap[$sr['status']])) {
                     $statusMap[$sr['status']] = (int) $sr['cnt'];
@@ -135,7 +135,7 @@ class Dashboard extends BaseController
                 "SELECT c.name, COALESCE(SUM(so.qty * so.unit_price), 0) AS total_sales
                  FROM sales_orders so
                  JOIN customers c ON c.id = so.customer_id
-                 WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ?
+                 WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ?
                  GROUP BY c.id, c.name
                  ORDER BY total_sales DESC
                  LIMIT 5",
@@ -144,7 +144,7 @@ class Dashboard extends BaseController
 
             return [
                 'soStatusDist' => [
-                    'labels' => ['Draf', 'Revisi', 'Dikonfirmasi', 'Terkirim', 'Dibatalkan'],
+                    'labels' => ['Dikonfirmasi', 'Terkirim', 'Revisi', 'Dibatalkan'],
                     'series' => array_values($statusMap),
                 ],
                 'topCustomers' => [
@@ -173,7 +173,7 @@ class Dashboard extends BaseController
                 "SELECT s.name, COALESCE(SUM(po.qty * po.unit_price), 0) AS total_spend
                  FROM purchase_orders po
                  JOIN suppliers s ON s.id = po.supplier_id
-                 WHERE po.status <> 'cancelled' AND po.order_date BETWEEN ? AND ?
+                 WHERE po.status IN ('approved', 'received') AND po.order_date BETWEEN ? AND ?
                  GROUP BY s.id, s.name
                  ORDER BY total_spend DESC
                  LIMIT 5",
@@ -198,7 +198,7 @@ class Dashboard extends BaseController
                  FROM sales_orders so
                  JOIN products p ON p.id = so.product_id
                  LEFT JOIN categories c ON c.id = p.category_id
-                 WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ?
+                 WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ?
                  GROUP BY c.name
                  ORDER BY total_sales DESC
                  LIMIT 6",
@@ -283,12 +283,12 @@ class Dashboard extends BaseController
             }
         } else {
             $soExpr = sprintf($fmt, 'order_date');
-            $soRows = $db->query("SELECT {$soExpr} AS k, COALESCE(SUM(qty * unit_price), 0) AS total FROM sales_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
+            $soRows = $db->query("SELECT {$soExpr} AS k, COALESCE(SUM(qty * unit_price), 0) AS total FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
             foreach ($soRows as $r) {
                 if (isset($primaryMap[$r['k']])) $primaryMap[$r['k']] = (float) $r['total'];
             }
             $poExpr = sprintf($fmt, 'order_date');
-            $poRows = $db->query("SELECT {$poExpr} AS k, COALESCE(SUM(qty * unit_price), 0) AS total FROM purchase_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
+            $poRows = $db->query("SELECT {$poExpr} AS k, COALESCE(SUM(qty * unit_price), 0) AS total FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
             foreach ($poRows as $r) {
                 if (isset($secondaryMap[$r['k']])) $secondaryMap[$r['k']] = (float) $r['total'];
             }
@@ -384,11 +384,10 @@ class Dashboard extends BaseController
             $salesRow = $db->query(
                 "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_sales, COUNT(DISTINCT so_number) AS total_orders 
                  FROM sales_orders 
-                 WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?",
+                 WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?",
                 [$startOfPeriod, $endOfPeriod]
             )->getRowArray();
 
-            $draftSoCount = count($db->table('sales_orders')->select('so_number')->where('status', 'draft')->groupBy('so_number')->get()->getResultArray());
             $revisionSoCount = count($db->table('sales_orders')->select('so_number')->where('status', 'revision')->groupBy('so_number')->get()->getResultArray());
             $deliveredSoCount = count($db->table('sales_orders')->select('so_number')->where('status', 'delivered')->where('order_date >=', $startOfPeriod)->where('order_date <=', $endOfPeriod)->groupBy('so_number')->get()->getResultArray());
             $customerCount = $db->table('customers')->countAllResults();
@@ -408,14 +407,14 @@ class Dashboard extends BaseController
                 "SELECT p.code, p.name, p.unit, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_sales 
                  FROM sales_orders so 
                  JOIN products p ON p.id = so.product_id 
-                 WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ? 
+                 WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ? 
                  GROUP BY p.id, p.code, p.name, p.unit 
                  ORDER BY total_qty DESC 
                  LIMIT 10",
                 [$startOfPeriod, $endOfPeriod]
             )->getResultArray();
 
-            $prevSalesRow = $db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS s, COUNT(DISTINCT so_number) AS o FROM sales_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRowArray();
+            $prevSalesRow = $db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS s, COUNT(DISTINCT so_number) AS o FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRowArray();
 
             return view('dashboard/index', array_merge($period, $roleExtras, [
                 'title' => 'Dashboard & Laporan Penjualan',
@@ -424,7 +423,6 @@ class Dashboard extends BaseController
                 'ordersThisMonth' => (int) ($salesRow['total_orders'] ?? 0),
                 'deltaSales' => $this->calcDeltaPct((float) ($salesRow['total_sales'] ?? 0), (float) ($prevSalesRow['s'] ?? 0)),
                 'deltaOrders' => $this->calcDeltaPct((float) ($salesRow['total_orders'] ?? 0), (float) ($prevSalesRow['o'] ?? 0)),
-                'draftSoCount' => $draftSoCount,
                 'revisionSoCount' => $revisionSoCount,
                 'deliveredSoCount' => $deliveredSoCount,
                 'customerCount' => $customerCount,
@@ -441,7 +439,7 @@ class Dashboard extends BaseController
             $purchaseRow = $db->query(
                 "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_purchases, COUNT(DISTINCT po_number) AS total_orders 
                  FROM purchase_orders 
-                 WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?",
+                 WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?",
                 [$startOfPeriod, $endOfPeriod]
             )->getRowArray();
 
@@ -470,7 +468,7 @@ class Dashboard extends BaseController
                 ->get()
                 ->getResultArray();
 
-            $prevPoRow = $db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS p, COUNT(DISTINCT po_number) AS o FROM purchase_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRowArray();
+            $prevPoRow = $db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS p, COUNT(DISTINCT po_number) AS o FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRowArray();
 
             return view('dashboard/index', array_merge($period, $roleExtras, [
                 'title' => 'Dashboard & Laporan Pembelian',
@@ -497,14 +495,14 @@ class Dashboard extends BaseController
             $salesRow = $db->query(
                 "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_sales, COUNT(DISTINCT so_number) AS total_orders 
                  FROM sales_orders 
-                 WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?",
+                 WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?",
                 [$startOfPeriod, $endOfPeriod]
             )->getRowArray();
 
             $purchaseRow = $db->query(
                 "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_purchases, COUNT(DISTINCT po_number) AS total_orders 
                  FROM purchase_orders 
-                 WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?",
+                 WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?",
                 [$startOfPeriod, $endOfPeriod]
             )->getRowArray();
 
@@ -516,7 +514,7 @@ class Dashboard extends BaseController
                 "SELECT p.code, p.name, p.unit, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_sales 
                  FROM sales_orders so 
                  JOIN products p ON p.id = so.product_id 
-                 WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ? 
+                 WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ? 
                  GROUP BY p.id, p.code, p.name, p.unit 
                  ORDER BY total_sales DESC 
                  LIMIT 5",
@@ -588,8 +586,8 @@ class Dashboard extends BaseController
                 ->get()
                 ->getResultArray();
 
-            $prevSalesVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM sales_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
-            $prevPoVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM purchase_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
+            $prevSalesVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
+            $prevPoVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
 
             return view('dashboard/index', array_merge($period, $roleExtras, [
                 'title' => 'Dashboard Eksekutif & Laporan Perusahaan',
@@ -621,7 +619,7 @@ class Dashboard extends BaseController
         $salesRow = $db->query(
             "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_sales, COUNT(DISTINCT so_number) AS total_orders 
              FROM sales_orders 
-             WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?",
+             WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?",
             [$startOfPeriod, $endOfPeriod]
         )->getRowArray();
 
@@ -629,7 +627,7 @@ class Dashboard extends BaseController
             "SELECT p.code, p.name, p.unit, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_sales 
              FROM sales_orders so 
              JOIN products p ON p.id = so.product_id 
-             WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ? 
+             WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ? 
              GROUP BY p.id, p.code, p.name, p.unit 
              ORDER BY total_qty DESC 
              LIMIT 5",
@@ -640,7 +638,7 @@ class Dashboard extends BaseController
         $warehouseCount = $db->table('warehouses')->countAllResults();
         $categoryCount = $db->table('categories')->countAllResults();
 
-        $prevSalesVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM sales_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
+        $prevSalesVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
 
         return view('dashboard/index', array_merge($period, $roleExtras, [
             'title' => 'Dashboard Administrator',
@@ -841,7 +839,7 @@ class Dashboard extends BaseController
             $rows = $db->table('sales_orders so')
                 ->select('so.so_number, MIN(so.order_date) AS order_date, c.name AS customer_name, MIN(so.status) AS status, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_amount')
                 ->join('customers c', 'c.id = so.customer_id')
-                ->where('so.status <>', 'cancelled')
+                ->whereIn('so.status', ['confirmed', 'delivered'])
                 ->where('so.order_date >=', $start)
                 ->where('so.order_date <=', $end)
                 ->groupBy('so.so_number, c.name')
@@ -893,7 +891,7 @@ class Dashboard extends BaseController
                 ->select('so.so_number, so.order_date, c.name AS customer_name, p.code AS product_code, p.name AS product_name, so.qty, p.unit, so.unit_price, (so.qty * so.unit_price) AS subtotal, so.status')
                 ->join('customers c', 'c.id = so.customer_id')
                 ->join('products p', 'p.id = so.product_id')
-                ->where('so.status <>', 'cancelled')
+                ->whereIn('so.status', ['confirmed', 'delivered'])
                 ->where('so.order_date >=', $start)
                 ->where('so.order_date <=', $end)
                 ->orderBy('so.order_date', 'DESC')
@@ -928,7 +926,7 @@ class Dashboard extends BaseController
             $rows = $db->table('purchase_orders po')
                 ->select('po.po_number, MIN(po.order_date) AS order_date, s.name AS supplier_name, MIN(po.status) AS status, SUM(po.qty) AS total_qty, SUM(po.qty * po.unit_price) AS total_amount')
                 ->join('suppliers s', 's.id = po.supplier_id')
-                ->where('po.status <>', 'cancelled')
+                ->whereIn('po.status', ['approved', 'received'])
                 ->where('po.order_date >=', $start)
                 ->where('po.order_date <=', $end)
                 ->groupBy('po.po_number, s.name')
@@ -976,7 +974,7 @@ class Dashboard extends BaseController
                 ->select('po.po_number, po.order_date, s.name AS supplier_name, p.code AS product_code, p.name AS product_name, po.qty, p.unit, po.unit_price, (po.qty * po.unit_price) AS subtotal, po.status')
                 ->join('suppliers s', 's.id = po.supplier_id')
                 ->join('products p', 'p.id = po.product_id')
-                ->where('po.status <>', 'cancelled')
+                ->whereIn('po.status', ['approved', 'received'])
                 ->where('po.order_date >=', $start)
                 ->where('po.order_date <=', $end)
                 ->orderBy('po.order_date', 'DESC')
@@ -1125,8 +1123,8 @@ class Dashboard extends BaseController
         ];
 
         if (in_array('summary', $sections, true)) {
-            $soAgg = $db->query("SELECT COUNT(DISTINCT so_number) AS cnt, COALESCE(SUM(qty * unit_price), 0) AS total FROM sales_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$start, $end])->getRowArray();
-            $poAgg = $db->query("SELECT COUNT(DISTINCT po_number) AS cnt, COALESCE(SUM(qty * unit_price), 0) AS total FROM purchase_orders WHERE status <> 'cancelled' AND order_date BETWEEN ? AND ?", [$start, $end])->getRowArray();
+            $soAgg = $db->query("SELECT COUNT(DISTINCT so_number) AS cnt, COALESCE(SUM(qty * unit_price), 0) AS total FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$start, $end])->getRowArray();
+            $poAgg = $db->query("SELECT COUNT(DISTINCT po_number) AS cnt, COALESCE(SUM(qty * unit_price), 0) AS total FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?", [$start, $end])->getRowArray();
             $invAgg = $db->query("SELECT COUNT(*) AS sku_count, COALESCE(SUM(stock_qty), 0) AS total_units, COALESCE(SUM(stock_qty * purchase_price), 0) AS total_val FROM products")->getRowArray();
             $doAgg = $db->query("SELECT COUNT(DISTINCT delivery_number) AS cnt, COALESCE(SUM(qty_delivered), 0) AS qty FROM deliveries WHERE status <> 'cancelled' AND delivery_date BETWEEN ? AND ?", [$start, $end])->getRowArray();
             $data['summary'] = [
@@ -1146,7 +1144,7 @@ class Dashboard extends BaseController
             $data['salesRows'] = $db->table('sales_orders so')
                 ->select('so.so_number, MIN(so.order_date) AS order_date, c.name AS customer_name, MIN(so.status) AS status, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_amount')
                 ->join('customers c', 'c.id = so.customer_id')
-                ->where('so.status <>', 'cancelled')
+                ->whereIn('so.status', ['confirmed', 'delivered'])
                 ->where('so.order_date >=', $start)
                 ->where('so.order_date <=', $end)
                 ->groupBy('so.so_number, c.name')
@@ -1159,7 +1157,7 @@ class Dashboard extends BaseController
             $data['poRows'] = $db->table('purchase_orders po')
                 ->select('po.po_number, MIN(po.order_date) AS order_date, s.name AS supplier_name, MIN(po.status) AS status, SUM(po.qty) AS total_qty, SUM(po.qty * po.unit_price) AS total_amount')
                 ->join('suppliers s', 's.id = po.supplier_id')
-                ->where('po.status <>', 'cancelled')
+                ->whereIn('po.status', ['approved', 'received'])
                 ->where('po.order_date >=', $start)
                 ->where('po.order_date <=', $end)
                 ->groupBy('po.po_number, s.name')
@@ -1178,7 +1176,7 @@ class Dashboard extends BaseController
         }
 
         if (in_array('top_products', $sections, true)) {
-            $data['topRows'] = $db->query("SELECT p.code, p.name, p.unit, COALESCE(SUM(so.qty), 0) AS total_qty, COALESCE(SUM(so.qty * so.unit_price), 0) AS total_sales FROM sales_orders so JOIN products p ON p.id = so.product_id WHERE so.status <> 'cancelled' AND so.order_date BETWEEN ? AND ? GROUP BY p.id, p.code, p.name, p.unit ORDER BY total_qty DESC LIMIT 10", [$start, $end])->getResultArray();
+            $data['topRows'] = $db->query("SELECT p.code, p.name, p.unit, COALESCE(SUM(so.qty), 0) AS total_qty, COALESCE(SUM(so.qty * so.unit_price), 0) AS total_sales FROM sales_orders so JOIN products p ON p.id = so.product_id WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ? GROUP BY p.id, p.code, p.name, p.unit ORDER BY total_qty DESC LIMIT 10", [$start, $end])->getResultArray();
         }
 
         if (in_array('low_stock', $sections, true)) {

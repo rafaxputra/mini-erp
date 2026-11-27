@@ -138,95 +138,153 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
         </a>
       </div>
       <div class="collapse navbar-collapse" id="sidebar-menu">
-        <ul class="navbar-nav pt-lg-3">
+        <ul class="navbar-nav pt-lg-2">
           <li class="nav-item">
             <a class="nav-link <?= ($currentPath === 'dashboard' || $currentPath === '') ? 'active' : '' ?>" href="/dashboard" title="Dashboard">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /> </svg></span>
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg></span>
               <span class="nav-link-title">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item dropdown <?= $activeGroup === 'master' ? 'show is-active-group' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'master' ? 'true' : 'false' ?>" title="Data Master">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /> </svg></span>
-              <span class="nav-link-title">Data Master</span>
+
+          <li class="sidebar-section-label">Data Master</li>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('products') ?>" href="/products" title="Produk">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg></span>
+              <span class="nav-link-title">Produk</span>
             </a>
-            <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
-              <div class="dropdown-header d-none sidebar-flyout-title">Data Master</div>
-              <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
-              <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('units') ?>" href="/units">Satuan</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('suppliers') ?>" href="/suppliers">Pemasok</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('customers') ?>" href="/customers">Pelanggan</a><?php endif; ?>
-              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?><a class="dropdown-item <?= $navActive('warehouses') ?>" href="/warehouses">Gudang</a><?php endif; ?>
-            </div>
-          </li>
-          <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'pembelian' ? 'show is-active-group' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pembelian' ? 'true' : 'false' ?>" title="Pembelian">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 17h-11v-14h-2" /> <path d="M6 5l14 1l-1 7h-13" /> </svg></span>
-              <span class="nav-link-title">Pembelian</span>
-            </a>
-            <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
-              <div class="dropdown-header d-none sidebar-flyout-title">Pembelian</div>
-              <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
-                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('purchase-orders') ?>" href="/purchase-orders">
-                  <span>Pesanan Pembelian (PO)</span>
-                  <?php if ($navBadges['po_draft'] > 0): ?><span class="badge bg-amber text-dark ms-2"><?= $navBadges['po_draft'] ?></span><?php endif; ?>
-                </a>
-              <?php endif; ?>
-              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
-                <a class="dropdown-item <?= $navActive('goods-receipts') ?>" href="/goods-receipts">Penerimaan Barang (GR)</a>
-              <?php endif; ?>
-            </div>
-          </li>
-          <?php endif; ?>
-          <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show is-active-group' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>" title="Penjualan">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304" /> <path d="M9 11v-5a3 3 0 0 1 6 0v5" /> </svg></span>
-              <span class="nav-link-title">Penjualan</span>
-            </a>
-            <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
-              <div class="dropdown-header d-none sidebar-flyout-title">Penjualan</div>
-              <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
-                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('sales-orders') ?>" href="/sales-orders">
-                  <span>Pesanan Penjualan (SO)</span>
-                  <?php if ($navBadges['so_revision'] > 0): ?><span class="badge bg-warning text-dark ms-2" title="Butuh Revisi"><?= $navBadges['so_revision'] ?></span><?php endif; ?>
-                </a>
-              <?php endif; ?>
-              <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
-                <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('deliveries') ?>" href="/deliveries">
-                  <span>Pengiriman Barang (DO)</span>
-                  <?php if ($navBadges['do_scheduled'] > 0): ?><span class="badge bg-azure text-white ms-2" title="Dijadwalkan"><?= $navBadges['do_scheduled'] ?></span><?php endif; ?>
-                </a>
-              <?php endif; ?>
-            </div>
-          </li>
-          <?php endif; ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show is-active-group' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>" title="Persediaan">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /> </svg></span>
-              <span class="nav-link-title">Persediaan</span>
-            </a>
-            <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
-              <div class="dropdown-header d-none sidebar-flyout-title">Persediaan</div>
-              <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
-              <?php if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)): ?>
-                <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
-              <?php endif; ?>
-            </div>
           </li>
           <?php if ($role === 'admin'): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show is-active-group' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>" title="Pengaturan">
-              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg></span>
-              <span class="nav-link-title">Pengaturan</span>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('categories') ?>" href="/categories" title="Kategori">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h6v6h-6z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6h-6z"/><path d="M17 17m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"/></svg></span>
+              <span class="nav-link-title">Kategori</span>
             </a>
-            <div class="dropdown-menu <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
-              <div class="dropdown-header d-none sidebar-flyout-title">Pengaturan</div>
-              <a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a>
-              <a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran & Akses</a>
-            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('units') ?>" href="/units" title="Satuan">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3l4 4l-14 14l-4 -4z"/><path d="M16 7l-1.5 -1.5"/><path d="M13 10l-1.5 -1.5"/><path d="M10 13l-1.5 -1.5"/><path d="M7 16l-1.5 -1.5"/></svg></span>
+              <span class="nav-link-title">Satuan</span>
+            </a>
+          </li>
+          <?php endif; ?>
+          <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('suppliers') ?>" href="/suppliers" title="Pemasok">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0"/><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/><path d="M5 21l0 -10.15"/><path d="M19 21l0 -10.15"/></svg></span>
+              <span class="nav-link-title">Pemasok</span>
+            </a>
+          </li>
+          <?php endif; ?>
+          <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('customers') ?>" href="/customers" title="Pelanggan">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg></span>
+              <span class="nav-link-title">Pelanggan</span>
+            </a>
+          </li>
+          <?php endif; ?>
+          <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('warehouses') ?>" href="/warehouses" title="Gudang">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21v-13l9 -4l9 4v13"/><path d="M13 13h4v8h-10v-6h6"/><path d="M13 21v-9a1 1 0 0 0 -1 -1h-2a1 1 0 0 0 -1 1v3"/></svg></span>
+              <span class="nav-link-title">Gudang</span>
+            </a>
+          </li>
+          <?php endif; ?>
+
+          <?php if ($role === 'gudang'): ?>
+            <li class="sidebar-section-label">Operasional Gudang</li>
+            <li class="nav-item">
+              <a class="nav-link <?= $navActive('goods-receipts') ?>" href="/goods-receipts" title="Terima Barang (GR)">
+                <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v12"/><path d="M8 11l4 4l4 -4"/><path d="M8 5h-4a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2 -2v-10a2 2 0 0 0 -2 -2h-4"/></svg></span>
+                <span class="nav-link-title">Terima Barang (GR)</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link <?= $navActive('deliveries') ?>" href="/deliveries" title="Kirim Barang (DO)">
+                <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg></span>
+                <span class="nav-link-title d-flex align-items-center justify-content-between w-100">
+                  <span>Kirim Barang (DO)</span>
+                  <?php if ($navBadges['do_scheduled'] > 0): ?><span class="badge bg-azure text-white ms-2" title="Dijadwalkan"><?= $navBadges['do_scheduled'] ?></span><?php endif; ?>
+                </span>
+              </a>
+            </li>
+          <?php else: ?>
+            <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
+              <li class="sidebar-section-label">Pembelian</li>
+              <li class="nav-item">
+                <a class="nav-link <?= $navActive('purchase-orders') ?>" href="/purchase-orders" title="Pesanan Pembelian (PO)">
+                  <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg></span>
+                  <span class="nav-link-title d-flex align-items-center justify-content-between w-100">
+                    <span>Pesanan Pembelian (PO)</span>
+                    <?php if ($navBadges['po_draft'] > 0): ?><span class="badge bg-amber text-dark ms-2"><?= $navBadges['po_draft'] ?></span><?php endif; ?>
+                  </span>
+                </a>
+              </li>
+              <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
+              <li class="nav-item">
+                <a class="nav-link <?= $navActive('goods-receipts') ?>" href="/goods-receipts" title="Terima Barang (GR)">
+                  <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v12"/><path d="M8 11l4 4l4 -4"/><path d="M8 5h-4a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2 -2v-10a2 2 0 0 0 -2 -2h-4"/></svg></span>
+                  <span class="nav-link-title">Terima Barang (GR)</span>
+                </a>
+              </li>
+              <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
+              <li class="sidebar-section-label">Penjualan</li>
+              <li class="nav-item">
+                <a class="nav-link <?= $navActive('sales-orders') ?>" href="/sales-orders" title="Pesanan Penjualan (SO)">
+                  <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304"/><path d="M9 11v-5a3 3 0 0 1 6 0v5"/></svg></span>
+                  <span class="nav-link-title d-flex align-items-center justify-content-between w-100">
+                    <span>Pesanan Penjualan (SO)</span>
+                    <?php if ($navBadges['so_revision'] > 0): ?><span class="badge bg-warning text-dark ms-2" title="Butuh Revisi"><?= $navBadges['so_revision'] ?></span><?php endif; ?>
+                  </span>
+                </a>
+              </li>
+              <?php if (in_array($role, ['admin', 'manajemen'], true)): ?>
+              <li class="nav-item">
+                <a class="nav-link <?= $navActive('deliveries') ?>" href="/deliveries" title="Kirim Barang (DO)">
+                  <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg></span>
+                  <span class="nav-link-title d-flex align-items-center justify-content-between w-100">
+                    <span>Kirim Barang (DO)</span>
+                    <?php if ($navBadges['do_scheduled'] > 0): ?><span class="badge bg-azure text-white ms-2" title="Dijadwalkan"><?= $navBadges['do_scheduled'] ?></span><?php endif; ?>
+                  </span>
+                </a>
+              </li>
+              <?php endif; ?>
+            <?php endif; ?>
+          <?php endif; ?>
+
+          <li class="sidebar-section-label">Persediaan</li>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('inventory') ?>" href="/inventory" title="Stok Produk">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4h16v16h-16z"/><path d="M4 12h16"/><path d="M12 4v16"/></svg></span>
+              <span class="nav-link-title">Stok Produk</span>
+            </a>
+          </li>
+          <?php if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)): ?>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('inventory/movements') ?>" href="/inventory/movements" title="Mutasi Stok">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8v4l3 3"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg></span>
+              <span class="nav-link-title">Mutasi Stok</span>
+            </a>
+          </li>
+          <?php endif; ?>
+
+          <?php if ($role === 'admin'): ?>
+          <li class="sidebar-section-label">Pengaturan</li>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('users') ?>" href="/users" title="Pengguna">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg></span>
+              <span class="nav-link-title">Pengguna</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link <?= $navActive('roles') ?>" href="/roles" title="Peran &amp; Akses">
+              <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/></svg></span>
+              <span class="nav-link-title">Peran &amp; Akses</span>
+            </a>
           </li>
           <?php endif; ?>
         </ul>

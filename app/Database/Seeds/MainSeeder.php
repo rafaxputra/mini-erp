@@ -557,12 +557,16 @@ class MainSeeder extends Seeder
             ['so_number' => $so9Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 15, 'qty' => 20, 'unit_price' => 38000, 'order_date' => $d2, 'status' => 'revision', 'notes' => 'Pelanggan minta ubah jumlah map zipper sebelum dikirim ulang', 'created_by' => 4, 'created_at' => $d2 . ' 13:00:00', 'updated_at' => $d1 . ' 16:00:00'],
         ]);
 
-        // SO 10: Status DRAFT (Menunggu Konfirmasi Pelanggan)
+        // SO 10: Status CONFIRMED (Pesanan Baru Langsung Dikonfirmasi Sales)
         $so10Num = 'SO-' . $n1 . '-003';
         $this->db->table('sales_orders')->insertBatch([
-            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 30, 'unit_price' => 46000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Penawaran kertas HVS koperasi tahunan', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
-            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 1, 'qty' => 20, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'draft', 'notes' => 'Penawaran pulpen koperasi', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 8, 'qty' => 10, 'unit_price' => 46000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Pesanan kertas HVS koperasi tahunan', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
+            ['so_number' => $so10Num, 'customer_id' => 8, 'warehouse_id' => 1, 'product_id' => 1, 'qty' => 10, 'unit_price' => 25000, 'order_date' => $d1, 'status' => 'confirmed', 'notes' => 'Pesanan pulpen koperasi', 'created_by' => 4, 'created_at' => $d1 . ' 16:30:00', 'updated_at' => $d1 . ' 16:30:00'],
         ]);
+        $so10Rows = $this->db->table('sales_orders')->where('so_number', $so10Num)->get()->getResultArray();
+        foreach ($so10Rows as $sr) {
+            $this->applyStockOut((int) $sr['product_id'], 1, (int) $sr['qty'], 'SALES_ORDER', (int) $sr['id'], 'Pesanan Jual ' . $so10Num, 4, $d1 . ' 16:30:00');
+        }
 
         // SO 11: Status CANCELLED (Pembatalan Pesanan dengan Alasan Audit)
         $so11Num = 'SO-' . $n4 . '-002';

@@ -199,7 +199,7 @@
                   <?= esc($whStock) ?> <?= esc($it['unit']) ?>
                   <?php if ($whStock < $sisa): ?>
                     <div class="small text-danger fw-normal" style="font-size: 0.72rem;">
-                      <?= $whStock <= 0 ? 'Stok habis' : 'Stok kurang (' . $whStock . ')' ?>
+                      <?= $whStock <= 0 ? 'Stok habis (kurang ' . $sisa . ')' : 'Kurang ' . ($sisa - $whStock) ?>
                     </div>
                   <?php endif; ?>
                 </td>

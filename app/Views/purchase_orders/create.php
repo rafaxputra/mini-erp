@@ -234,6 +234,11 @@ function updateProductDropdowns() {
     });
     if (sel.tomselect) {
       sel.tomselect.sync();
+      Object.keys(sel.tomselect.options).forEach(function (k) {
+        const shouldDisable = k !== '' && k !== currentVal && selectedValues.includes(k);
+        sel.tomselect.options[k].disabled = shouldDisable;
+      });
+      sel.tomselect.refreshOptions(false);
     }
   });
 

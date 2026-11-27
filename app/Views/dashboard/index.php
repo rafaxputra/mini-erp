@@ -57,8 +57,8 @@ $roleMeta = match ($userRole) {
     ],
     'purchasing' => [
         'pretitle' => 'Pembelian & Pemasok',
-        'title' => 'Ringkasan Pembelian & Stok Ulang',
-        'subtitle' => 'Pantau permintaan isi ulang stok, status persetujuan pesanan beli, dan daftar pemasok utama.',
+        'title' => 'Ringkasan Pembelian & Restok',
+        'subtitle' => 'Pantau permintaan restok, status persetujuan pesanan beli, dan daftar pemasok utama.',
         'pdfOptions' => [
             'summary'   => ['label' => 'Ringkasan Pembelian', 'checked' => true],
             'purchase'  => ['label' => 'Rincian Pesanan Pembelian (PO)', 'checked' => true],
@@ -287,7 +287,7 @@ $roleMeta = match ($userRole) {
           <?php else: ?>
             <div class="table-responsive">
               <table class="table table-vcenter card-table table-hover mb-0">
-                <thead><tr><th>No. SO</th><th>Pelanggan &amp; Gudang</th><th class="text-center">Umur</th><th class="text-center">Qty</th><th class="text-end">Aksi</th></tr></thead>
+                <thead><tr><th>No. SO</th><th>Pelanggan &amp; Gudang</th><th class="text-center">Lama Menunggu</th><th class="text-center">Qty</th><th class="text-end">Aksi</th></tr></thead>
                 <tbody>
                   <?php foreach ($pendingDeliveries as $pd):
                     $ageDays = max(0, (int) floor((time() - strtotime($pd['order_date'])) / 86400));
@@ -295,7 +295,7 @@ $roleMeta = match ($userRole) {
                   <tr>
                     <td><code class="text-dark fw-bold"><?= esc($pd['so_number']) ?></code></td>
                     <td><div class="fw-semibold"><?= esc($pd['customer_name']) ?></div><div class="small text-secondary"><?= esc($pd['warehouse_name']) ?></div></td>
-                    <td class="text-center"><span class="badge <?= $ageDays >= 3 ? 'bg-danger-lt' : 'bg-secondary-lt' ?>"><?= $ageDays ?> hr</span></td>
+                    <td class="text-center"><span class="badge <?= $ageDays >= 3 ? 'bg-danger-lt' : 'bg-secondary-lt' ?>"><?= $ageDays === 0 ? 'Hari ini' : $ageDays . ' hari' ?></span></td>
                     <td class="text-center fw-bold tabular-nums"><?= esc($pd['total_qty']) ?></td>
                     <td class="text-end"><a class="btn btn-sm btn-primary" href="/deliveries/create?sales_order_id=<?= esc($pd['id']) ?>">Kirim</a></td>
                   </tr>
@@ -356,7 +356,7 @@ $roleMeta = match ($userRole) {
   <div class="col-lg-5">
     <div class="card h-100">
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">5 Produk Paling Sering Keluar</h3>
+        <h3 class="card-title m-0">Top 5 Produk Fast Moving</h3>
         <span class="text-secondary small">Total dikirim keluar</span>
       </div>
       <div class="card-body">
@@ -388,11 +388,11 @@ $roleMeta = match ($userRole) {
     <a href="/sales-orders?status=revision" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="subheader">Perlu Diperiksa</div>
+          <div class="subheader">Butuh Revisi</div>
           <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></span>
         </div>
-        <div class="kpi-value mb-2"><?= esc(($draftSoCount ?? 0) + ($revisionSoCount ?? 0)) ?> <span class="fs-5 text-secondary fw-normal">SO</span></div>
-        <div class="text-secondary small"><?= esc($draftSoCount ?? 0) ?> Draf &bull; <?= esc($revisionSoCount ?? 0) ?> Revisi</div>
+        <div class="kpi-value mb-2"><?= esc($revisionSoCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">SO</span></div>
+        <div class="text-secondary small">Dikembalikan Gudang untuk diubah</div>
       </div></div>
     </a>
   </div>
@@ -561,7 +561,7 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="subheader">Perlu Segera Dibeli Ulang</div>
+        <div class="subheader">Perlu Segera Restok</div>
         <span class="avatar avatar-sm <?= !empty($lowStock) ? 'bg-red-lt text-red' : 'bg-green-lt text-green' ?>"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></span>
       </div>
       <div class="kpi-value mb-2 <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>"><?= count($lowStock ?? []) ?> <span class="fs-5 text-secondary fw-normal">Produk</span></div>
@@ -1111,7 +1111,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let isCurrency = true;
 
     if (userRole === 'gudang') {
-      chartType = 'bar';
       isCurrency = false;
       series = [
         { name: 'Barang Masuk (Unit)', data: primaryData },

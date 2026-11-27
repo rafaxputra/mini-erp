@@ -6,11 +6,10 @@
 <?php
 $soStatus = $so['status'];
 $soSteps = [
-  ['key' => 'draft',     'label' => 'Draf Pesanan'],
   ['key' => 'confirmed', 'label' => $soStatus === 'revision' ? 'Butuh Revisi' : 'Dikonfirmasi'],
   ['key' => 'delivered', 'label' => 'Terkirim (DO)'],
 ];
-$soOrder = ['draft' => 0, 'revision' => 1, 'confirmed' => 1, 'delivered' => 2];
+$soOrder = ['revision' => 0, 'confirmed' => 0, 'delivered' => 1];
 $curIdx = $soOrder[$soStatus] ?? 0;
 $stepsColor = match ($soStatus) {
   'cancelled' => 'steps-red',
@@ -20,7 +19,7 @@ $stepsColor = match ($soStatus) {
 ?>
 <ul class="steps <?= $stepsColor ?> steps-counter my-3">
   <?php if ($soStatus === 'cancelled'): ?>
-    <li class="step-item">Draf Pesanan</li>
+    <li class="step-item">Dikonfirmasi</li>
     <li class="step-item active">Dibatalkan</li>
   <?php else: ?>
     <?php foreach ($soSteps as $idx => $step): ?>
@@ -41,15 +40,6 @@ $stepsColor = match ($soStatus) {
         <div class="text-secondary small">Dibuat oleh: <strong class="text-dark"><?= esc($so['creator_name']) ?></strong></div>
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <?php if ($so['status'] === 'draft' && session()->get('user_role') === 'sales'): ?>
-          <form action="/sales-orders/confirm/<?= esc($so['id']) ?>" method="post" class="d-inline" data-confirm="Apakah Anda yakin ingin mengonfirmasi Pesanan Jual <strong><?= esc($so['so_number']) ?></strong>?" data-confirm-title="Konfirmasi Pesanan Jual" data-confirm-btn="Ya, Konfirmasi" data-confirm-type="primary">
-            <button class="btn btn-success" type="submit">
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
-              Konfirmasi Pesanan
-            </button>
-          </form>
-        <?php endif; ?>
-
         <?php if ($so['status'] === 'confirmed' && session()->get('user_role') === 'gudang'): ?>
           <a class="btn btn-primary" href="/deliveries/create?sales_order_id=<?= esc($so['id']) ?>">
             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
@@ -252,8 +242,8 @@ $stepsColor = match ($soStatus) {
         <div class="card timeline-event-card">
           <div class="card-body">
             <div class="text-secondary float-end small"><?= ! empty($so['created_at']) ? date('d M Y H:i', strtotime($so['created_at'])) : date('d M Y', strtotime($so['order_date'])) ?></div>
-            <h4 class="mb-1">Pesanan Jual Dibuat</h4>
-            <p class="text-secondary mb-0">Dokumen <strong><?= esc($so['so_number']) ?></strong> untuk <?= esc($so['customer_name']) ?> tercatat sebagai draf.</p>
+            <h4 class="mb-1">Pesanan Jual Dibuat &amp; Dikonfirmasi</h4>
+            <p class="text-secondary mb-0">Dokumen <strong><?= esc($so['so_number']) ?></strong> untuk <?= esc($so['customer_name']) ?> tercatat dan langsung dikonfirmasi.</p>
           </div>
         </div>
       </li>
