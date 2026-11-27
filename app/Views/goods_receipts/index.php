@@ -76,9 +76,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
     <h3 class="card-title m-0 fw-bold">Pesanan Pembelian (PO) Siap Diterima di Gudang</h3>
   </div>
   <?php if (empty($pendingPos)): ?>
-    <div class="card-body text-center py-5">
-      <div class="h4 mb-1">Tidak ada Pesanan Beli yang menunggu penerimaan</div>
-      <div class="text-secondary small">Semua PO berstatus Disetujui sudah diterima di gudang.</div>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12l2 2l4 -4"/><path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18z"/></svg>
+      </div>
+      <p class="empty-title">Tidak ada Pesanan Beli yang menunggu penerimaan</p>
+      <p class="empty-subtitle text-secondary">Semua PO berstatus Disetujui sudah diterima di gudang.</p>
     </div>
   <?php else: ?>
     <div class="table-responsive">
@@ -119,12 +122,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
       </div>
-      <div class="h4 mb-1"><?= $filterActive ? 'Tidak ada penerimaan barang yang cocok dengan filter.' : 'Belum ada barang masuk' ?></div>
-      <div class="text-secondary small"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Terima Barang untuk mencatat penerimaan dari pesanan beli yang sudah disetujui.' ?></div>
+      <p class="empty-title"><?= $filterActive ? 'Tidak ada penerimaan barang yang cocok dengan filter.' : 'Belum ada barang masuk' ?></p>
+      <p class="empty-subtitle text-secondary"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Terima Barang untuk mencatat penerimaan dari pesanan beli yang sudah disetujui.' ?></p>
     </div>
   <?php else: ?>
     <div class="table-responsive">

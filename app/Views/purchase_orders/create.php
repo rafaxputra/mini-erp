@@ -73,7 +73,7 @@
       <h3 class="card-title m-0 fw-bold">Daftar Produk yang Dipesan</h3>
       <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-        Tambah Baris Produk <kbd class="erp-kbd ms-1">Alt+T</kbd>
+        Tambah Baris Produk
       </button>
     </div>
     <div class="table-responsive">
@@ -164,7 +164,7 @@
   <div class="d-flex align-items-center gap-2">
     <button type="submit" class="btn btn-primary px-4">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h8l4 4v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2"/><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M14 4l0 4l-6 0l0 -4"/></svg>
-      Simpan &amp; Buat Pesanan Beli <kbd class="erp-kbd ms-1">Ctrl+S</kbd>
+      Simpan &amp; Buat Pesanan Beli
     </button>
     <a class="btn btn-outline-secondary" href="/purchase-orders">Batal</a>
   </div>
@@ -289,7 +289,7 @@ function validateRowStock(row) {
     maxBox.value = maxStock > 0 ? maxStock.toLocaleString('id-ID') : '∞';
   }
   if (onOrderNote) {
-    onOrderNote.innerHTML = onOrder > 0 ? `<span class="badge bg-warning-lt">PO Aktif: ${onOrder}</span>` : '';
+    onOrderNote.innerHTML = onOrder > 0 ? `<span class="badge bg-warning-lt">Sedang dipesan: ${onOrder} ${unit}</span>` : '';
   }
 
   if (maxStock > 0) {
@@ -299,13 +299,13 @@ function validateRowStock(row) {
     if (totalProjected >= maxStock) {
       if (warnEl) {
         warnEl.style.display = 'block';
-        warnEl.textContent = `Kapasitas penuh! Sudah ${totalProjected} / ${maxStock} ${unit}. Tidak dapat dipesan.`;
+        warnEl.textContent = `Gudang sudah penuh (${totalProjected} dari maks. ${maxStock} ${unit}), belum bisa memesan lagi.`;
       }
       qtyInput.classList.add('is-invalid');
     } else if (qty > availableQuota) {
       if (warnEl) {
         warnEl.style.display = 'block';
-        warnEl.textContent = `Melebihi max stok! Sisa kuota pemesanan: ${availableQuota} ${unit}.`;
+        warnEl.textContent = `Melebihi batas gudang. Maksimal hanya bisa pesan ${availableQuota} ${unit} lagi.`;
       }
       qtyInput.classList.add('is-invalid');
     } else {

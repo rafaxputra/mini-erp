@@ -41,8 +41,13 @@
         <tr>
           <td><span class="text-muted font-monospace">#<?= esc($u['id']) ?></span></td>
           <td>
-            <div class="fw-semibold text-dark"><?= esc($u['name']) ?></div>
-            <div class="text-muted small"><?= esc($u['email']) ?></div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><?= esc(mb_strtoupper(mb_substr(trim((string) $u['name']), 0, 2))) ?></span>
+              <div>
+                <div class="fw-semibold text-dark"><?= esc($u['name']) ?></div>
+                <div class="text-muted small"><?= esc($u['email']) ?></div>
+              </div>
+            </div>
           </td>
           <td><span class="badge bg-secondary-lt fw-bold"><?= esc(ucfirst($u['role_name'])) ?></span></td>
           <td class="text-center">

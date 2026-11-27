@@ -126,7 +126,7 @@ class GoodsReceipts extends BaseController
                 return redirect()->to('/goods-receipts/create')->with('error', 'Pesanan Beli tidak ditemukan.');
             }
             if ($po['status'] !== 'approved') {
-                return redirect()->to('/goods-receipts/create')->with('error', 'Barang Masuk hanya bisa dibuat untuk PO berstatus Approved. PO ini berstatus ' . $po['status'] . '.');
+                return redirect()->to('/goods-receipts/create')->with('error', 'Penerimaan barang hanya bisa diproses untuk pesanan pembelian yang sudah Disetujui.');
             }
             $items = $db->table('purchase_orders po')->select('po.id, po.product_id, po.qty, po.unit_price, p.code, p.name AS product_name, p.unit, COALESCE((SELECT SUM(gr.qty_received) FROM goods_receipts gr WHERE gr.purchase_order_id = po.id), 0) AS received_qty')->join('products p', 'p.id = po.product_id')->where('po.po_number', $po['po_number'])->orderBy('po.id', 'ASC')->get()->getResultArray();
         }
@@ -144,7 +144,7 @@ class GoodsReceipts extends BaseController
             return redirect()->back()->withInput()->with('error', 'Pesanan Beli tidak ditemukan.');
         }
         if ($po['status'] !== 'approved') {
-            return redirect()->back()->withInput()->with('error', 'Barang Masuk hanya bisa dibuat untuk PO berstatus Approved.');
+            return redirect()->back()->withInput()->with('error', 'Penerimaan barang hanya bisa diproses untuk pesanan pembelian yang sudah Disetujui.');
         }
         if (! $receiptDate) {
             return redirect()->back()->withInput()->with('error', 'Tanggal terima wajib diisi.');
@@ -166,7 +166,7 @@ class GoodsReceipts extends BaseController
                 if ($qty > $remaining) {
                     $prod = (new ProductModel())->find((int) $poRow['product_id']);
                     $prodName = $prod ? $prod['name'] : ('Produk ' . $poRow['product_id']);
-                    throw new \RuntimeException('Jumlah terima melebihi sisa. ' . $prodName . ' sisa terima ' . $remaining . ', diminta ' . $qty . '.');
+                    throw new \RuntimeException("{$prodName}: jumlah yang diterima ({$qty}) melebihi sisa pesanan yang belum datang ({$remaining}).");
                 }
                 $lines[] = ['purchase_order_id' => (int) $poRowId, 'product_id' => (int) $poRow['product_id'], 'qty_received' => $qty];
             }

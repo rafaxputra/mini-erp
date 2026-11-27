@@ -49,7 +49,12 @@
         <?php foreach ($items as $it): ?>
         <tr>
           <td><code class="text-dark font-monospace fw-bold"><?= esc($it['code']) ?></code></td>
-          <td class="fw-semibold text-dark"><?= esc($it['name']) ?></td>
+          <td class="fw-semibold text-dark">
+            <div class="d-flex align-items-center gap-2">
+              <span class="avatar avatar-sm bg-blue-lt text-blue fw-bold"><?= esc(mb_strtoupper(mb_substr(trim((string) $it['name']), 0, 2))) ?></span>
+              <span><?= esc($it['name']) ?></span>
+            </div>
+          </td>
           <td>
             <div class="text-dark"><?= esc($it['phone'] ?: '-') ?></div>
             <?php if (!empty($it['email'])): ?>

@@ -6,40 +6,28 @@
 <?php
 $soStatus = $so['status'];
 $soSteps = [
-  ['key' => 'draft',     'label' => '1. Draf Pesanan'],
-  ['key' => 'confirmed', 'label' => '2. Dikonfirmasi'],
-  ['key' => 'shipped',   'label' => '3. Dikirim (DO)'],
-  ['key' => 'completed', 'label' => '4. Selesai'],
+  ['key' => 'draft',     'label' => 'Draf Pesanan'],
+  ['key' => 'confirmed', 'label' => $soStatus === 'revision' ? 'Butuh Revisi' : 'Dikonfirmasi'],
+  ['key' => 'delivered', 'label' => 'Terkirim (DO)'],
 ];
-$soOrder = ['draft' => 0, 'revision' => 1, 'confirmed' => 1, 'shipped' => 2, 'completed' => 3];
-$curIdx = $soOrder[$soStatus] ?? -1;
+$soOrder = ['draft' => 0, 'revision' => 1, 'confirmed' => 1, 'delivered' => 2];
+$curIdx = $soOrder[$soStatus] ?? 0;
+$stepsColor = match ($soStatus) {
+  'cancelled' => 'steps-red',
+  'revision'  => 'steps-orange',
+  default     => 'steps-green',
+};
 ?>
-<div class="erp-stepper">
-  <?php foreach ($soSteps as $idx => $step):
-    $cls = '';
-    if ($soStatus === 'cancelled') {
-      $cls = $idx === 0 ? 'is-danger' : '';
-    } elseif ($soStatus === 'revision' && $idx === 1) {
-      $cls = 'is-warn';
-    } elseif ($idx < $curIdx || ($soStatus === 'completed' && $idx === 3)) {
-      $cls = 'is-done';
-    } elseif ($idx === $curIdx) {
-      $cls = 'is-active';
-    }
-    $stepLabel = ($soStatus === 'revision' && $idx === 1) ? '2. Butuh Revisi' : $step['label'];
-  ?>
-    <div class="erp-step <?= $cls ?>">
-      <span class="erp-step-dot"><?= $cls === 'is-done' ? '✓' : ($idx + 1) ?></span>
-      <span class="erp-step-label"><?= esc($stepLabel) ?></span>
-    </div>
-  <?php endforeach; ?>
+<ul class="steps <?= $stepsColor ?> steps-counter my-3">
   <?php if ($soStatus === 'cancelled'): ?>
-    <div class="erp-step is-danger">
-      <span class="erp-step-dot">✕</span>
-      <span class="erp-step-label">Dibatalkan</span>
-    </div>
+    <li class="step-item">Draf Pesanan</li>
+    <li class="step-item active">Dibatalkan</li>
+  <?php else: ?>
+    <?php foreach ($soSteps as $idx => $step): ?>
+      <li class="step-item <?= $idx === $curIdx ? 'active' : '' ?>"><?= esc($step['label']) ?></li>
+    <?php endforeach; ?>
   <?php endif; ?>
-</div>
+</ul>
 
 <!-- Kartu Ringkasan Informasi Pesanan -->
 <div class="card mb-3 border-0 shadow-sm">
@@ -141,26 +129,34 @@ $curIdx = $soOrder[$soStatus] ?? -1;
       </div>
     <?php endif; ?>
 
-    <!-- Grid Detail Informasi -->
-    <div class="row g-3">
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-secondary small">Pelanggan</div>
-        <div class="fw-bold text-dark mt-1"><?= esc($so['customer_name']) ?></div>
-        <div class="text-secondary small font-monospace"><?= esc($so['customer_code']) ?></div>
+    <!-- Ringkasan Informasi (Tabler Datagrid) -->
+    <div class="datagrid">
+      <div class="datagrid-item">
+        <div class="datagrid-title">Pelanggan</div>
+        <div class="datagrid-content">
+          <div class="fw-bold text-dark"><?= esc($so['customer_name']) ?></div>
+          <div class="text-secondary small font-monospace"><?= esc($so['customer_code']) ?></div>
+        </div>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-secondary small">Tanggal Pesanan</div>
-        <div class="fw-bold text-dark mt-1"><?= date('d M Y', strtotime($so['order_date'])) ?></div>
-        <div class="text-secondary small font-monospace"><?= esc($so['order_date']) ?></div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Tanggal Pesanan</div>
+        <div class="datagrid-content">
+          <div class="fw-bold text-dark"><?= date('d M Y', strtotime($so['order_date'])) ?></div>
+          <div class="text-secondary small font-monospace"><?= esc($so['order_date']) ?></div>
+        </div>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-secondary small">Gudang Pengirim</div>
-        <div class="fw-bold text-dark mt-1"><?= esc($so['warehouse_name'] ?? 'Gudang Utama') ?></div>
-        <div class="text-secondary small">Gudang asal barang saat dikirim</div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Gudang Pengirim</div>
+        <div class="datagrid-content">
+          <div class="fw-bold text-dark"><?= esc($so['warehouse_name'] ?? 'Gudang Utama') ?></div>
+          <div class="text-secondary small">Gudang asal barang saat dikirim</div>
+        </div>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-secondary small">Total Nilai Pesanan</div>
-        <div class="fw-bold fs-2 text-primary mt-1">Rp <?= number_format((float) $so['total_amount'], 0, ',', '.') ?></div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Total Nilai Pesanan</div>
+        <div class="datagrid-content">
+          <span class="fw-bold fs-2 text-primary">Rp <?= number_format((float) $so['total_amount'], 0, ',', '.') ?></span>
+        </div>
       </div>
     </div>
 
@@ -242,45 +238,103 @@ $curIdx = $soOrder[$soStatus] ?? -1;
   </div>
 </div>
 
-<!-- Riwayat Pengiriman Barang (Delivery) -->
-<?php if (! empty($deliveries)): ?>
-<div class="card border-0 shadow-sm">
+<!-- Jejak Aktivitas & Alur Dokumen (Tabler Timeline) -->
+<div class="card border-0 shadow-sm mt-3">
   <div class="card-header bg-transparent py-3">
-    <h3 class="card-title m-0 fw-bold">Riwayat Pengiriman Barang (Delivery)</h3>
+    <h3 class="card-title m-0 fw-bold">Jejak Aktivitas &amp; Alur Dokumen</h3>
   </div>
-  <div class="table-responsive">
-    <table class="table table-vcenter table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th style="width: 250px;">Nomor Pengiriman (DO)</th>
-          <th>Tanggal Pengiriman</th>
-          <th>Status Dokumen</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($deliveries as $d): ?>
-        <tr>
-          <td>
-            <span class="badge bg-primary-lt font-monospace px-2 py-1 fs-4"><?= esc($d['delivery_number']) ?></span>
-          </td>
-          <td>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-secondary me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/></svg>
-            <?= date('d M Y', strtotime($d['delivery_date'])) ?><?= ! empty($d['delivery_time']) ? ' &bull; ' . esc($d['delivery_time']) . ' WIB' : '' ?>
-          </td>
-          <td>
-            <?php $ds = $d['status'] ?? 'delivered'; $dsb = status_badge($ds); ?>
-            <span class="badge <?= $dsb['badge'] ?>"><?= esc($ds === 'delivered' ? 'Terkirim dari Gudang' : $dsb['label']) ?></span>
+  <div class="card-body">
+    <ul class="timeline">
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-primary-lt text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($so['created_at']) ? date('d M Y H:i', strtotime($so['created_at'])) : date('d M Y', strtotime($so['order_date'])) ?></div>
+            <h4 class="mb-1">Pesanan Jual Dibuat</h4>
+            <p class="text-secondary mb-0">Dokumen <strong><?= esc($so['so_number']) ?></strong> untuk <?= esc($so['customer_name']) ?> tercatat sebagai draf.</p>
+          </div>
+        </div>
+      </li>
+      <?php if ($so['status'] === 'revision'): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-warning-lt text-warning">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($so['updated_at']) ? date('d M Y H:i', strtotime($so['updated_at'])) : '-' ?></div>
+            <h4 class="mb-1 text-warning">Diminta Revisi</h4>
+            <p class="text-secondary mb-0">Pesanan dikembalikan ke tim Sales untuk penyesuaian sebelum diproses lanjut.</p>
+          </div>
+        </div>
+      </li>
+      <?php endif; ?>
+      <?php if (in_array($so['status'], ['confirmed', 'delivered'], true)): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-azure-lt text-azure">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($so['updated_at']) ? date('d M Y H:i', strtotime($so['updated_at'])) : date('d M Y', strtotime($so['order_date'])) ?></div>
+            <h4 class="mb-1">Pesanan Dikonfirmasi</h4>
+            <p class="text-secondary mb-0">Pesanan disetujui dan siap dijadwalkan pengirimannya dari <?= esc($so['warehouse_name'] ?? 'Gudang Utama') ?>.</p>
+          </div>
+        </div>
+      </li>
+      <?php endif; ?>
+      <?php if (! empty($deliveries)): foreach ($deliveries as $d): $ds = $d['status'] ?? 'delivered'; $dsb = status_badge($ds); ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon <?= $ds === 'cancelled' ? 'bg-danger-lt text-danger' : ($ds === 'scheduled' ? 'bg-cyan-lt text-cyan' : 'bg-green-lt text-green') ?>">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= date('d M Y', strtotime($d['delivery_date'])) ?><?= ! empty($d['delivery_time']) ? ' &bull; ' . esc($d['delivery_time']) . ' WIB' : '' ?></div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <span class="badge bg-primary-lt font-monospace px-2 py-1"><?= esc($d['delivery_number']) ?></span>
+              <span class="badge <?= $dsb['badge'] ?>"><?= esc($ds === 'delivered' ? 'Terkirim dari Gudang' : $dsb['label']) ?></span>
+            </div>
+            <p class="text-secondary mb-0">Pengiriman barang dicatat melalui surat jalan <strong><?= esc($d['delivery_number']) ?></strong>.</p>
             <?php if ($ds === 'cancelled' && ! empty($d['cancel_reason'])): ?>
               <div class="text-danger small mt-1"><strong>Alasan Batal:</strong> <?= esc($d['cancel_reason']) ?></div>
             <?php endif; ?>
-          </td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+          </div>
+        </div>
+      </li>
+      <?php endforeach; endif; ?>
+      <?php if ($so['status'] === 'delivered'): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-success-lt text-success">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12l2 2l4 -4"/><path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18z"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($so['updated_at']) ? date('d M Y H:i', strtotime($so['updated_at'])) : '-' ?></div>
+            <h4 class="mb-1 text-success">Pesanan Terkirim &amp; Selesai</h4>
+            <p class="text-secondary mb-0">Seluruh item pesanan telah selesai dikirim ke pelanggan.</p>
+          </div>
+        </div>
+      </li>
+      <?php elseif ($so['status'] === 'cancelled'): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-danger-lt text-danger">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($so['updated_at']) ? date('d M Y H:i', strtotime($so['updated_at'])) : '-' ?></div>
+            <h4 class="mb-1 text-danger">Pesanan Dibatalkan</h4>
+            <p class="text-secondary mb-0">Proses pesanan jual dihentikan dan dibatalkan.</p>
+          </div>
+        </div>
+      </li>
+      <?php endif; ?>
+    </ul>
   </div>
 </div>
-<?php endif; ?>
 
 <!-- Modal Konfirmasi & Catatan Pembatalan Pesanan Jual -->
 <div class="modal modal-blur fade" id="modalCancelSO" tabindex="-1" role="dialog" aria-hidden="true">

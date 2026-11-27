@@ -88,12 +88,12 @@
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304"/><path d="M9 11v-5a3 3 0 0 1 6 0v5"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304"/><path d="M9 11v-5a3 3 0 0 1 6 0v5"/></svg>
       </div>
-      <div class="h4 mb-1"><?= $filterActive ? 'Tidak ada Pesanan Jual yang cocok dengan filter.' : 'Belum ada pesanan jual' ?></div>
-      <div class="text-secondary small"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat SO untuk membuat pesanan baru.' ?></div>
+      <p class="empty-title"><?= $filterActive ? 'Tidak ada Pesanan Jual yang cocok dengan filter.' : 'Belum ada pesanan jual' ?></p>
+      <p class="empty-subtitle text-secondary"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat SO untuk membuat pesanan baru.' ?></p>
     </div>
   <?php else: ?>
     <div class="table-responsive">
@@ -115,7 +115,16 @@
           <td><code class="text-dark font-monospace fw-bold"><?= esc($it['so_number']) ?></code></td>
           <td class="fw-semibold text-dark"><?= esc($it['customer_name']) ?></td>
           <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['order_date'])) ?></td>
-          <td class="text-center"><span class="badge <?= esc(status_badge_class($it['status'])) ?> fw-bold"><?= esc(status_label($it['status'])) ?></span></td>
+          <td class="text-center">
+            <?php if ($it['status'] === 'revision'): ?>
+              <span class="badge bg-warning-lt text-warning fw-bold d-inline-flex align-items-center gap-2">
+                <span class="status-dot status-dot-animated bg-warning"></span>
+                <?= esc(status_label($it['status'])) ?>
+              </span>
+            <?php else: ?>
+              <span class="badge <?= esc(status_badge_class($it['status'])) ?> fw-bold"><?= esc(status_label($it['status'])) ?></span>
+            <?php endif; ?>
+          </td>
           <td class="text-end fw-semibold text-dark font-monospace">Rp <?= number_format((float) $it['total_amount'], 0, ',', '.') ?></td>
           <td class="text-secondary"><?= esc($it['creator_name']) ?></td>
           <td class="text-end">

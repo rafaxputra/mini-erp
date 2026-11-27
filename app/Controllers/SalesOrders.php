@@ -128,7 +128,7 @@ class SalesOrders extends BaseController
                 if ($price < (float) $prod['purchase_price']) {
                     $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');
                     $priceFmt = 'Rp ' . number_format($price, 0, ',', '.');
-                    throw new \RuntimeException("{$prodName}: harga satuan jual ({$priceFmt}) tidak boleh di bawah harga modal beli perusahaan ({$minFmt}).");
+                    throw new \RuntimeException("Harga jual {$prodName} ({$priceFmt}) tidak boleh lebih rendah dari harga belinya ({$minFmt}).");
                 }
                 $stockSvc = new \App\Libraries\StockService();
                 $availInWh = $stockSvc->stockInWarehouse($pid, $warehouseId);
@@ -218,7 +218,7 @@ class SalesOrders extends BaseController
         $so = (new SalesOrderModel())->find((int) $id);
         if (! $so) return redirect()->to('/sales-orders')->with('error', 'Pesanan Jual tidak ditemukan.');
         if ($so['status'] !== 'draft') {
-            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Hanya SO berstatus Draft yang bisa di confirm.');
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Hanya pesanan penjualan berstatus Draf yang bisa dikonfirmasi.');
         }
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -329,7 +329,7 @@ class SalesOrders extends BaseController
             ->where('d.status <>', 'cancelled')
             ->countAllResults();
         if ($doCount > 0) {
-            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'SO ini sudah memiliki Pengiriman (DO) aktif. Minta Staff Gudang membatalkan DO terlebih dahulu sebelum merevisi SO.');
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Pesanan ini sudah memiliki jadwal pengiriman aktif. Minta staf gudang membatalkan pengirimannya dulu sebelum mengubah pesanan.');
         }
 
         $items = $db->table('sales_orders so')
@@ -388,7 +388,7 @@ class SalesOrders extends BaseController
             ->where('d.status <>', 'cancelled')
             ->countAllResults();
         if ($activeDoCount > 0) {
-            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'SO ini sudah memiliki Pengiriman (DO) aktif. Minta Staff Gudang membatalkan DO terlebih dahulu sebelum merevisi SO.');
+            return redirect()->to('/sales-orders/show/' . $id)->with('error', 'Pesanan ini sudah memiliki jadwal pengiriman aktif. Minta staf gudang membatalkan pengirimannya dulu sebelum mengubah pesanan.');
         }
 
         $customerId = (int) $this->request->getPost('customer_id');
@@ -464,7 +464,7 @@ class SalesOrders extends BaseController
                 if ($price < (float) $prod['purchase_price']) {
                     $minFmt = 'Rp ' . number_format((float) $prod['purchase_price'], 0, ',', '.');
                     $priceFmt = 'Rp ' . number_format($price, 0, ',', '.');
-                    throw new \RuntimeException("{$prodName}: harga satuan jual ({$priceFmt}) tidak boleh di bawah harga modal beli perusahaan ({$minFmt}).");
+                    throw new \RuntimeException("Harga jual {$prodName} ({$priceFmt}) tidak boleh lebih rendah dari harga belinya ({$minFmt}).");
                 }
                 $availInWh = $stockSvc->stockInWarehouse($pid, $warehouseId);
                 $deductQty = min($qty, max(0, $availInWh));

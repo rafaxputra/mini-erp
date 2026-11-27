@@ -116,6 +116,9 @@ class MainSeeder extends Seeder
             ['id' => 3, 'code' => 'SUP-003', 'name' => 'PT Graha Pena Distribusi', 'phone' => '031-8287700', 'email' => 'distribusi@grahapena.test', 'address' => 'Jl. Ahmad Yani No. 88, Surabaya', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 4, 'code' => 'SUP-004', 'name' => 'CV Cahaya Office Logistik', 'phone' => '0341-492100', 'email' => 'kontak@cahayaoffice.test', 'address' => 'Jl. Soekarno Hatta No. 12, Malang', 'created_at' => $now, 'updated_at' => $now],
             ['id' => 5, 'code' => 'SUP-005', 'name' => 'PT Digital Print Star', 'phone' => '021-6543210', 'email' => 'supply@digitalprintstar.test', 'address' => 'Mangga Dua Square Lt. 2, Jakarta Pusat', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 6, 'code' => 'SUP-006', 'name' => 'PT Mitra Kertas Nusantara', 'phone' => '031-7412890', 'email' => 'order@mitrakertas.test', 'address' => 'Jl. Margomulyo Permai Blok H-7, Surabaya', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 7, 'code' => 'SUP-007', 'name' => 'CV Jaya Abadi Perlengkapan', 'phone' => '031-8551234', 'email' => 'sales@jayaabadi.test', 'address' => 'Ruko Gateway Blok B-12, Waru, Sidoarjo', 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 8, 'code' => 'SUP-008', 'name' => 'PT Prima Tinta Indonesia', 'phone' => '021-5690112', 'email' => 'cs@primatinta.test', 'address' => 'Jl. Pangeran Jayakarta No. 55, Jakarta', 'created_at' => $now, 'updated_at' => $now],
         ]);
         $this->db->query("SELECT setval('suppliers_id_seq', (SELECT MAX(id) FROM suppliers))");
 
@@ -363,18 +366,18 @@ class MainSeeder extends Seeder
         $seedPoReceived('PO-' . $n10 . '-001', 5, 1, $d10, $d9, 'Pengadaan tinta printer & perangkat komputer', 'Penerimaan perangkat PT Digital Print Star di Gudang Utama', [
             [11, 20, 58000], [21, 22, 65000], [22, 12, 85000], [23, 6, 260000],
         ]);
-        $seedPoReceived('PO-' . $n8 . '-001', 2, 2, $d8, $d7, 'Pasokan stok Cabang Sidoarjo', 'Penerimaan stok di Gudang Cabang Sidoarjo', [
-            [8, 45, 32000], [9, 40, 36000], [17, 45, 8500], [1, 40, 15000], [4, 25, 25000], [13, 15, 45000],
+        $seedPoReceived('PO-' . $n8 . '-001', 6, 2, $d8, $d7, 'Pasokan stok Cabang Sidoarjo', 'Penerimaan stok PT Mitra Kertas di Gudang Cabang Sidoarjo', [
+            [8, 45, 32000], [9, 40, 36000], [17, 50, 8500], [1, 40, 15000], [4, 25, 25000], [13, 15, 45000],
         ]);
-        $seedPoReceived('PO-' . $n7 . '-001', 1, 3, $d7, $d6, 'Pasokan Hub Surabaya Timur', 'Penerimaan stok di Hub Surabaya Timur', [
+        $seedPoReceived('PO-' . $n7 . '-001', 7, 3, $d7, $d6, 'Pasokan Hub Surabaya Timur', 'Penerimaan stok CV Jaya Abadi di Hub Surabaya Timur', [
             [9, 30, 36000], [2, 30, 15000], [15, 35, 22000], [18, 30, 16000], [11, 15, 58000],
         ]);
 
         // PO 7: Status APPROVED (Menunggu Barang Datang)
         $po7Num = 'PO-' . $n3 . '-001';
         $this->db->table('purchase_orders')->insertBatch([
-            ['po_number' => $po7Num, 'supplier_id' => 5, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
-            ['po_number' => $po7Num, 'supplier_id' => 5, 'product_id' => 11, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po7Num, 'supplier_id' => 8, 'product_id' => 21, 'qty' => 15, 'unit_price' => 65000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock tinta printer hub timur', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
+            ['po_number' => $po7Num, 'supplier_id' => 8, 'product_id' => 11, 'qty' => 10, 'unit_price' => 58000, 'order_date' => $d3, 'status' => 'approved', 'notes' => 'Restock mouse kantor', 'created_by' => 2, 'created_at' => $d3 . ' 13:00:00', 'updated_at' => $d2 . ' 08:30:00'],
         ]);
 
         // PO 8: Status DRAFT (Menunggu Persetujuan Manajemen)
@@ -483,8 +486,8 @@ class MainSeeder extends Seeder
         // Awal November (tgl 2 - 10) agar grafik bulan berjalan terisi penuh sejak awal bulan
         $m0Start = strtotime('first day of this month');
         $earlyNovPos = [
-            ['02', 1, 1, 'Pengadaan awal November Gudang Utama', [[8, 40, 32000], [1, 30, 15000], [17, 35, 8500]]],
-            ['06', 2, 2, 'Pasokan awal November Sidoarjo', [[9, 30, 36000], [15, 25, 22000], [4, 20, 25000]]],
+            ['02', 4, 1, 'Pengadaan awal November Gudang Utama', [[8, 40, 32000], [1, 30, 15000], [17, 35, 8500]]],
+            ['06', 6, 2, 'Pasokan awal November Sidoarjo', [[9, 30, 36000], [15, 25, 22000], [4, 20, 25000]]],
         ];
         foreach ($earlyNovPos as $idx => [$day, $supId, $whId, $note, $lines]) {
             $od = date('Y-m-', $m0Start) . $day;
@@ -568,12 +571,44 @@ class MainSeeder extends Seeder
         ]);
 
         // -------------------------------------------------------------
-        // 9. REKONSILIASI AKHIR SALDO PRODUK (STOCK RECONCILIATION)
+        // 9. REKONSILIASI KRONOLOGIS & SALDO AKHIR PRODUK
+        //    Memastikan rantai qty_before -> qty_after dan products.stock_qty 100% konsisten
         // -------------------------------------------------------------
-        // Pastikan kolom products.stock_qty sama persis dengan total saldo fisik dari semua gudang
+        $pairs = $this->db->query('SELECT DISTINCT product_id, warehouse_id FROM stock_movements')->getResultArray();
+        foreach ($pairs as $pair) {
+            $mvs = $this->db->table('stock_movements')
+                ->where('product_id', $pair['product_id'])
+                ->where('warehouse_id', $pair['warehouse_id'])
+                ->orderBy('created_at', 'ASC')
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getResultArray();
+            $running = 0;
+            foreach ($mvs as $mv) {
+                $before = $running;
+                if ($mv['movement_type'] === 'IN') {
+                    $after = $before + (int) $mv['qty'];
+                } elseif ($mv['movement_type'] === 'OUT') {
+                    $after = $before - (int) $mv['qty'];
+                } else {
+                    $after = $before + (int) $mv['qty'];
+                }
+                if ((int) $mv['qty_before'] !== $before || (int) $mv['qty_after'] !== $after) {
+                    $this->db->table('stock_movements')->where('id', $mv['id'])->update([
+                        'qty_before' => $before,
+                        'qty_after'  => $after,
+                    ]);
+                }
+                $running = $after;
+            }
+        }
+
         $allProducts = $this->db->table('products')->get()->getResultArray();
         foreach ($allProducts as $p) {
-            $row = $this->db->query('SELECT COALESCE(SUM(qa), 0) AS total FROM (SELECT DISTINCT ON (warehouse_id) qty_after AS qa FROM stock_movements WHERE product_id = ? ORDER BY warehouse_id, created_at DESC, id DESC) s', [$p['id']])->getRowArray();
+            $row = $this->db->query(
+                "SELECT COALESCE(SUM(CASE WHEN movement_type = 'IN' THEN qty WHEN movement_type = 'OUT' THEN -qty ELSE 0 END), 0) AS total FROM stock_movements WHERE product_id = ?",
+                [$p['id']]
+            )->getRowArray();
             $realTotal = (int) ($row['total'] ?? 0);
             $this->db->table('products')->where('id', $p['id'])->update(['stock_qty' => $realTotal]);
         }

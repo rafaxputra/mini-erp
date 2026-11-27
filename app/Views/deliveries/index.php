@@ -92,9 +92,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
     <h3 class="card-title m-0 fw-bold">Pesanan Pelanggan (SO) Siap Dikirim</h3>
   </div>
   <?php if (empty($pendingSos)): ?>
-    <div class="card-body text-center py-5">
-      <div class="h4 mb-1">Tidak ada Pesanan Jual yang menunggu pengiriman</div>
-      <div class="text-secondary small">Semua pesanan berstatus Dikonfirmasi sudah diproses.</div>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12l2 2l4 -4"/><path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18z"/></svg>
+      </div>
+      <p class="empty-title">Tidak ada Pesanan Jual yang menunggu pengiriman</p>
+      <p class="empty-subtitle text-secondary">Semua pesanan berstatus Dikonfirmasi sudah diproses.</p>
     </div>
   <?php else: ?>
     <div class="table-responsive">
@@ -137,12 +140,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304"/><path d="M9 11v-5a3 3 0 0 1 6 0v5"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304"/><path d="M9 11v-5a3 3 0 0 1 6 0v5"/></svg>
       </div>
-      <div class="h4 mb-1"><?= $filterActive ? 'Tidak ada pengiriman yang cocok dengan filter.' : 'Belum ada pengiriman' ?></div>
-      <div class="text-secondary small"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat Pengiriman untuk mengirim barang dari pesanan jual yang sudah dikonfirmasi.' ?></div>
+      <p class="empty-title"><?= $filterActive ? 'Tidak ada pengiriman yang cocok dengan filter.' : 'Belum ada pengiriman' ?></p>
+      <p class="empty-subtitle text-secondary"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat Pengiriman untuk mengirim barang dari pesanan jual yang sudah dikonfirmasi.' ?></p>
     </div>
   <?php else: ?>
     <div class="table-responsive">
@@ -176,7 +179,16 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
               <div class="small text-muted"><?= esc($it['delivery_time']) ?> WIB</div>
             <?php endif; ?>
           </td>
-          <td><span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span></td>
+          <td>
+            <?php if ($doStatus === 'scheduled'): ?>
+              <span class="badge <?= $sb['badge'] ?> d-inline-flex align-items-center gap-2">
+                <span class="status-dot status-dot-animated bg-cyan"></span>
+                <?= esc($sb['label']) ?>
+              </span>
+            <?php else: ?>
+              <span class="badge <?= $sb['badge'] ?>"><?= esc($sb['label']) ?></span>
+            <?php endif; ?>
+          </td>
           <td class="fw-semibold text-dark"><?= esc($it['deliverer_name']) ?></td>
           <td class="text-secondary small" style="min-width: 220px;">
             <?= esc($it['notes']) ?>

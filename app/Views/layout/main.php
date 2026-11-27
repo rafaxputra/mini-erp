@@ -140,17 +140,18 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
       <div class="collapse navbar-collapse" id="sidebar-menu">
         <ul class="navbar-nav pt-lg-3">
           <li class="nav-item">
-            <a class="nav-link <?= ($currentPath === 'dashboard' || $currentPath === '') ? 'active' : '' ?>" href="/dashboard">
+            <a class="nav-link <?= ($currentPath === 'dashboard' || $currentPath === '') ? 'active' : '' ?>" href="/dashboard" title="Dashboard">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M5 12l-2 0l9 -9l9 9l-2 0" /> <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /> <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /> </svg></span>
               <span class="nav-link-title">Dashboard</span>
             </a>
           </li>
-          <li class="nav-item dropdown <?= $activeGroup === 'master' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'master' ? 'true' : 'false' ?>">
+          <li class="nav-item dropdown <?= $activeGroup === 'master' ? 'show is-active-group' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'master' ? 'true' : 'false' ?>" title="Data Master">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" /> <path d="M4 6v6a8 3 0 0 0 16 0v-6" /> <path d="M4 12v6a8 3 0 0 0 16 0v-6" /> </svg></span>
               <span class="nav-link-title">Data Master</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'master' ? 'show' : '' ?>">
+              <div class="dropdown-header d-none sidebar-flyout-title">Data Master</div>
               <a class="dropdown-item <?= $navActive('products') ?>" href="/products">Produk</a>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('categories') ?>" href="/categories">Kategori</a><?php endif; ?>
               <?php if ($role === 'admin'): ?><a class="dropdown-item <?= $navActive('units') ?>" href="/units">Satuan</a><?php endif; ?>
@@ -160,12 +161,13 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
             </div>
           </li>
           <?php if (in_array($role, ['admin', 'purchasing', 'gudang', 'manajemen'], true)): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pembelian' ? 'true' : 'false' ?>">
+          <li class="nav-item dropdown <?= $activeGroup === 'pembelian' ? 'show is-active-group' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pembelian' ? 'true' : 'false' ?>" title="Pembelian">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /> <path d="M17 17h-11v-14h-2" /> <path d="M6 5l14 1l-1 7h-13" /> </svg></span>
               <span class="nav-link-title">Pembelian</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'pembelian' ? 'show' : '' ?>">
+              <div class="dropdown-header d-none sidebar-flyout-title">Pembelian</div>
               <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
                 <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('purchase-orders') ?>" href="/purchase-orders">
                   <span>Pesanan Pembelian (PO)</span>
@@ -179,12 +181,13 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
           </li>
           <?php endif; ?>
           <?php if (in_array($role, ['admin', 'sales', 'gudang', 'manajemen'], true)): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>">
+          <li class="nav-item dropdown <?= $activeGroup === 'penjualan' ? 'show is-active-group' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'penjualan' ? 'true' : 'false' ?>" title="Penjualan">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304" /> <path d="M9 11v-5a3 3 0 0 1 6 0v5" /> </svg></span>
               <span class="nav-link-title">Penjualan</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'penjualan' ? 'show' : '' ?>">
+              <div class="dropdown-header d-none sidebar-flyout-title">Penjualan</div>
               <?php if (in_array($role, ['admin', 'sales', 'manajemen'], true)): ?>
                 <a class="dropdown-item d-flex justify-content-between align-items-center <?= $navActive('sales-orders') ?>" href="/sales-orders">
                   <span>Pesanan Penjualan (SO)</span>
@@ -200,12 +203,13 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
             </div>
           </li>
           <?php endif; ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>">
+          <li class="nav-item dropdown <?= $activeGroup === 'persediaan' ? 'show is-active-group' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'persediaan' ? 'true' : 'false' ?>" title="Persediaan">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" > <path stroke="none" d="M0 0h24v24H0z" fill="none" /> <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /> <path d="M12 12l8 -4.5" /> <path d="M12 12l0 9" /> <path d="M12 12l-8 -4.5" /> <path d="M16 5.25l-8 4.5" /> </svg></span>
               <span class="nav-link-title">Persediaan</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'persediaan' ? 'show' : '' ?>">
+              <div class="dropdown-header d-none sidebar-flyout-title">Persediaan</div>
               <a class="dropdown-item <?= $navActive('inventory') ?>" href="/inventory">Stok Produk</a>
               <?php if (in_array($role, ['admin', 'gudang', 'purchasing', 'manajemen'], true)): ?>
                 <a class="dropdown-item <?= $navActive('inventory/movements') ?>" href="/inventory/movements">Mutasi Stok</a>
@@ -213,12 +217,13 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
             </div>
           </li>
           <?php if ($role === 'admin'): ?>
-          <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>">
+          <li class="nav-item dropdown <?= $activeGroup === 'pengaturan' ? 'show is-active-group' : '' ?>">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="<?= $activeGroup === 'pengaturan' ? 'true' : 'false' ?>" title="Pengaturan">
               <span class="nav-link-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></svg></span>
               <span class="nav-link-title">Pengaturan</span>
             </a>
             <div class="dropdown-menu <?= $activeGroup === 'pengaturan' ? 'show' : '' ?>">
+              <div class="dropdown-header d-none sidebar-flyout-title">Pengaturan</div>
               <a class="dropdown-item <?= $navActive('users') ?>" href="/users">Pengguna</a>
               <a class="dropdown-item <?= $navActive('roles') ?>" href="/roles">Peran & Akses</a>
             </div>
@@ -252,11 +257,24 @@ if (localStorage.getItem('erp_sidebar_collapsed') === '1' && window.innerWidth >
         </div>
 
         <div class="d-flex align-items-center gap-3 ms-auto">
+          <?php
+            $cmdSearchShort = match ($role) {
+                'sales'      => 'Cari Produk, SO, Pelanggan...',
+                'purchasing' => 'Cari Produk, PO, Pemasok...',
+                'gudang'     => 'Cari Produk, DO, GR...',
+                default      => 'Cari Produk, SO, PO...',
+            };
+            $cmdSearchLong = match ($role) {
+                'sales'      => 'Ketik nama produk, nomor SO, atau nama pelanggan...',
+                'purchasing' => 'Ketik nama produk, nomor PO, atau nama pemasok...',
+                'gudang'     => 'Ketik nama produk, nomor pengiriman (DO), atau barang masuk (GR)...',
+                default      => 'Ketik nama produk, nomor SO/PO, pelanggan, atau pemasok...',
+            };
+          ?>
           <button type="button" id="erpCmdTrigger" class="erp-cmd-trigger" data-bs-toggle="modal" data-bs-target="#erpCommandModal">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <span class="flex-grow-1 text-start d-none d-md-inline">Cari SO, PO, Produk...</span>
+            <span class="flex-grow-1 text-start d-none d-md-inline"><?= esc($cmdSearchShort) ?></span>
             <span class="flex-grow-1 text-start d-inline d-md-none">Cari...</span>
-            <kbd class="erp-kbd d-none d-md-inline">Ctrl K</kbd>
           </button>
 
           <div class="d-none d-sm-flex align-items-center gap-2 ps-3 border-start">
@@ -531,15 +549,43 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Sidebar Collapse Toggle
+  // Sidebar Collapse Toggle & Collapsed Flyout Handling
   const sidebarBtn = document.getElementById('sidebarCollapseBtn');
   if (sidebarBtn) {
     sidebarBtn.addEventListener('click', function () {
       document.body.classList.toggle('sidebar-collapsed');
+      document.querySelectorAll('.navbar-vertical .nav-item.dropdown.flyout-open').forEach(function (el) {
+        el.classList.remove('flyout-open');
+      });
       localStorage.setItem('erp_sidebar_collapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
       window.dispatchEvent(new Event('resize'));
     });
   }
+
+  document.querySelectorAll('.navbar-vertical .nav-item.dropdown > .nav-link').forEach(function (toggle) {
+    toggle.addEventListener('click', function (e) {
+      if (document.body.classList.contains('sidebar-collapsed') && window.innerWidth >= 992) {
+        e.preventDefault();
+        e.stopPropagation();
+        const parentItem = toggle.closest('.nav-item.dropdown');
+        const wasOpen = parentItem.classList.contains('flyout-open');
+        document.querySelectorAll('.navbar-vertical .nav-item.dropdown.flyout-open').forEach(function (el) {
+          el.classList.remove('flyout-open');
+        });
+        if (!wasOpen) {
+          parentItem.classList.add('flyout-open');
+        }
+      }
+    });
+  });
+
+  document.addEventListener('click', function (e) {
+    if (document.body.classList.contains('sidebar-collapsed') && !e.target.closest('.navbar-vertical')) {
+      document.querySelectorAll('.navbar-vertical .nav-item.dropdown.flyout-open').forEach(function (el) {
+        el.classList.remove('flyout-open');
+      });
+    }
+  });
 
   // Command Palette (Ctrl+K / Cmd+K) - 100% reliable via trigger button
   const cmdModalEl = document.getElementById('erpCommandModal');
@@ -610,12 +656,12 @@ document.addEventListener('DOMContentLoaded', function () {
   <div class="modal-dialog modal-dialog-centered" style="max-width: 580px;">
     <div class="modal-content" style="border-radius: 16px; overflow: hidden;">
       <div class="modal-header border-bottom py-2 px-3">
-        <div class="input-group input-group-flat w-100">
-          <span class="input-group-text border-0 bg-transparent ps-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <div class="d-flex align-items-center gap-2 w-100">
+          <span class="d-inline-flex align-items-center justify-content-center text-secondary flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </span>
-          <input type="text" id="erpCmdInput" class="form-control border-0 shadow-none" placeholder="Ketik nomor SO, PO, nama produk, atau pelanggan..." autocomplete="off">
-          <span class="input-group-text border-0 bg-transparent"><kbd class="erp-kbd">ESC</kbd></span>
+          <input type="text" id="erpCmdInput" class="form-control border-0 shadow-none bg-transparent px-1 flex-grow-1" placeholder="<?= esc($cmdSearchLong) ?>" autocomplete="off">
+          <button type="button" class="btn-close erp-cmd-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
       </div>
       <div class="modal-body p-2" id="erpCmdResults" style="max-height: 360px; overflow-y: auto;">
@@ -628,6 +674,10 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php endif; ?>
         <?php if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)): ?>
           <a href="/purchase-orders" class="erp-cmd-result-item"><span>Daftar Pesanan Pembelian (PO)</span><span class="badge bg-azure-lt">Pembelian</span></a>
+        <?php endif; ?>
+        <?php if (in_array($role, ['admin', 'gudang', 'manajemen'], true)): ?>
+          <a href="/deliveries" class="erp-cmd-result-item"><span>Pengiriman Barang (DO)</span><span class="badge bg-primary-lt">Gudang</span></a>
+          <a href="/goods-receipts" class="erp-cmd-result-item"><span>Penerimaan Barang (GR)</span><span class="badge bg-primary-lt">Gudang</span></a>
         <?php endif; ?>
       </div>
     </div>

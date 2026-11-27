@@ -52,12 +52,12 @@
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8v5l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h-5"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8v5l3 2"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h-5"/></svg>
       </div>
-      <div class="h4 mb-1">Belum ada mutasi stok</div>
-      <div class="text-secondary small">Mutasi tercatat otomatis saat barang diterima (GR) atau dialokasikan/dikirim (SO/DO).</div>
+      <p class="empty-title">Belum ada mutasi stok</p>
+      <p class="empty-subtitle text-secondary">Mutasi tercatat otomatis saat barang diterima (GR) atau dialokasikan/dikirim (SO/DO).</p>
     </div>
   <?php else: ?>
     <div class="table-responsive">

@@ -35,61 +35,61 @@ $renderDelta = static function (?float $delta): string {
 
 $roleMeta = match ($userRole) {
     'gudang' => [
-        'pretitle' => 'Operasional Pergudangan',
-        'title' => 'Logistik & Pergudangan',
-        'subtitle' => 'Kontrol barang masuk, antrean pengiriman pelanggan, dan kesehatan stok fisik.',
+        'pretitle' => 'Operasional Gudang',
+        'title' => 'Ringkasan Gudang & Pengiriman',
+        'subtitle' => 'Pantau barang masuk dari pemasok, antrean pengiriman ke pelanggan, dan sisa stok di gudang.',
         'pdfOptions' => [
             'summary'   => ['label' => 'Ringkasan Operasional Gudang', 'checked' => true],
             'stock'     => ['label' => 'Daftar Stok Fisik Produk (Tanpa Harga)', 'checked' => true],
-            'low_stock' => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+            'low_stock' => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
         ],
     ],
     'sales' => [
         'pretitle' => 'Penjualan & Pelanggan',
-        'title' => 'Performa & Pipeline Penjualan',
-        'subtitle' => 'Pantau omzet, distribusi status SO, pelanggan utama, dan produk terlaris.',
+        'title' => 'Ringkasan Penjualan',
+        'subtitle' => 'Pantau total penjualan, status pesanan pelanggan, pelanggan teratas, dan produk terlaris.',
         'pdfOptions' => [
-            'summary'      => ['label' => 'Ringkasan Kinerja Penjualan (KPI)', 'checked' => true],
-            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
+            'summary'      => ['label' => 'Ringkasan Penjualan', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Pesanan Penjualan (SO)', 'checked' => true],
             'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => true],
-            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => false],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => false],
         ],
     ],
     'purchasing' => [
-        'pretitle' => 'Pengadaan & Pemasok',
-        'title' => 'Pengadaan & Radar Restok',
-        'subtitle' => 'Kelola permintaan restok, status persetujuan PO, dan kontribusi pemasok.',
+        'pretitle' => 'Pembelian & Pemasok',
+        'title' => 'Ringkasan Pembelian & Stok Ulang',
+        'subtitle' => 'Pantau permintaan isi ulang stok, status persetujuan pesanan beli, dan daftar pemasok utama.',
         'pdfOptions' => [
-            'summary'   => ['label' => 'Ringkasan Pengadaan & Pembelian (KPI)', 'checked' => true],
-            'purchase'  => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'summary'   => ['label' => 'Ringkasan Pembelian', 'checked' => true],
+            'purchase'  => ['label' => 'Rincian Pesanan Pembelian (PO)', 'checked' => true],
             'stock'     => ['label' => 'Daftar Stok Produk & Nilai Persediaan', 'checked' => false],
-            'low_stock' => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+            'low_stock' => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
         ],
     ],
     'manajemen' => [
-        'pretitle' => 'Executive Command Center',
-        'title' => 'Dashboard Eksekutif',
-        'subtitle' => 'Arus kas penjualan vs belanja, komposisi kategori, sebaran gudang, dan antrean ACC PO.',
+        'pretitle' => 'Ringkasan Pimpinan',
+        'title' => 'Ringkasan Usaha',
+        'subtitle' => 'Pantau perbandingan penjualan dan pembelian, stok per gudang, serta pesanan beli yang menunggu persetujuan.',
         'pdfOptions' => [
-            'summary'      => ['label' => 'Ringkasan Eksekutif (KPI Utama)', 'checked' => true],
-            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
-            'purchase'     => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'summary'      => ['label' => 'Ringkasan Utama Usaha', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Pesanan Penjualan (SO)', 'checked' => true],
+            'purchase'     => ['label' => 'Rincian Pesanan Pembelian (PO)', 'checked' => true],
             'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => true],
-            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Aset', 'checked' => false],
-            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Barang', 'checked' => false],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
         ],
     ],
     default => [
-        'pretitle' => 'Tata Kelola Sistem & Master Data',
-        'title' => 'Dashboard Administrator',
-        'subtitle' => 'Ringkasan katalog produk, pengguna aktif, serta aktivitas transaksi sistem.',
+        'pretitle' => 'Pengaturan Sistem & Data Utama',
+        'title' => 'Ringkasan Admin',
+        'subtitle' => 'Pantau jumlah produk, pengguna aktif, stok menipis, dan ringkasan transaksi.',
         'pdfOptions' => [
-            'summary'      => ['label' => 'Ringkasan Eksekutif (KPI Utama)', 'checked' => true],
-            'sales'        => ['label' => 'Rincian Transaksi Penjualan (SO)', 'checked' => true],
-            'purchase'     => ['label' => 'Rincian Transaksi Pembelian (PO)', 'checked' => true],
+            'summary'      => ['label' => 'Ringkasan Utama Usaha', 'checked' => true],
+            'sales'        => ['label' => 'Rincian Pesanan Penjualan (SO)', 'checked' => true],
+            'purchase'     => ['label' => 'Rincian Pesanan Pembelian (PO)', 'checked' => true],
             'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => false],
-            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Aset', 'checked' => true],
-            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Kritis', 'checked' => true],
+            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Barang', 'checked' => true],
+            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
         ],
     ],
 };
@@ -192,9 +192,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Barang Masuk (GR)</span>
-        <span class="kpi-icon-pill kpi-icon-primary"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Barang Masuk (GR)</div>
+        <span class="avatar avatar-sm bg-primary-lt text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3v12"/><path d="M8 11l4 4l4 -4"/><path d="M8 5h-4a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2 -2v-10a2 2 0 0 0 -2 -2h-4"/></svg></span>
       </div>
       <div class="kpi-value mb-2"><?= number_format((float) ($grQtyThisMonth ?? 0), 0, ',', '.') ?> <span class="fs-5 text-secondary fw-normal">unit</span></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -205,9 +205,9 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Barang Keluar (DO)</span>
-        <span class="kpi-icon-pill kpi-icon-success"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 18H3c-.6 0-1-.4-1-1V7c0-.6.4-1 1-1h10c.6 0 1 .4 1 1v11"/><path d="M14 9h4l4 4v4c0 .6-.4 1-1 1h-2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Barang Keluar (DO)</div>
+        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M5 17h-2v-11a1 1 0 0 1 1 -1h9v12m-4 0h6m4 0h2v-6h-8m0 -5h5l3 5"/></svg></span>
       </div>
       <div class="kpi-value mb-2"><?= number_format((float) ($doQtyThisMonth ?? 0), 0, ',', '.') ?> <span class="fs-5 text-secondary fw-normal">unit</span></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -219,21 +219,21 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/deliveries?status=pending_so" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Siap Dikirim</span>
-          <span class="kpi-icon-pill kpi-icon-azure"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Siap Dikirim</div>
+          <span class="avatar avatar-sm bg-azure-lt text-azure"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7v5l3 3"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($pendingDeliveriesCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">SO</span></div>
-        <div class="text-secondary small">Menunggu proses packing &amp; DO &rarr;</div>
+        <div class="text-secondary small">Menunggu disiapkan &amp; dikirim &rarr;</div>
       </div></div>
     </a>
   </div>
   <div class="col-sm-6 col-xl-3">
     <a href="/inventory" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Stok Kritis</span>
-          <span class="kpi-icon-pill <?= !empty($lowStock) ? 'kpi-icon-danger' : 'kpi-icon-success' ?>"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Stok Kritis</div>
+          <span class="avatar avatar-sm <?= !empty($lowStock) ? 'bg-red-lt text-red' : 'bg-green-lt text-green' ?>"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></span>
         </div>
         <div class="kpi-value mb-2 <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>"><?= count($lowStock ?? []) ?> <span class="fs-5 text-secondary fw-normal">Produk</span></div>
         <div class="text-secondary small"><?= !empty($lowStock) ? 'Di bawah batas minimum' : 'Semua stok fisik aman' ?></div>
@@ -271,8 +271,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card h-100">
+      <div class="card-status-top bg-primary"></div>
       <div class="card-header bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h3 class="card-title m-0">Antrean Operasional Gudang</h3>
+        <h3 class="card-title m-0">Daftar Kerja Gudang</h3>
         <ul class="nav erp-card-tabs" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabGudangDO" type="button">Siap Kirim (<?= esc($pendingDeliveriesCount ?? 0) ?>)</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGudangGR" type="button">Kedatangan PO (<?= esc($pendingReceiptsCount ?? 0) ?>)</button></li>
@@ -333,9 +334,13 @@ $roleMeta = match ($userRole) {
               <table class="table table-vcenter card-table table-hover mb-0">
                 <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Batas Min</th></tr></thead>
                 <tbody>
-                  <?php foreach ($lowStock as $p): ?>
+                  <?php foreach ($lowStock as $p): $pct = (int) min(100, max(5, ((int) $p['min_stock'] > 0 ? round(((int) $p['stock_qty'] / (int) $p['min_stock']) * 100) : 0))); ?>
                   <tr>
-                    <td><div class="fw-semibold"><?= esc($p['name']) ?></div><div class="small text-secondary"><?= esc($p['code']) ?></div></td>
+                    <td>
+                      <div class="fw-semibold"><?= esc($p['name']) ?></div>
+                      <div class="small text-secondary mb-1"><?= esc($p['code']) ?></div>
+                      <div class="progress progress-sm"><div class="progress-bar <?= $pct <= 25 ? 'bg-danger' : 'bg-warning' ?>" style="width: <?= $pct ?>%"></div></div>
+                    </td>
                     <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
                     <td class="text-center text-secondary"><?= esc($p['min_stock']) ?></td>
                   </tr>
@@ -351,7 +356,7 @@ $roleMeta = match ($userRole) {
   <div class="col-lg-5">
     <div class="card h-100">
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">Top 5 Produk Fast Moving</h3>
+        <h3 class="card-title m-0">5 Produk Paling Sering Keluar</h3>
         <span class="text-secondary small">Total dikirim keluar</span>
       </div>
       <div class="card-body">
@@ -368,9 +373,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Total Penjualan</span>
-        <span class="kpi-icon-pill kpi-icon-success"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Total Penjualan</div>
+        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"/><path d="M12 3v3m0 12v3"/></svg></span>
       </div>
       <div class="kpi-value text-success mb-2">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -382,9 +387,9 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/sales-orders?status=revision" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Perlu Tindak Lanjut</span>
-          <span class="kpi-icon-pill kpi-icon-warning"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M3.6 9h16.8a1 1 0 0 1 .9 1.45l-8.4 15.1a1 1 0 0 1-1.8 0L2.7 10.45A1 1 0 0 1 3.6 9z"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Perlu Diperiksa</div>
+          <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc(($draftSoCount ?? 0) + ($revisionSoCount ?? 0)) ?> <span class="fs-5 text-secondary fw-normal">SO</span></div>
         <div class="text-secondary small"><?= esc($draftSoCount ?? 0) ?> Draf &bull; <?= esc($revisionSoCount ?? 0) ?> Revisi</div>
@@ -393,9 +398,9 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Sudah Terkirim</span>
-        <span class="kpi-icon-pill kpi-icon-azure"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Sudah Terkirim</div>
+        <span class="avatar avatar-sm bg-azure-lt text-azure"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg></span>
       </div>
       <div class="kpi-value mb-2"><?= esc($deliveredSoCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">SO</span></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -407,9 +412,9 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/customers" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Pelanggan Aktif</span>
-          <span class="kpi-icon-pill kpi-icon-primary"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Pelanggan Aktif</div>
+          <span class="avatar avatar-sm bg-primary-lt text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($customerCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">Mitra</span></div>
         <div class="text-secondary small">Kelola daftar pelanggan &rarr;</div>
@@ -518,9 +523,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Total Belanja PO</span>
-        <span class="kpi-icon-pill kpi-icon-azure"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Total Belanja PO</div>
+        <span class="avatar avatar-sm bg-azure-lt text-azure"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg></span>
       </div>
       <div class="kpi-value text-primary mb-2">Rp <?= number_format((float) ($purchasesThisMonth ?? 0), 0, ',', '.') ?></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -532,21 +537,21 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/purchase-orders?status=draft" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Menunggu ACC</span>
-          <span class="kpi-icon-pill kpi-icon-warning"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Menunggu Persetujuan</div>
+          <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 7v5l3 3"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($draftPoCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">PO</span></div>
-        <div class="text-secondary small">Menunggu persetujuan Direksi</div>
+        <div class="text-secondary small">Menunggu persetujuan pimpinan</div>
       </div></div>
     </a>
   </div>
   <div class="col-sm-6 col-xl-3">
     <a href="/purchase-orders?status=approved" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Siap Diterima Gudang</span>
-          <span class="kpi-icon-pill kpi-icon-primary"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Siap Diterima Gudang</div>
+          <span class="avatar avatar-sm bg-primary-lt text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($approvedPoCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">PO</span></div>
         <div class="text-secondary small">PO aktif dalam perjalanan</div>
@@ -555,9 +560,9 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Perlu Segera Restok</span>
-        <span class="kpi-icon-pill <?= !empty($lowStock) ? 'kpi-icon-danger' : 'kpi-icon-success' ?>"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Perlu Segera Dibeli Ulang</div>
+        <span class="avatar avatar-sm <?= !empty($lowStock) ? 'bg-red-lt text-red' : 'bg-green-lt text-green' ?>"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg></span>
       </div>
       <div class="kpi-value mb-2 <?= !empty($lowStock) ? 'text-danger' : 'text-success' ?>"><?= count($lowStock ?? []) ?> <span class="fs-5 text-secondary fw-normal">Produk</span></div>
       <div class="text-secondary small"><?= count($restockAlerts ?? []) ?> permintaan dari Sales</div>
@@ -566,9 +571,10 @@ $roleMeta = match ($userRole) {
 </div>
 
 <?php if (! empty($restockAlerts)): ?>
-<div class="card mb-4 border-warning">
+<div class="card mb-4">
+  <div class="card-status-top bg-warning"></div>
   <div class="card-header bg-warning-lt d-flex justify-content-between align-items-center">
-    <h3 class="card-title m-0 text-dark">Notifikasi Kebutuhan Restok dari Pesanan Pelanggan</h3>
+    <h3 class="card-title m-0 text-dark">Peringatan Stok Kurang dari Pesanan Pelanggan</h3>
     <span class="badge bg-warning text-white fw-bold"><?= count($restockAlerts) ?> Permintaan</span>
   </div>
   <div class="table-responsive">
@@ -631,8 +637,9 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-lg-7">
     <div class="card h-100">
+      <div class="card-status-top bg-primary"></div>
       <div class="card-header bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <h3 class="card-title m-0">Tindak Lanjut Pengadaan</h3>
+        <h3 class="card-title m-0">Daftar Pembelian &amp; Stok Menipis</h3>
         <ul class="nav erp-card-tabs" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPurchLow" type="button">Stok Menipis (<?= count($lowStock ?? []) ?>)</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabPurchPO" type="button">PO Terbaru</button></li>
@@ -647,18 +654,25 @@ $roleMeta = match ($userRole) {
               <table class="table table-vcenter card-table table-hover mb-0">
                 <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Min</th><th class="text-end">Aksi</th></tr></thead>
                 <tbody>
-                  <?php foreach ($lowStock as $p): $suggestedQty = max(10, ((int) $p['min_stock'] * 2) - (int) $p['stock_qty']); ?>
+                  <?php foreach ($lowStock as $p): $suggestedQty = max(10, ((int) $p['min_stock'] * 2) - (int) $p['stock_qty']); $pct = (int) min(100, max(5, ((int) $p['min_stock'] > 0 ? round(((int) $p['stock_qty'] / (int) $p['min_stock']) * 100) : 0))); ?>
                   <tr>
                     <td>
                       <div class="fw-semibold"><?= esc($p['name']) ?></div>
-                      <div class="small text-secondary"><?= esc($p['code']) ?></div>
+                      <div class="small text-secondary mb-1"><?= esc($p['code']) ?></div>
+                      <div class="progress progress-sm mb-1"><div class="progress-bar <?= $pct <= 25 ? 'bg-danger' : 'bg-warning' ?>" style="width: <?= $pct ?>%"></div></div>
                       <?php if (! empty($p['active_po_number'])): ?>
                         <span class="badge bg-warning-lt mt-1">Sedang dipesan: <?= esc($p['active_po_number']) ?></span>
                       <?php endif; ?>
                     </td>
                     <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
                     <td class="text-center text-secondary"><?= esc($p['min_stock']) ?></td>
-                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">Buat PO</a></td>
+                    <td class="text-end">
+                      <?php if (! empty($p['active_po_number']) && ! empty($p['active_po_id'])): ?>
+                        <a class="btn btn-sm btn-outline-secondary" href="/purchase-orders/show/<?= esc($p['active_po_id']) ?>">Lihat PO</a>
+                      <?php else: ?>
+                        <a class="btn btn-sm btn-primary" href="/purchase-orders/create?product_id=<?= esc($p['id']) ?>&qty=<?= $suggestedQty ?>">Buat PO</a>
+                      <?php endif; ?>
+                    </td>
                   </tr>
                   <?php endforeach; ?>
                 </tbody>
@@ -699,9 +713,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3 mb-4">
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Total Penjualan</span>
-        <span class="kpi-icon-pill kpi-icon-success"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Total Penjualan</div>
+        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg></span>
       </div>
       <div class="kpi-value text-success mb-2">Rp <?= number_format((float) ($totalSales ?? 0), 0, ',', '.') ?></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -712,9 +726,9 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Total Pembelian</span>
-        <span class="kpi-icon-pill kpi-icon-azure"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Total Pembelian</div>
+        <span class="avatar avatar-sm bg-azure-lt text-azure"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg></span>
       </div>
       <div class="kpi-value text-primary mb-2">Rp <?= number_format((float) ($totalPurchases ?? 0), 0, ',', '.') ?></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -726,20 +740,20 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <?php $marginPositive = ($netMargin ?? 0) >= 0; ?>
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Arus Kas Operasional</span>
-        <span class="kpi-icon-pill <?= $marginPositive ? 'kpi-icon-success' : 'kpi-icon-danger' ?>"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Arus Kas Operasional</div>
+        <span class="avatar avatar-sm <?= $marginPositive ? 'bg-green-lt text-green' : 'bg-red-lt text-red' ?>"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"/><path d="M12 3v3m0 12v3"/></svg></span>
       </div>
       <div class="kpi-value mb-2 <?= $marginPositive ? 'text-success' : 'text-danger' ?>">Rp <?= number_format((float) ($netMargin ?? 0), 0, ',', '.') ?></div>
-      <div class="text-secondary small">Selisih omzet &minus; belanja stok</div>
+      <div class="text-secondary small">Selisih penjualan dikurangi belanja</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-xl-3">
     <a href="/inventory" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Nilai Aset Stok</span>
-          <span class="kpi-icon-pill kpi-icon-warning"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Nilai Aset Stok</div>
+          <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg></span>
         </div>
         <div class="kpi-value mb-2">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
         <div class="text-secondary small"><?= esc($lowStockCount ?? 0) ?> produk perlu restok ulang</div>
@@ -777,8 +791,9 @@ $roleMeta = match ($userRole) {
 <div class="row g-3 mb-4">
   <div class="col-lg-7">
     <div class="card h-100">
+      <div class="card-status-top <?= !empty($pendingPoCount) ? 'bg-warning' : 'bg-success' ?>"></div>
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">Antrean Persetujuan Pembelian (ACC Direktur)</h3>
+        <h3 class="card-title m-0">Pesanan Beli Menunggu Persetujuan</h3>
         <span class="badge <?= !empty($pendingPoCount) ? 'bg-warning text-white' : 'bg-success-lt' ?> fw-bold"><?= esc($pendingPoCount ?? 0) ?> Menunggu</span>
       </div>
       <?php if (empty($pendingApprovalPOs)): ?>
@@ -794,7 +809,7 @@ $roleMeta = match ($userRole) {
                 <td class="fw-semibold"><?= esc($po['supplier_name']) ?></td>
                 <td class="small text-secondary"><?= esc($po['creator_name']) ?></td>
                 <td class="text-end tabular-nums fw-bold">Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></td>
-                <td class="text-end"><button type="button" class="btn btn-sm btn-warning fw-semibold js-po-drawer" data-po-id="<?= esc($po['id']) ?>">Review / ACC</button></td>
+                <td class="text-end"><button type="button" class="btn btn-sm btn-warning fw-semibold js-po-drawer" data-po-id="<?= esc($po['id']) ?>">Periksa &amp; Setujui</button></td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -820,6 +835,7 @@ $roleMeta = match ($userRole) {
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card h-100">
+      <div class="card-status-top bg-primary"></div>
       <div class="card-header bg-transparent d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h3 class="card-title m-0">Ringkasan Transaksi (<?= esc($pLabel) ?>)</h3>
         <ul class="nav erp-card-tabs" role="tablist">
@@ -906,30 +922,30 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/products" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Total Produk</span>
-          <span class="kpi-icon-pill kpi-icon-primary"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Total Produk</div>
+          <span class="avatar avatar-sm bg-primary-lt text-primary"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg></span>
         </div>
-        <div class="kpi-value mb-2"><?= esc($productCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">SKU</span></div>
+        <div class="kpi-value mb-2"><?= esc($productCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">Produk</span></div>
         <div class="text-secondary small"><?= esc($categoryCount ?? 0) ?> Kategori &bull; <?= esc($warehouseCount ?? 0) ?> Gudang</div>
       </div></div>
     </a>
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Nilai Persediaan</span>
-        <span class="kpi-icon-pill kpi-icon-warning"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Nilai Persediaan</div>
+        <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0"/><path d="M4 6v6a8 3 0 0 0 16 0v-6"/><path d="M4 12v6a8 3 0 0 0 16 0v-6"/></svg></span>
       </div>
       <div class="kpi-value mb-2">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
-      <div class="text-secondary small">Estimasi modal seluruh stok</div>
+      <div class="text-secondary small">Perkiraan nilai seluruh stok barang</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <span class="text-secondary small fw-bold text-uppercase">Penjualan (<?= esc($pLabel) ?>)</span>
-        <span class="kpi-icon-pill kpi-icon-success"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="subheader">Penjualan (<?= esc($pLabel) ?>)</div>
+        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg></span>
       </div>
       <div class="kpi-value text-success mb-2">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
       <div class="d-flex align-items-center justify-content-between gap-2">
@@ -941,9 +957,9 @@ $roleMeta = match ($userRole) {
   <div class="col-sm-6 col-xl-3">
     <a href="/users" class="kpi-card-link">
       <div class="card kpi-card h-100"><div class="card-body p-3">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <span class="text-secondary small fw-bold text-uppercase">Pengguna Aktif</span>
-          <span class="kpi-icon-pill kpi-icon-purple"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Pengguna Aktif</div>
+          <span class="avatar avatar-sm bg-purple-lt text-purple"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($userCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">Akun</span></div>
         <div class="text-secondary small">Kelola pengguna &amp; peran &rarr;</div>
@@ -968,7 +984,7 @@ $roleMeta = match ($userRole) {
   <div class="col-lg-4">
     <div class="card h-100">
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">Komposisi Data</h3>
+        <h3 class="card-title m-0">Rincian Kategori &amp; Peran</h3>
         <ul class="nav erp-card-tabs" role="tablist">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabAdminCat" type="button">Kategori</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAdminRole" type="button">Peran</button></li>
@@ -990,6 +1006,7 @@ $roleMeta = match ($userRole) {
 <div class="row g-3">
   <div class="col-lg-7">
     <div class="card h-100">
+      <div class="card-status-top <?= !empty($lowStock) ? 'bg-danger' : 'bg-success' ?>"></div>
       <div class="card-header bg-transparent"><h3 class="card-title m-0">Produk dengan Stok Menipis</h3></div>
       <?php if (empty($lowStock)): ?>
         <div class="card-body text-center py-4 text-secondary">Seluruh stok aman.</div>
@@ -998,9 +1015,13 @@ $roleMeta = match ($userRole) {
           <table class="table table-vcenter card-table table-hover mb-0">
             <thead><tr><th>Produk</th><th class="text-center">Sisa</th><th class="text-center">Min</th></tr></thead>
             <tbody>
-              <?php foreach ($lowStock as $p): ?>
+              <?php foreach ($lowStock as $p): $pct = (int) min(100, max(5, ((int) $p['min_stock'] > 0 ? round(((int) $p['stock_qty'] / (int) $p['min_stock']) * 100) : 0))); ?>
               <tr>
-                <td><div class="fw-semibold"><?= esc($p['name']) ?></div><div class="small text-secondary"><?= esc($p['code']) ?></div></td>
+                <td>
+                  <div class="fw-semibold"><?= esc($p['name']) ?></div>
+                  <div class="small text-secondary mb-1"><?= esc($p['code']) ?></div>
+                  <div class="progress progress-sm"><div class="progress-bar <?= $pct <= 25 ? 'bg-danger' : 'bg-warning' ?>" style="width: <?= $pct ?>%"></div></div>
+                </td>
                 <td class="text-center"><span class="badge bg-danger-lt fw-bold"><?= esc($p['stock_qty']) ?> <?= esc($p['unit']) ?></span></td>
                 <td class="text-center text-secondary"><?= esc($p['min_stock']) ?></td>
               </tr>
@@ -1212,21 +1233,58 @@ document.addEventListener('DOMContentLoaded', function () {
       el.innerHTML = '<div class="text-center text-secondary small py-5">Belum ada data peringkat pada periode ini.</div>';
       return;
     }
+    const chartH = Math.max(220, Math.min(280, labelsArr.length * 46 + 48));
     new ApexCharts(el, {
-      chart: { type: 'bar', height: 255, toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans, sans-serif' },
+      chart: { type: 'bar', height: chartH, toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans, sans-serif' },
       series: [{ name: isCurrencyVal ? 'Nilai' : 'Jumlah', data: seriesArr }],
       colors: [colorHex],
-      plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '55%' } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '58%' } },
       dataLabels: { enabled: false },
+      yaxis: {
+        labels: { maxWidth: 155, style: { fontSize: '11.5px', colors: ['#334155'] } }
+      },
       xaxis: {
         categories: labelsArr,
-        labels: { formatter: (val) => isCurrencyVal ? fmtRpShort(val) : Math.round(val) }
+        tickAmount: 4,
+        labels: {
+          rotate: 0,
+          hideOverlappingLabels: true,
+          style: { fontSize: '11px', colors: ['#64748b'] },
+          formatter: (val) => isCurrencyVal ? fmtRpShort(val).replace('Rp ', '') : Math.round(val)
+        }
       },
       tooltip: {
         y: { formatter: (val) => isCurrencyVal ? fmtRp(val) : val.toLocaleString('id-ID') + ' unit' }
       },
       grid: { borderColor: '#e2e8f0', strokeDashArray: 4 }
     }).render();
+
+    const totalSum = seriesArr.reduce((acc, v) => acc + (Number(v) || 0), 0);
+    const listWrap = document.createElement('div');
+    listWrap.className = 'mt-3 pt-3 border-top d-flex flex-column gap-2';
+    labelsArr.forEach((lbl, idx) => {
+      const val = Number(seriesArr[idx]) || 0;
+      const pct = totalSum > 0 ? Math.round((val / totalSum) * 100) : 0;
+      const row = document.createElement('div');
+      row.className = 'd-flex justify-content-between align-items-center small';
+      const left = document.createElement('div');
+      left.className = 'd-flex align-items-center gap-2 text-truncate me-2';
+      const numBadge = document.createElement('span');
+      numBadge.className = 'badge bg-secondary-lt tabular-nums';
+      numBadge.textContent = String(idx + 1);
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'fw-semibold text-dark text-truncate';
+      nameSpan.textContent = String(lbl);
+      left.appendChild(numBadge);
+      left.appendChild(nameSpan);
+      const right = document.createElement('div');
+      right.className = 'text-nowrap tabular-nums';
+      right.innerHTML = `<strong class="text-dark">${isCurrencyVal ? fmtRp(val) : val.toLocaleString('id-ID') + ' unit'}</strong> <span class="text-secondary">(${pct}%)</span>`;
+      row.appendChild(left);
+      row.appendChild(right);
+      listWrap.appendChild(row);
+    });
+    el.parentNode.appendChild(listWrap);
   }
 
   // Render Role-Specific Donut & Bar Charts

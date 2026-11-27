@@ -145,7 +145,7 @@ class Deliveries extends BaseController
                 return redirect()->to('/deliveries/create')->with('error', 'Pesanan Jual tidak ditemukan.');
             }
             if ($so['status'] !== 'confirmed') {
-                return redirect()->to('/deliveries/create')->with('error', 'Pengiriman hanya bisa dibuat untuk SO berstatus Confirmed. SO ini berstatus ' . $so['status'] . '.');
+                return redirect()->to('/deliveries/create')->with('error', 'Pengiriman hanya bisa diproses untuk pesanan penjualan yang sudah Dikonfirmasi.');
             }
             $items = $db->table('sales_orders so')->select('so.id, so.product_id, so.qty, so.unit_price, p.code, p.name AS product_name, p.unit, p.stock_qty, COALESCE((SELECT SUM(d.qty_delivered) FROM deliveries d WHERE d.sales_order_id = so.id AND d.status <> \'cancelled\'), 0) AS delivered_qty')->join('products p', 'p.id = so.product_id')->where('so.so_number', $so['so_number'])->orderBy('so.id', 'ASC')->get()->getResultArray();
             

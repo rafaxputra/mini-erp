@@ -168,12 +168,12 @@ class PurchaseOrders extends BaseController
                     $totalProjected = (int) $prod['stock_qty'] + $pendingQty;
 
                     if ($totalProjected >= $maxStock) {
-                        throw new \RuntimeException("Produk '{$prodName}' sudah mencapai kapasitas stok maksimal ({$maxStock} {$prod['unit']}). Stok fisik saat ini: {$prod['stock_qty']}, dalam pesanan berjalan: {$pendingQty}. Tidak diperbolehkan membuat pesanan baru.");
+                        throw new \RuntimeException("Stok {$prodName} sudah penuh (maksimal {$maxStock} {$prod['unit']}). Saat ini ada {$prod['stock_qty']} {$prod['unit']} di gudang dan {$pendingQty} {$prod['unit']} sedang dipesan, jadi belum bisa memesan lagi.");
                     }
 
                     if ($totalProjected + $qty > $maxStock) {
                         $availableQuota = max(0, $maxStock - $totalProjected);
-                        throw new \RuntimeException("Jumlah pesanan untuk '{$prodName}' ({$qty} {$prod['unit']}) melampaui kapasitas stok maksimal! Sisa kuota pesanan yang diperbolehkan adalah {$availableQuota} {$prod['unit']} (Maksimal: {$maxStock}, Fisik: {$prod['stock_qty']}, On-Order: {$pendingQty}).");
+                        throw new \RuntimeException("Pesanan {$prodName} sebanyak {$qty} {$prod['unit']} melebihi batas gudang. Anda maksimal hanya bisa memesan {$availableQuota} {$prod['unit']} lagi, karena kapasitas gudang {$maxStock} {$prod['unit']}, stok saat ini {$prod['stock_qty']} {$prod['unit']}, dan sedang ada pesanan berjalan {$pendingQty} {$prod['unit']}.");
                     }
                 }
 
@@ -251,7 +251,7 @@ class PurchaseOrders extends BaseController
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] !== 'draft') {
-            return redirect()->to($redirectTarget)->with('error', 'Hanya PO berstatus Draft yang bisa di-approve (ACC).');
+            return redirect()->to($redirectTarget)->with('error', 'Hanya pesanan pembelian berstatus Draf yang bisa disetujui.');
         }
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -271,7 +271,7 @@ class PurchaseOrders extends BaseController
         $po = (new PurchaseOrderModel())->find((int) $id);
         if (! $po) return redirect()->to('/purchase-orders')->with('error', 'Pesanan Beli tidak ditemukan.');
         if ($po['status'] === 'received') {
-            return redirect()->to($redirectTarget)->with('error', 'PO yang sudah diterima penuh tidak bisa dibatalkan.');
+            return redirect()->to($redirectTarget)->with('error', 'Pesanan pembelian yang barangnya sudah diterima di gudang tidak bisa dibatalkan.');
         }
         if ($po['status'] === 'cancelled') {
             return redirect()->to($redirectTarget)->with('error', 'PO sudah dibatalkan/ditolak.');

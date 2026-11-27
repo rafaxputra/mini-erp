@@ -738,6 +738,18 @@ class Dashboard extends BaseController
             }
         }
 
+        if (in_array($role, ['admin', 'purchasing', 'manajemen'], true)) {
+            $sups = $db->query("SELECT id, name, phone FROM suppliers WHERE name ILIKE ? LIMIT 3", [$like])->getResultArray();
+            foreach ($sups as $s) {
+                $items[] = [
+                    'type' => 'Pemasok',
+                    'title' => esc($s['name']),
+                    'subtitle' => esc($s['phone'] ?? 'Mitra Pemasok'),
+                    'url' => '/suppliers',
+                ];
+            }
+        }
+
         return $this->response->setJSON(['items' => array_slice($items, 0, 12)]);
     }
 
@@ -1203,7 +1215,7 @@ LEFT JOIN (
     GROUP BY po.product_id
 ) active_po ON active_po.product_id = p.id
 WHERE p.stock_qty <= p.min_stock
-ORDER BY p.stock_qty ASC
+ORDER BY (CASE WHEN active_po.po_number IS NULL THEN 0 ELSE 1 END) ASC, p.stock_qty ASC
 SQL
         )->getResultArray();
     }

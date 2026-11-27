@@ -167,6 +167,12 @@ body {
   body.sidebar-collapsed .navbar-vertical {
     width: 74px !important;
     min-width: 74px !important;
+    overflow: visible !important;
+    z-index: 1030 !important;
+  }
+  body.sidebar-collapsed .navbar-vertical .container-fluid,
+  body.sidebar-collapsed .navbar-vertical .navbar-collapse {
+    overflow: visible !important;
   }
   body.sidebar-collapsed .page-wrapper {
     margin-left: 74px !important;
@@ -177,8 +183,62 @@ body {
   body.sidebar-collapsed .navbar-vertical .navbar-side .lh-1 {
     display: none !important;
   }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown {
+    position: relative !important;
+  }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown.is-active-group > .nav-link {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+  }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown.is-active-group > .nav-link .nav-link-icon {
+    color: #ffffff !important;
+  }
   body.sidebar-collapsed .navbar-vertical .dropdown-menu {
     display: none !important;
+    position: absolute !important;
+    left: calc(100% + 4px) !important;
+    top: 0 !important;
+    margin: 0 !important;
+    min-width: 225px !important;
+    background: #0f172a !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 10px !important;
+    padding: 0.45rem !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.4) !important;
+    z-index: 1050 !important;
+  }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -12px;
+    width: 12px;
+    height: 100%;
+    display: none;
+  }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown:hover::after,
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown.flyout-open::after {
+    display: block;
+  }
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown:hover > .dropdown-menu,
+  body.sidebar-collapsed .navbar-vertical .nav-item.dropdown.flyout-open > .dropdown-menu {
+    display: block !important;
+  }
+  body.sidebar-collapsed .navbar-vertical .dropdown-menu .sidebar-flyout-title {
+    display: block !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    padding: 0.35rem 0.75rem 0.45rem;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  body.sidebar-collapsed .navbar-vertical .dropdown-item {
+    margin: 0.12rem 0 !important;
   }
   body.sidebar-collapsed .navbar-vertical .navbar-brand a {
     justify-content: center;
@@ -757,6 +817,28 @@ kbd.erp-kbd {
 }
 .ts-dropdown .option { padding: 0.55rem 0.85rem !important; font-size: 0.9rem !important; }
 .ts-dropdown .active { background-color: #eff6ff !important; color: #1d4ed8 !important; font-weight: 600 !important; }
+
+/* Command Palette Modal Header & Close Button */
+#erpCommandModal .modal-header {
+  min-height: 54px;
+  padding: 0.5rem 1rem !important;
+}
+#erpCmdInput:focus {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+#erpCommandModal .erp-cmd-close {
+  position: static !important;
+  margin: 0 !important;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+#erpCommandModal .erp-cmd-close:hover {
+  background-color: #f1f5f9;
+}
 
 /* Print / Export PDF Styling */
 @media print {

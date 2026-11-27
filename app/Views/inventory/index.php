@@ -58,12 +58,12 @@
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
       </div>
-      <div class="h4 mb-1"><?= ($q !== '' || ! empty($warehouseId)) ? 'Tidak ada produk yang cocok dengan filter pencarian.' : 'Belum ada produk' ?></div>
-      <div class="text-secondary small">Coba ubah kata kunci atau reset filter pencarian.</div>
+      <p class="empty-title"><?= ($q !== '' || ! empty($warehouseId)) ? 'Tidak ada produk yang cocok dengan filter pencarian.' : 'Belum ada produk' ?></p>
+      <p class="empty-subtitle text-secondary">Coba ubah kata kunci atau reset filter pencarian.</p>
     </div>
   <?php else: ?>
     <div class="table-responsive">

@@ -83,12 +83,12 @@
 
 <div class="card border-0 shadow-sm">
   <?php if (empty($items)): ?>
-    <div class="card-body text-center py-5">
-      <div class="text-secondary mb-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
+    <div class="empty">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 17h-11v-14h-2"/><path d="M6 5l14 1l-1 7h-13"/></svg>
       </div>
-      <div class="h4 mb-1"><?= $filterActive ? 'Tidak ada Pesanan Beli yang cocok dengan filter.' : 'Belum ada pesanan beli' ?></div>
-      <div class="text-secondary small"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat PO untuk membuat pesanan baru.' ?></div>
+      <p class="empty-title"><?= $filterActive ? 'Tidak ada Pesanan Beli yang cocok dengan filter.' : 'Belum ada pesanan beli' ?></p>
+      <p class="empty-subtitle text-secondary"><?= $filterActive ? 'Coba ubah kata kunci atau reset filternya.' : 'Klik tombol Buat PO untuk membuat pesanan baru.' ?></p>
     </div>
   <?php else: ?>
     <div class="table-responsive">
@@ -113,8 +113,8 @@
           <td class="text-secondary font-monospace"><?= date('d/m/Y', strtotime($it['order_date'])) ?></td>
           <td class="text-center">
             <?php if ($isDraftAction): ?>
-              <span class="badge bg-warning-lt text-warning fw-bold border border-warning-subtle d-inline-flex align-items-center gap-1 px-2 py-1" title="Pesanan ini menunggu persetujuan (ACC) dari Anda">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-xs" width="14" height="14" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.76 2.75"/></svg>
+              <span class="badge bg-warning-lt text-warning fw-bold border border-warning-subtle d-inline-flex align-items-center gap-2 px-2 py-1" title="Pesanan ini menunggu persetujuan (ACC) dari Anda">
+                <span class="status-dot status-dot-animated bg-warning"></span>
                 Butuh ACC
               </span>
             <?php else: ?>

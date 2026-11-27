@@ -54,7 +54,7 @@
       <h3 class="card-title m-0 fw-bold">Daftar Produk yang Dijual</h3>
       <button type="button" class="btn btn-sm btn-outline-primary" id="addRowBtn">
         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-        Tambah Baris Produk <kbd class="erp-kbd ms-1">Alt+T</kbd>
+        Tambah Baris Produk
       </button>
     </div>
     <div class="table-responsive">

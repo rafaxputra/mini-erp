@@ -252,7 +252,7 @@ class Products extends BaseController
             || $db->table('sales_orders')->where('product_id', $id)->countAllResults() > 0;
 
         if ($hasTransactions) {
-            return redirect()->to('/products')->with('error', 'Produk tidak bisa dihapus karena sudah memiliki riwayat transaksi atau mutasi stok fisik. Data ini harus dipertahankan untuk jejak audit pembukuan.');
+            return redirect()->to('/products')->with('error', 'Produk tidak bisa dihapus karena sudah pernah dipakai dalam transaksi atau riwayat keluar-masuk barang.');
         }
 
         // 2. Jika belum pernah ada transaksi, pastikan saldo stok fisik = 0

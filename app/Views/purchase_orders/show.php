@@ -6,36 +6,24 @@
 <?php
 $poStatus = $po['status'];
 $poSteps = [
-  ['key' => 'draft',    'label' => '1. Draf Pengajuan'],
-  ['key' => 'approved', 'label' => '2. Disetujui (ACC)'],
-  ['key' => 'received', 'label' => '3. Diterima di Gudang'],
+  ['key' => 'draft',    'label' => 'Draf Pengajuan'],
+  ['key' => 'approved', 'label' => 'Disetujui (ACC)'],
+  ['key' => 'received', 'label' => 'Diterima di Gudang'],
 ];
 $poOrder = ['draft' => 0, 'approved' => 1, 'received' => 2];
-$curIdx = $poOrder[$poStatus] ?? -1;
+$curIdx = $poOrder[$poStatus] ?? 0;
+$stepsColor = $poStatus === 'cancelled' ? 'steps-red' : 'steps-green';
 ?>
-<div class="erp-stepper">
-  <?php foreach ($poSteps as $idx => $step):
-    $cls = '';
-    if ($poStatus === 'cancelled') {
-      $cls = $idx === 0 ? 'is-danger' : '';
-    } elseif ($idx < $curIdx || ($poStatus === 'received' && $idx === 2)) {
-      $cls = 'is-done';
-    } elseif ($idx === $curIdx) {
-      $cls = 'is-active';
-    }
-  ?>
-    <div class="erp-step <?= $cls ?>">
-      <span class="erp-step-dot"><?= $cls === 'is-done' ? '✓' : ($idx + 1) ?></span>
-      <span class="erp-step-label"><?= esc($step['label']) ?></span>
-    </div>
-  <?php endforeach; ?>
+<ul class="steps <?= $stepsColor ?> steps-counter my-3">
   <?php if ($poStatus === 'cancelled'): ?>
-    <div class="erp-step is-danger">
-      <span class="erp-step-dot">✕</span>
-      <span class="erp-step-label">Dibatalkan</span>
-    </div>
+    <li class="step-item">Draf Pengajuan</li>
+    <li class="step-item active">Dibatalkan</li>
+  <?php else: ?>
+    <?php foreach ($poSteps as $idx => $step): ?>
+      <li class="step-item <?= $idx === $curIdx ? 'active' : '' ?>"><?= esc($step['label']) ?></li>
+    <?php endforeach; ?>
   <?php endif; ?>
-</div>
+</ul>
 
 <!-- Kartu Ringkasan Informasi Pesanan -->
 <div class="card mb-3 border-0 shadow-sm">
@@ -112,21 +100,27 @@ $curIdx = $poOrder[$poStatus] ?? -1;
       </div>
     <?php endif; ?>
 
-    <!-- Grid Detail Informasi -->
-    <div class="row g-3">
-      <div class="col-sm-4 col-lg-4">
-        <div class="text-secondary small">Pemasok</div>
-        <div class="fw-bold text-dark mt-1"><?= esc($po['supplier_name']) ?></div>
-        <div class="text-secondary small font-monospace"><?= esc($po['supplier_code']) ?></div>
+    <!-- Ringkasan Informasi (Tabler Datagrid) -->
+    <div class="datagrid">
+      <div class="datagrid-item">
+        <div class="datagrid-title">Pemasok</div>
+        <div class="datagrid-content">
+          <div class="fw-bold text-dark"><?= esc($po['supplier_name']) ?></div>
+          <div class="text-secondary small font-monospace"><?= esc($po['supplier_code']) ?></div>
+        </div>
       </div>
-      <div class="col-sm-4 col-lg-4">
-        <div class="text-secondary small">Tanggal Pesanan</div>
-        <div class="fw-bold text-dark mt-1"><?= date('d M Y', strtotime($po['order_date'])) ?></div>
-        <div class="text-secondary small font-monospace"><?= esc($po['order_date']) ?></div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Tanggal Pesanan</div>
+        <div class="datagrid-content">
+          <div class="fw-bold text-dark"><?= date('d M Y', strtotime($po['order_date'])) ?></div>
+          <div class="text-secondary small font-monospace"><?= esc($po['order_date']) ?></div>
+        </div>
       </div>
-      <div class="col-sm-4 col-lg-4">
-        <div class="text-secondary small">Total Nilai Pesanan</div>
-        <div class="fw-bold fs-2 text-primary mt-1">Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Total Nilai Pesanan</div>
+        <div class="datagrid-content">
+          <span class="fw-bold fs-2 text-primary">Rp <?= number_format((float) $po['total_amount'], 0, ',', '.') ?></span>
+        </div>
       </div>
     </div>
 
@@ -201,41 +195,86 @@ $curIdx = $poOrder[$poStatus] ?? -1;
   </div>
 </div>
 
-<!-- Riwayat Penerimaan Barang (Goods Receipt) -->
-<?php if (! empty($receipts)): ?>
-<div class="card border-0 shadow-sm">
+<!-- Jejak Aktivitas & Alur Dokumen (Tabler Timeline) -->
+<div class="card border-0 shadow-sm mt-3">
   <div class="card-header bg-transparent py-3">
-    <h3 class="card-title m-0 fw-bold">Riwayat Penerimaan Barang Masuk (Goods Receipt)</h3>
+    <h3 class="card-title m-0 fw-bold">Jejak Aktivitas &amp; Alur Dokumen</h3>
   </div>
-  <div class="table-responsive">
-    <table class="table table-vcenter table-hover mb-0">
-      <thead class="table-light">
-        <tr>
-          <th style="width: 250px;">Nomor Penerimaan (GR)</th>
-          <th>Tanggal Penerimaan</th>
-          <th>Status Dokumen</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($receipts as $r): ?>
-        <tr>
-          <td>
-            <span class="badge bg-primary-lt font-monospace px-2 py-1 fs-4"><?= esc($r['gr_number']) ?></span>
-          </td>
-          <td>
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm text-secondary me-1" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/></svg>
-            <?= date('d M Y', strtotime($r['receipt_date'])) ?>
-          </td>
-          <td>
-            <span class="badge bg-success-lt">Tercatat di Gudang</span>
-          </td>
-        </tr>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
+  <div class="card-body">
+    <ul class="timeline">
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-primary-lt text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($po['created_at']) ? date('d M Y H:i', strtotime($po['created_at'])) : date('d M Y', strtotime($po['order_date'])) ?></div>
+            <h4 class="mb-1">Pengajuan PO Dibuat</h4>
+            <p class="text-secondary mb-0">Dokumen <strong><?= esc($po['po_number']) ?></strong> ke pemasok <?= esc($po['supplier_name']) ?> diajukan.</p>
+          </div>
+        </div>
+      </li>
+      <?php if (in_array($po['status'], ['approved', 'received'], true)): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-azure-lt text-azure">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($po['updated_at']) ? date('d M Y H:i', strtotime($po['updated_at'])) : date('d M Y', strtotime($po['order_date'])) ?></div>
+            <h4 class="mb-1">Disetujui Manajemen (ACC)</h4>
+            <p class="text-secondary mb-0">Pesanan pembelian telah disetujui dan siap diterima oleh tim Gudang.</p>
+          </div>
+        </div>
+      </li>
+      <?php endif; ?>
+      <?php if (! empty($receipts)): foreach ($receipts as $r): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-green-lt text-green">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5"/><path d="M12 12l8 -4.5"/><path d="M12 12l0 9"/><path d="M12 12l-8 -4.5"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= date('d M Y', strtotime($r['receipt_date'])) ?></div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+              <span class="badge bg-primary-lt font-monospace px-2 py-1"><?= esc($r['gr_number']) ?></span>
+              <span class="badge bg-success-lt">Tercatat di Gudang</span>
+            </div>
+            <p class="text-secondary mb-0">Barang masuk dari pemasok telah dicatat ke stok gudang melalui penerimaan <strong><?= esc($r['gr_number']) ?></strong>.</p>
+          </div>
+        </div>
+      </li>
+      <?php endforeach; endif; ?>
+      <?php if ($po['status'] === 'received'): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-success-lt text-success">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 12l2 2l4 -4"/><path d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18z"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($po['updated_at']) ? date('d M Y H:i', strtotime($po['updated_at'])) : '-' ?></div>
+            <h4 class="mb-1 text-success">PO Diterima Lengkap</h4>
+            <p class="text-secondary mb-0">Seluruh item pesanan pembelian telah diterima di gudang.</p>
+          </div>
+        </div>
+      </li>
+      <?php elseif ($po['status'] === 'cancelled'): ?>
+      <li class="timeline-event">
+        <div class="timeline-event-icon bg-danger-lt text-danger">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </div>
+        <div class="card timeline-event-card">
+          <div class="card-body">
+            <div class="text-secondary float-end small"><?= ! empty($po['updated_at']) ? date('d M Y H:i', strtotime($po['updated_at'])) : '-' ?></div>
+            <h4 class="mb-1 text-danger">Pesanan Dibatalkan / Ditolak</h4>
+            <p class="text-secondary mb-0">Pengajuan pembelian dihentikan dan tidak diproses lanjut.</p>
+          </div>
+        </div>
+      </li>
+      <?php endif; ?>
+    </ul>
   </div>
 </div>
-<?php endif; ?>
 
 <!-- Modal Konfirmasi & Catatan Pembatalan/Penolakan Pesanan Beli -->
 <div class="modal modal-blur fade" id="modalCancelPO" tabindex="-1" role="dialog" aria-hidden="true">
