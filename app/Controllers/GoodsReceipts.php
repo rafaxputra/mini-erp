@@ -220,4 +220,40 @@ class GoodsReceipts extends BaseController
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         }
     }
+
+    public function show($id)
+    {
+        if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Detail Barang Masuk.')) return $r;
+        $grRow = (new GoodsReceiptModel())->find((int) $id);
+        if (! $grRow) {
+            return redirect()->to('/goods-receipts')->with('error', 'Data penerimaan barang tidak ditemukan.');
+        }
+
+        $db = \Config\Database::connect();
+        $items = $db->table('goods_receipts gr')
+            ->select('gr.id, gr.gr_number, gr.receipt_date, gr.qty_received, gr.notes, gr.created_at, po.id AS po_id, po.po_number, po.order_date AS po_date, po.qty AS po_qty, p.code AS sku, p.name AS product_name, p.unit, s.name AS supplier_name, u.name AS receiver_name, w.name AS warehouse_name')
+            ->join('purchase_orders po', 'po.id = gr.purchase_order_id')
+            ->join('products p', 'p.id = po.product_id')
+            ->join('suppliers s', 's.id = po.supplier_id', 'left')
+            ->join('users u', 'u.id = gr.received_by', 'left')
+            ->join('warehouses w', 'w.id = gr.warehouse_id', 'left')
+            ->where('gr.gr_number', $grRow['gr_number'])
+            ->orderBy('gr.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($items)) {
+            return redirect()->to('/goods-receipts')->with('error', 'Data penerimaan barang tidak ditemukan.');
+        }
+
+        $first = $items[0];
+        $role = (string) session()->get('user_role');
+
+        return view('goods_receipts/show', [
+            'title' => 'Detail Barang Masuk ' . $first['gr_number'],
+            'gr' => $first,
+            'items' => $items,
+            'canViewPo' => in_array($role, ['admin', 'purchasing', 'manajemen'], true),
+        ]);
+    }
 }

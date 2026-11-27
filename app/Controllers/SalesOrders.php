@@ -235,7 +235,7 @@ class SalesOrders extends BaseController
 
         $existingNotes = $so['notes'] ? trim($so['notes']) : '';
         $canceller = session()->get('user_name') ?: 'User';
-        $cancelNote = "[Dibatalkan oleh {$canceller} pada " . date('d/m/Y H:i') . "]: " . $reason;
+        $cancelNote = "[Dibatalkan • " . date('d/m/Y H:i') . "] {$reason} (oleh {$canceller})";
         $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 
         $db = \Config\Database::connect();

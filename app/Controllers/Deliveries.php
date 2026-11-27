@@ -49,7 +49,7 @@ class Deliveries extends BaseController
         $pendingSoTotalCount = (int) ($db->query("SELECT COUNT(DISTINCT so_number) AS c FROM sales_orders WHERE status = 'confirmed'")->getRow('c') ?? 0);
 
         $countRows = $db->query("SELECT COALESCE(status, 'delivered') AS st, COUNT(DISTINCT delivery_number) AS cnt FROM deliveries GROUP BY COALESCE(status, 'delivered')")->getResultArray();
-        $statusCounts = ['all' => 0, 'scheduled' => 0, 'delivered' => 0, 'cancelled' => 0, 'pending_so' => $pendingSoTotalCount];
+        $statusCounts = ['all' => 0, 'scheduled' => 0, 'shipping' => 0, 'delivered' => 0, 'cancelled' => 0, 'pending_so' => $pendingSoTotalCount];
         foreach ($countRows as $cr) {
             $stKey = (string) $cr['st'];
             $cnt = (int) $cr['cnt'];
@@ -66,7 +66,7 @@ class Deliveries extends BaseController
             ->join('users u', 'u.id = d.delivered_by')
             ->join('warehouses w', 'w.id = d.warehouse_id');
 
-        if (in_array($status, ['scheduled', 'delivered', 'cancelled'], true)) {
+        if (in_array($status, ['scheduled', 'shipping', 'delivered', 'cancelled'], true)) {
             $subQuery->where('d.status', $status);
         }
 
@@ -203,8 +203,8 @@ class Deliveries extends BaseController
         if (! preg_match('/^\d{2}:\d{2}$/', $deliveryTime)) {
             $deliveryTime = date('H:i');
         }
-        $deliveryStatus = $this->request->getPost('delivery_status') === 'scheduled' ? 'scheduled' : 'delivered';
-        if ($deliveryStatus === 'delivered') {
+        $deliveryStatus = $this->request->getPost('delivery_status') === 'scheduled' ? 'scheduled' : 'shipping';
+        if ($deliveryStatus === 'shipping') {
             $deliveryDate = date('Y-m-d');
         }
         $qtys = (array) $this->request->getPost('qty_delivered');
@@ -277,22 +277,10 @@ class Deliveries extends BaseController
                     $stock->deliverStock($line['product_id'], $extraToDeduct, 'SALES_DELIVERY', (int) $doRowId, $this->userId(), 'Kirim SO ' . $so['so_number'], $warehouseId);
                 }
             }
-            if ($deliveryStatus === 'delivered') {
-                $soRows = $db->table('sales_orders')->select('id, qty')->where('so_number', $so['so_number'])->get()->getResultArray();
-                $full = true;
-                foreach ($soRows as $row) {
-                    $delivered = (int) ($db->query("SELECT COALESCE(SUM(qty_delivered), 0) AS total FROM deliveries WHERE sales_order_id = ? AND status = 'delivered'", [(int) $row['id']])->getRowArray()['total']);
-                    if ($delivered < (int) $row['qty']) { $full = false; break; }
-                }
-                if ($full) {
-                    $db->table('sales_orders')->where('so_number', $so['so_number'])->update(['status' => 'delivered', 'updated_at' => date('Y-m-d H:i:s')]);
-                    $db->table('restock_alerts')->where('sales_order_number', $so['so_number'])->whereIn('status', ['open', 'ordered'])->update(['status' => 'resolved', 'updated_at' => date('Y-m-d H:i:s')]);
-                }
-            }
             $db->transCommit();
             $msg = $deliveryStatus === 'scheduled'
                 ? 'Pengiriman berhasil dijadwalkan (Status: Terjadwal).'
-                : 'Pengiriman berhasil disimpan (Status: Terkirim).';
+                : 'Pengiriman berhasil dibuat (Status: Dalam Pengiriman).';
             return redirect()->to('/deliveries')->with('success', $msg);
         } catch (\Throwable $e) {
             $db->transRollback();
@@ -307,8 +295,8 @@ class Deliveries extends BaseController
         if (! $do) {
             return redirect()->to('/deliveries')->with('error', 'Data pengiriman tidak ditemukan.');
         }
-        if ($do['status'] !== 'scheduled') {
-            return redirect()->to('/deliveries')->with('error', 'Hanya pengiriman berstatus Terjadwal yang dapat diselesaikan.');
+        if (! in_array($do['status'], ['scheduled', 'shipping'], true)) {
+            return redirect()->to('/deliveries')->with('error', 'Hanya pengiriman berstatus Terjadwal atau Dalam Pengiriman yang dapat diselesaikan.');
         }
         $db = \Config\Database::connect();
         $db->transBegin();
@@ -318,7 +306,7 @@ class Deliveries extends BaseController
                     ->select('id')
                     ->where('delivery_number', $do['delivery_number'])
                     ->where('created_at', $do['created_at'])
-                    ->where('status', 'scheduled')
+                    ->whereIn('status', ['scheduled', 'shipping'])
                     ->get()
                     ->getResultArray(),
                 'id'
@@ -329,7 +317,7 @@ class Deliveries extends BaseController
 
             $db->table('deliveries')
                 ->whereIn('id', $doRowIds)
-                ->where('status', 'scheduled')
+                ->whereIn('status', ['scheduled', 'shipping'])
                 ->update(['status' => 'delivered', 'updated_at' => date('Y-m-d H:i:s')]);
 
             $soRow = (new SalesOrderModel())->find((int) $do['sales_order_id']);
@@ -342,6 +330,7 @@ class Deliveries extends BaseController
                 }
                 if ($full) {
                     $db->table('sales_orders')->where('so_number', $soRow['so_number'])->where('status', 'confirmed')->update(['status' => 'delivered', 'updated_at' => date('Y-m-d H:i:s')]);
+                    $db->table('restock_alerts')->where('sales_order_number', $soRow['so_number'])->whereIn('status', ['open', 'ordered'])->update(['status' => 'resolved', 'updated_at' => date('Y-m-d H:i:s')]);
                 }
             }
             $db->transCommit();
@@ -359,8 +348,8 @@ class Deliveries extends BaseController
         if (! $do) {
             return redirect()->to('/deliveries')->with('error', 'Data pengiriman tidak ditemukan.');
         }
-        if ($do['status'] !== 'scheduled') {
-            return redirect()->to('/deliveries')->with('error', 'Hanya pengiriman berstatus Terjadwal yang dapat dibatalkan. Pengiriman yang sudah Terkirim tidak bisa dibatalkan.');
+        if (! in_array($do['status'], ['scheduled', 'shipping'], true)) {
+            return redirect()->to('/deliveries')->with('error', 'Hanya pengiriman berstatus Terjadwal atau Dalam Pengiriman yang dapat dibatalkan. Pengiriman yang sudah Terkirim tidak bisa dibatalkan.');
         }
         $reason = trim((string) $this->request->getPost('cancel_reason'));
         if ($reason === '') {
@@ -453,7 +442,7 @@ class Deliveries extends BaseController
                             }
                         }
 
-                        $cancelNote = "[Dibatalkan oleh {$canceller} via Pembatalan DO {$do['delivery_number']} pada " . date('d/m/Y H:i') . "]: " . $reason;
+                        $cancelNote = "[Dibatalkan • {$do['delivery_number']} • " . date('d/m/Y H:i') . "] {$reason} (oleh {$canceller})";
                         $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 
                         $db->table('sales_orders')
@@ -476,7 +465,7 @@ class Deliveries extends BaseController
                         $soAction = 'cancelled';
                     } else {
                         // Opsi 2: Customer minta revisi -> SO masuk status Butuh Revisi, stok tetap ditahan hingga Sales simpan revisi
-                        $revNote = "[Butuh Revisi dari {$canceller} via DO {$do['delivery_number']} pada " . date('d/m/Y H:i') . "]: " . $reason;
+                        $revNote = "[Butuh Revisi • {$do['delivery_number']} • " . date('d/m/Y H:i') . "] {$reason} (oleh {$canceller})";
                         $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $revNote : $revNote;
 
                         $db->table('sales_orders')
@@ -511,5 +500,41 @@ class Deliveries extends BaseController
             $db->transRollback();
             return redirect()->to('/deliveries')->with('error', 'Gagal membatalkan pengiriman: ' . $e->getMessage());
         }
+    }
+
+    public function show($id)
+    {
+        if ($r = $this->requireRole(['admin', 'gudang', 'manajemen'], '/dashboard', 'Peran Anda tidak diizinkan melihat Detail Pengiriman.')) return $r;
+        $doRow = (new DeliveryModel())->find((int) $id);
+        if (! $doRow) {
+            return redirect()->to('/deliveries')->with('error', 'Data pengiriman tidak ditemukan.');
+        }
+
+        $db = \Config\Database::connect();
+        $items = $db->table('deliveries d')
+            ->select('d.id, d.delivery_number, d.delivery_date, d.delivery_time, d.qty_delivered, d.status, d.cancel_reason, d.notes, d.created_at, d.updated_at, so.id AS so_id, so.so_number, so.order_date AS so_date, so.qty AS so_qty, p.code AS sku, p.name AS product_name, p.unit, c.name AS customer_name, u.name AS deliverer_name, w.name AS warehouse_name')
+            ->join('sales_orders so', 'so.id = d.sales_order_id')
+            ->join('products p', 'p.id = so.product_id')
+            ->join('customers c', 'c.id = so.customer_id', 'left')
+            ->join('users u', 'u.id = d.delivered_by', 'left')
+            ->join('warehouses w', 'w.id = d.warehouse_id', 'left')
+            ->where('d.delivery_number', $doRow['delivery_number'])
+            ->orderBy('d.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        if (empty($items)) {
+            return redirect()->to('/deliveries')->with('error', 'Data pengiriman tidak ditemukan.');
+        }
+
+        $first = $items[0];
+        $role = (string) session()->get('user_role');
+
+        return view('deliveries/show', [
+            'title' => 'Detail Pengiriman ' . $first['delivery_number'],
+            'do' => $first,
+            'items' => $items,
+            'canViewSo' => in_array($role, ['admin', 'sales', 'manajemen'], true),
+        ]);
     }
 }

@@ -13,6 +13,7 @@ if (! function_exists('status_label')) {
             'confirmed' => 'Dikonfirmasi',
             'revision' => 'Butuh Revisi',
             'scheduled' => 'Terjadwal',
+            'shipping' => 'Dalam Pengiriman',
             'delivered' => 'Terkirim',
         ][$status] ?? $status;
     }
@@ -26,6 +27,7 @@ if (! function_exists('status_badge_class')) {
             'confirmed' => 'bg-azure-lt',
             'revision'  => 'bg-warning-lt',
             'scheduled' => 'bg-warning-lt',
+            'shipping'  => 'bg-azure-lt',
             'received'  => 'bg-success-lt',
             'delivered' => 'bg-success-lt',
             'completed' => 'bg-success-lt',

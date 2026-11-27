@@ -284,8 +284,8 @@ class PurchaseOrders extends BaseController
 
         $userRole = session()->get('user_role');
         $canceller = session()->get('user_name') ?: 'User';
-        $label = $userRole === 'manajemen' ? 'Ditolak oleh Manajemen' : 'Dibatalkan oleh Purchasing';
-        $cancelNote = "[{$label} ({$canceller}) pada " . date('d/m/Y H:i') . "]: " . $reason;
+        $label = $userRole === 'manajemen' ? 'Ditolak' : 'Dibatalkan';
+        $cancelNote = "[{$label} • " . date('d/m/Y H:i') . "] {$reason} (oleh {$canceller})";
         $existingNotes = $po['notes'] ? trim($po['notes']) : '';
         $updatedNotes = $existingNotes !== '' ? $existingNotes . "\n" . $cancelNote : $cancelNote;
 

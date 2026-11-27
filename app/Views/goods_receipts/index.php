@@ -105,7 +105,7 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
             <td class="fw-semibold text-dark"><?= esc($pp['supplier_name'] ?? '-') ?></td>
             <td class="text-secondary font-monospace text-nowrap"><?= date('d/m/Y', strtotime($pp['order_date'])) ?></td>
             <td class="text-center text-nowrap"><?= (int) $pp['item_count'] ?> item &bull; <strong><?= (int) $pp['total_qty'] ?></strong> unit</td>
-            <td class="text-secondary small" style="min-width: 220px;"><?= esc($pp['notes'] ?: '-') ?></td>
+            <td class="text-secondary small" style="min-width: 220px; white-space: pre-line;"><?= esc($pp['notes'] ?: '-') ?></td>
             <?php if (session()->get('user_role') === 'gudang'): ?>
               <td class="text-end text-nowrap">
                 <a href="/goods-receipts/create?purchase_order_id=<?= esc($pp['id']) ?>" class="btn btn-sm btn-primary">Terima Barang &rarr;</a>
@@ -144,13 +144,13 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
         </thead>
         <tbody>
         <?php foreach ($items as $it): ?>
-        <tr>
-          <td><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($it['gr_number']) ?></code></td>
+        <tr style="cursor: pointer;" onclick="if (!event.target.closest('a, button, form, input')) { window.location='/goods-receipts/show/<?= (int) $it['id'] ?>'; }">
+          <td><a href="/goods-receipts/show/<?= esc($it['id']) ?>" class="text-decoration-none"><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($it['gr_number']) ?></code></a></td>
           <td><code class="text-dark font-monospace text-nowrap"><?= esc($it['po_number']) ?></code></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
           <td class="text-secondary font-monospace text-nowrap"><?= date('d/m/Y', strtotime($it['receipt_date'])) ?></td>
           <td class="fw-medium text-dark"><?= esc($it['receiver_name']) ?></td>
-          <td class="text-secondary small" style="min-width: 220px;">
+          <td class="text-secondary small" style="min-width: 220px; white-space: pre-line;">
             <?= esc($it['notes'] ?: '-') ?>
           </td>
         </tr>

@@ -29,6 +29,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
       </a>
     </li>
     <li class="nav-item">
+      <a class="nav-link px-3 py-1 <?= $curStatus === 'shipping' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?status=shipping">
+        Dalam Pengiriman
+        <span class="badge ms-1 <?= $curStatus === 'shipping' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['shipping'] ?? 0) ?></span>
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link px-3 py-1 <?= $curStatus === 'delivered' ? 'active fw-bold' : 'text-secondary' ?>" href="/deliveries?status=delivered">
         Terkirim
         <span class="badge ms-1 <?= $curStatus === 'delivered' ? 'bg-white text-primary' : 'bg-secondary-lt' ?>"><?= esc($statusCounts['delivered'] ?? 0) ?></span>
@@ -123,7 +129,7 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
             <td><span class="badge bg-secondary-lt"><?= esc($ps['warehouse_name'] ?? '-') ?></span></td>
             <td class="text-secondary font-monospace text-nowrap"><?= date('d/m/Y', strtotime($ps['order_date'])) ?></td>
             <td class="text-center text-nowrap"><?= (int) $ps['item_count'] ?> item &bull; <strong><?= (int) $ps['total_qty'] ?></strong> unit</td>
-            <td class="text-secondary small" style="min-width: 220px;"><?= esc($ps['notes'] ?: '-') ?></td>
+            <td class="text-secondary small" style="min-width: 220px; white-space: pre-line;"><?= esc($ps['notes'] ?: '-') ?></td>
             <?php if (session()->get('user_role') === 'gudang'): ?>
               <td class="text-end text-nowrap">
                 <a href="/deliveries/create?sales_order_id=<?= esc($ps['id']) ?>" class="btn btn-sm btn-primary">Proses Kirim &rarr;</a>
@@ -160,7 +166,7 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
             <th>Dikirim Oleh</th>
             <th>Catatan</th>
             <?php if (session()->get('user_role') === 'gudang'): ?>
-              <th class="text-end" style="width: 180px;">Aksi</th>
+              <th class="text-end" style="width: 115px;">Aksi</th>
             <?php endif; ?>
           </tr>
         </thead>
@@ -169,8 +175,8 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
           $doStatus = $it['status'] ?? 'delivered';
           $sb = status_badge($doStatus);
         ?>
-        <tr class="<?= $doStatus === 'cancelled' ? 'opacity-75' : '' ?>">
-          <td><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($it['delivery_number']) ?></code></td>
+        <tr class="<?= $doStatus === 'cancelled' ? 'opacity-75' : '' ?>" style="cursor: pointer;" onclick="if (!event.target.closest('a, button, form, input')) { window.location='/deliveries/show/<?= (int) $it['id'] ?>'; }">
+          <td><a href="/deliveries/show/<?= esc($it['id']) ?>" class="text-decoration-none"><code class="text-primary font-monospace fw-bold text-nowrap"><?= esc($it['delivery_number']) ?></code></a></td>
           <td><code class="text-dark font-monospace text-nowrap"><?= esc($it['so_number']) ?></code></td>
           <td><span class="badge bg-secondary-lt"><?= esc($it['warehouse_name'] ?? '-') ?></span></td>
           <td class="text-secondary font-monospace">
@@ -180,9 +186,9 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
             <?php endif; ?>
           </td>
           <td>
-            <?php if ($doStatus === 'scheduled'): ?>
+            <?php if (in_array($doStatus, ['scheduled', 'shipping'], true)): ?>
               <span class="badge <?= $sb['badge'] ?> d-inline-flex align-items-center gap-2">
-                <span class="status-dot status-dot-animated bg-cyan"></span>
+                <span class="status-dot status-dot-animated <?= $doStatus === 'shipping' ? 'bg-azure' : 'bg-cyan' ?>"></span>
                 <?= esc($sb['label']) ?>
               </span>
             <?php else: ?>
@@ -190,7 +196,7 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
             <?php endif; ?>
           </td>
           <td class="fw-semibold text-dark"><?= esc($it['deliverer_name']) ?></td>
-          <td class="text-secondary small" style="min-width: 220px;">
+          <td class="text-secondary small" style="min-width: 140px; white-space: pre-line;">
             <?= esc($it['notes']) ?>
             <?php if ($doStatus === 'cancelled' && ! empty($it['cancel_reason'])): ?>
               <div class="text-danger mt-1"><strong>Alasan Batal:</strong> <?= esc($it['cancel_reason']) ?></div>
@@ -198,12 +204,12 @@ $filterActive = ($q ?? '') !== '' || ($warehouseId ?? 0) !== 0 || ($start_date ?
           </td>
           <?php if (session()->get('user_role') === 'gudang'): ?>
             <td class="text-end">
-              <div class="d-inline-flex gap-1">
-                <?php if ($doStatus === 'scheduled'): ?>
-                  <form action="/deliveries/complete/<?= esc($it['id']) ?>" method="post" class="d-inline" data-confirm="Tandai pengiriman <strong><?= esc($it['delivery_number']) ?></strong> sudah <strong>Terkirim</strong>?" data-confirm-title="Selesaikan Pengiriman" data-confirm-btn="Ya, Terkirim" data-confirm-type="primary">
-                    <button type="submit" class="btn btn-sm btn-success">Selesaikan</button>
+              <div class="d-flex flex-column gap-1 align-items-stretch">
+                <?php if (in_array($doStatus, ['scheduled', 'shipping'], true)): ?>
+                  <form action="/deliveries/complete/<?= esc($it['id']) ?>" method="post" class="d-grid" data-confirm="Tandai pengiriman <strong><?= esc($it['delivery_number']) ?></strong> sudah <strong>Terkirim</strong>?" data-confirm-title="Selesaikan Pengiriman" data-confirm-btn="Ya, Terkirim" data-confirm-type="primary">
+                    <button type="submit" class="btn btn-sm btn-success w-100">Selesaikan</button>
                   </form>
-                  <button type="button" class="btn btn-sm btn-outline-danger btn-cancel-do" data-bs-toggle="modal" data-bs-target="#modalCancelDO" data-id="<?= (int) $it['id'] ?>" data-number="<?= esc($it['delivery_number']) ?>">Batalkan</button>
+                  <button type="button" class="btn btn-sm btn-outline-danger w-100 btn-cancel-do" data-bs-toggle="modal" data-bs-target="#modalCancelDO" data-id="<?= (int) $it['id'] ?>" data-number="<?= esc($it['delivery_number']) ?>">Batalkan</button>
                 <?php else: ?>
                   <span class="text-muted small">-</span>
                 <?php endif; ?>

@@ -142,9 +142,9 @@
             <label class="form-label required">Status Pengiriman</label>
             <select name="delivery_status" id="deliveryStatusSelect" class="form-select" required>
               <option value="scheduled">Terjadwal (Jadwalkan Pengiriman)</option>
-              <option value="delivered" selected>Terkirim (Langsung Kirim Hari Ini)</option>
+              <option value="shipping" selected>Dalam Pengiriman (Kirim Hari Ini)</option>
             </select>
-            <div class="form-text">Pilih <strong>Terjadwal</strong> untuk kirim nanti / hari libur.</div>
+            <div class="form-text">Pilih <strong>Terjadwal</strong> untuk kirim nanti / hari libur. Klik <strong>Selesaikan</strong> di daftar pengiriman saat barang sudah sampai.</div>
           </div>
           <div class="col-md-4">
             <label class="form-label required">Gudang Pengirim</label>
@@ -261,7 +261,7 @@ function clearAllDelivery() {
   const minDateFormatted = '<?= isset($minDeliveryDate) ? date('d/m/Y', strtotime($minDeliveryDate)) : date('d/m/Y') ?>';
 
   function syncDeliveryDateMode() {
-    if (statusEl.value === 'delivered') {
+    if (statusEl.value === 'shipping') {
       dateEl.value = today;
       dateEl.readOnly = true;
       dateEl.classList.add('bg-light');

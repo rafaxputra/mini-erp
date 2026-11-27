@@ -73,6 +73,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('goods-receipts', 'GoodsReceipts::index');
     $routes->get('goods-receipts/create', 'GoodsReceipts::create');
     $routes->post('goods-receipts/store', 'GoodsReceipts::store');
+    $routes->get('goods-receipts/show/(:num)', 'GoodsReceipts::show/$1');
     $routes->get('sales-orders', 'SalesOrders::index');
     $routes->get('sales-orders/create', 'SalesOrders::create');
     $routes->post('sales-orders/store', 'SalesOrders::store');
@@ -84,6 +85,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('deliveries', 'Deliveries::index');
     $routes->get('deliveries/create', 'Deliveries::create');
     $routes->post('deliveries/store', 'Deliveries::store');
+    $routes->get('deliveries/show/(:num)', 'Deliveries::show/$1');
     $routes->post('deliveries/complete/(:num)', 'Deliveries::complete/$1');
     $routes->post('deliveries/cancel/(:num)', 'Deliveries::cancel/$1');
     $routes->get('inventory', 'Inventory::index');
