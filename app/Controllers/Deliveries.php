@@ -213,7 +213,7 @@ class Deliveries extends BaseController
             return redirect()->back()->withInput()->with('error', 'Pesanan Jual tidak ditemukan.');
         }
         if ($so['status'] !== 'confirmed') {
-            return redirect()->back()->withInput()->with('error', 'Pengiriman hanya bisa dibuat untuk SO berstatus Confirmed.');
+            return redirect()->back()->withInput()->with('error', 'Pengiriman hanya bisa diproses untuk pesanan penjualan yang sudah Dikonfirmasi.');
         }
         if (! $deliveryDate) {
             return redirect()->back()->withInput()->with('error', 'Tanggal kirim wajib diisi.');
@@ -313,8 +313,22 @@ class Deliveries extends BaseController
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
+            $doRowIds = array_map('intval', array_column(
+                $db->table('deliveries')
+                    ->select('id')
+                    ->where('delivery_number', $do['delivery_number'])
+                    ->where('created_at', $do['created_at'])
+                    ->where('status', 'scheduled')
+                    ->get()
+                    ->getResultArray(),
+                'id'
+            ));
+            if (empty($doRowIds)) {
+                $doRowIds = [(int) $do['id']];
+            }
+
             $db->table('deliveries')
-                ->where('delivery_number', $do['delivery_number'])
+                ->whereIn('id', $doRowIds)
                 ->where('status', 'scheduled')
                 ->update(['status' => 'delivered', 'updated_at' => date('Y-m-d H:i:s')]);
 
@@ -357,8 +371,16 @@ class Deliveries extends BaseController
         $db = \Config\Database::connect();
         $db->transBegin();
         try {
-            $doRows = $db->table('deliveries')->where('delivery_number', $do['delivery_number'])->where('status <>', 'cancelled')->get()->getResultArray();
-            $doRowIds = array_column($doRows, 'id');
+            $doRows = $db->table('deliveries')
+                ->where('delivery_number', $do['delivery_number'])
+                ->where('created_at', $do['created_at'])
+                ->where('status <>', 'cancelled')
+                ->get()
+                ->getResultArray();
+            $doRowIds = array_map('intval', array_column($doRows, 'id'));
+            if (empty($doRowIds)) {
+                $doRowIds = [(int) $do['id']];
+            }
 
             // Kembalikan stok jika DO ini sempat memotong selisih stok tambahan (kasus backorder)
             if (! empty($doRowIds)) {
@@ -383,7 +405,7 @@ class Deliveries extends BaseController
             }
 
             $db->table('deliveries')
-                ->where('delivery_number', $do['delivery_number'])
+                ->whereIn('id', $doRowIds)
                 ->where('status <>', 'cancelled')
                 ->update([
                     'status' => 'cancelled',

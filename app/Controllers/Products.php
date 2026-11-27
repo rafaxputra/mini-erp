@@ -62,11 +62,15 @@ class Products extends BaseController
         if ($this->request->getPost('code') !== null) {
             $cleanCode = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
             $_POST['code'] = $cleanCode;
+            $_REQUEST['code'] = $cleanCode;
             $postMerged['code'] = $cleanCode;
         }
         $_POST['purchase_price'] = $cleanBuyPrice;
         $_POST['selling_price'] = $cleanSellPrice;
+        $_REQUEST['purchase_price'] = $cleanBuyPrice;
+        $_REQUEST['selling_price'] = $cleanSellPrice;
         $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
+        $this->request->setGlobal('request', array_merge($_REQUEST, $postMerged));
 
         $rules = [
             'code' => 'required|max_length[20]|is_unique[products.code]',
@@ -183,11 +187,15 @@ class Products extends BaseController
         if ($this->request->getPost('code') !== null) {
             $cleanCode = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
             $_POST['code'] = $cleanCode;
+            $_REQUEST['code'] = $cleanCode;
             $postMerged['code'] = $cleanCode;
         }
         $_POST['purchase_price'] = $cleanBuyPrice;
         $_POST['selling_price'] = $cleanSellPrice;
+        $_REQUEST['purchase_price'] = $cleanBuyPrice;
+        $_REQUEST['selling_price'] = $cleanSellPrice;
         $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
+        $this->request->setGlobal('request', array_merge($_REQUEST, $postMerged));
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0

@@ -255,7 +255,7 @@
       <div class="section">
         <h2 class="section-title">1. Ringkasan Eksekutif</h2>
         <div class="kpi-grid">
-          <?php if (!$isGudang): ?>
+          <?php if ($role === 'manajemen'): ?>
             <div class="kpi-box">
               <div class="kpi-label">Total Penjualan (SO)</div>
               <div class="kpi-value">Rp <?= number_format((float) $summary['so_total'], 0, ',', '.') ?></div>
@@ -271,10 +271,37 @@
               <div class="kpi-value">Rp <?= number_format((float) $summary['inv_value'], 0, ',', '.') ?></div>
               <div class="kpi-sub"><?= number_format((int) $summary['total_units']) ?> unit total stok</div>
             </div>
+            <div class="kpi-box">
+              <div class="kpi-label">Pengiriman Barang (DO)</div>
+              <div class="kpi-value"><?= number_format((int) $summary['do_count']) ?> Surat Jalan</div>
+              <div class="kpi-sub"><?= number_format((int) $summary['do_qty']) ?> unit terkirim</div>
+            </div>
+          <?php elseif ($role === 'sales'): ?>
+            <div class="kpi-box">
+              <div class="kpi-label">Total Penjualan (SO)</div>
+              <div class="kpi-value">Rp <?= number_format((float) $summary['so_total'], 0, ',', '.') ?></div>
+              <div class="kpi-sub"><?= number_format((int) $summary['so_count']) ?> pesanan pelanggan</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-label">Pengiriman Barang (DO)</div>
+              <div class="kpi-value"><?= number_format((int) $summary['do_count']) ?> Surat Jalan</div>
+              <div class="kpi-sub"><?= number_format((int) $summary['do_qty']) ?> unit terkirim</div>
+            </div>
+          <?php elseif ($role === 'purchasing'): ?>
+            <div class="kpi-box">
+              <div class="kpi-label">Total Pembelian (PO)</div>
+              <div class="kpi-value">Rp <?= number_format((float) $summary['po_total'], 0, ',', '.') ?></div>
+              <div class="kpi-sub"><?= number_format((int) $summary['po_count']) ?> pesanan pemasok</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-label">Nilai Aset Persediaan</div>
+              <div class="kpi-value">Rp <?= number_format((float) $summary['inv_value'], 0, ',', '.') ?></div>
+              <div class="kpi-sub"><?= number_format((int) $summary['total_units']) ?> unit total stok</div>
+            </div>
           <?php else: ?>
             <div class="kpi-box">
               <div class="kpi-label">Total Jenis Produk</div>
-              <div class="kpi-value"><?= number_format((int) $summary['sku_count']) ?> SKU</div>
+              <div class="kpi-value"><?= number_format((int) $summary['sku_count']) ?> Produk</div>
               <div class="kpi-sub">Katalog aktif gudang</div>
             </div>
             <div class="kpi-box">
@@ -282,12 +309,12 @@
               <div class="kpi-value"><?= number_format((int) $summary['total_units']) ?> Unit</div>
               <div class="kpi-sub">Seluruh gudang</div>
             </div>
+            <div class="kpi-box">
+              <div class="kpi-label">Pengiriman Barang (DO)</div>
+              <div class="kpi-value"><?= number_format((int) $summary['do_count']) ?> Surat Jalan</div>
+              <div class="kpi-sub"><?= number_format((int) $summary['do_qty']) ?> unit terkirim</div>
+            </div>
           <?php endif; ?>
-          <div class="kpi-box">
-            <div class="kpi-label">Pengiriman Barang (DO)</div>
-            <div class="kpi-value"><?= number_format((int) $summary['do_count']) ?> Surat Jalan</div>
-            <div class="kpi-sub"><?= number_format((int) $summary['do_qty']) ?> unit terkirim</div>
-          </div>
         </div>
       </div>
     <?php endif; ?>
@@ -471,7 +498,7 @@
 
     <?php if (in_array('low_stock', $sections, true)): ?>
       <div class="section">
-        <h2 class="section-title">Peringatan Stok Menipis / Kritis</h2>
+        <h2 class="section-title">Peringatan Stok Menipis / Habis</h2>
         <table>
           <thead>
             <tr>

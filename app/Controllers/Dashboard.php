@@ -214,33 +214,19 @@ class Dashboard extends BaseController
         }
 
         // Admin
-        $catProds = $db->query(
-            "SELECT COALESCE(c.name, 'Tanpa Kategori') AS name, COUNT(p.id) AS cnt
-             FROM products p
-             LEFT JOIN categories c ON c.id = p.category_id
-             GROUP BY c.name
-             ORDER BY cnt DESC
-             LIMIT 6"
-        )->getResultArray();
-
-        $roleUsers = $db->query(
-            "SELECT COALESCE(r.name, 'User') AS name, COUNT(u.id) AS cnt
-             FROM users u
-             LEFT JOIN roles r ON r.id = u.role_id
-             WHERE u.is_active = true
-             GROUP BY r.name
-             ORDER BY cnt DESC"
-        )->getResultArray();
+        $recentActivities = $db->table('stock_movements sm')
+            ->select('sm.movement_type, sm.qty, sm.reference_type, sm.created_at, p.name AS product_name, p.unit, w.name AS warehouse_name, u.name AS user_name')
+            ->join('products p', 'p.id = sm.product_id')
+            ->join('warehouses w', 'w.id = sm.warehouse_id', 'left')
+            ->join('users u', 'u.id = sm.created_by', 'left')
+            ->orderBy('sm.created_at', 'DESC')
+            ->orderBy('sm.id', 'DESC')
+            ->limit(6)
+            ->get()
+            ->getResultArray();
 
         return [
-            'categoryProductDist' => [
-                'labels' => array_column($catProds, 'name'),
-                'series' => array_map('intval', array_column($catProds, 'cnt')),
-            ],
-            'userRoleDist' => [
-                'labels' => array_column($roleUsers, 'name'),
-                'series' => array_map('intval', array_column($roleUsers, 'cnt')),
-            ],
+            'recentActivities' => $recentActivities,
         ];
     }
 
@@ -279,6 +265,17 @@ class Dashboard extends BaseController
             $doExpr = sprintf($fmt, 'delivery_date');
             $doRows = $db->query("SELECT {$doExpr} AS k, COALESCE(SUM(qty_delivered), 0) AS total FROM deliveries WHERE status <> 'cancelled' AND delivery_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
             foreach ($doRows as $r) {
+                if (isset($secondaryMap[$r['k']])) $secondaryMap[$r['k']] = (int) $r['total'];
+            }
+        } elseif ($role === 'admin') {
+            $soExpr = sprintf($fmt, 'order_date');
+            $soRows = $db->query("SELECT {$soExpr} AS k, COUNT(DISTINCT so_number) AS total FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
+            foreach ($soRows as $r) {
+                if (isset($primaryMap[$r['k']])) $primaryMap[$r['k']] = (int) $r['total'];
+            }
+            $poExpr = sprintf($fmt, 'order_date');
+            $poRows = $db->query("SELECT {$poExpr} AS k, COUNT(DISTINCT po_number) AS total FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ? GROUP BY k", [$startDate, $endDate])->getResultArray();
+            foreach ($poRows as $r) {
                 if (isset($secondaryMap[$r['k']])) $secondaryMap[$r['k']] = (int) $r['total'];
             }
         } else {
@@ -521,33 +518,7 @@ class Dashboard extends BaseController
                 [$startOfPeriod, $endOfPeriod]
             )->getResultArray();
 
-            $warehouses = $db->table('warehouses')->orderBy('id', 'ASC')->get()->getResultArray();
-            $warehouseSummary = [];
-            foreach ($warehouses as $w) {
-                $lastMovements = $db->query(
-                    'SELECT DISTINCT ON (product_id) product_id, qty_after 
-                     FROM stock_movements 
-                     WHERE warehouse_id = ? 
-                     ORDER BY product_id, created_at DESC, id DESC',
-                    [(int) $w['id']]
-                )->getResultArray();
-                $itemCount = 0;
-                $wStockQty = 0;
-                foreach ($lastMovements as $lm) {
-                    if ((int) $lm['qty_after'] > 0) {
-                        $itemCount++;
-                        $wStockQty += (int) $lm['qty_after'];
-                    }
-                }
-                $warehouseSummary[] = [
-                    'id' => $w['id'],
-                    'name' => $w['name'],
-                    'code' => $w['code'],
-                    'location' => $w['location'],
-                    'itemCount' => $itemCount,
-                    'totalQty' => $wStockQty,
-                ];
-            }
+            $warehouseSummary = $this->getWarehouseStockSummary($db);
 
             $lowStockCount = count($db->query('SELECT id FROM products WHERE stock_qty <= min_stock')->getResultArray());
 
@@ -612,47 +583,42 @@ class Dashboard extends BaseController
         }
 
         // =====================================================================
-        // 5. DASHBOARD KHUSUS ADMINISTRATOR (SUPER ADMIN)
+        // 5. DASHBOARD KHUSUS ADMINISTRATOR (TATA KELOLA SISTEM & DATA MASTER)
         // =====================================================================
-        $stockValue = $db->query('SELECT COALESCE(SUM(stock_qty * purchase_price), 0) AS total FROM products')->getRowArray()['total'];
-
-        $salesRow = $db->query(
-            "SELECT COALESCE(SUM(qty * unit_price), 0) AS total_sales, COUNT(DISTINCT so_number) AS total_orders 
-             FROM sales_orders 
-             WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?",
-            [$startOfPeriod, $endOfPeriod]
-        )->getRowArray();
-
-        $topProducts = $db->query(
-            "SELECT p.code, p.name, p.unit, SUM(so.qty) AS total_qty, SUM(so.qty * so.unit_price) AS total_sales 
-             FROM sales_orders so 
-             JOIN products p ON p.id = so.product_id 
-             WHERE so.status IN ('confirmed', 'delivered') AND so.order_date BETWEEN ? AND ? 
-             GROUP BY p.id, p.code, p.name, p.unit 
-             ORDER BY total_qty DESC 
-             LIMIT 5",
-            [$startOfPeriod, $endOfPeriod]
-        )->getResultArray();
+        $soDocCount = (int) ($db->query("SELECT COUNT(DISTINCT so_number) AS cnt FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$startOfPeriod, $endOfPeriod])->getRow('cnt') ?? 0);
+        $poDocCount = (int) ($db->query("SELECT COUNT(DISTINCT po_number) AS cnt FROM purchase_orders WHERE status IN ('approved', 'received') AND order_date BETWEEN ? AND ?", [$startOfPeriod, $endOfPeriod])->getRow('cnt') ?? 0);
 
         $userCount = $db->table('users')->where('is_active', true)->countAllResults();
+        $inactiveUserCount = $db->table('users')->where('is_active', false)->countAllResults();
         $warehouseCount = $db->table('warehouses')->countAllResults();
         $categoryCount = $db->table('categories')->countAllResults();
+        $customerCount = $db->table('customers')->countAllResults();
+        $supplierCount = $db->table('suppliers')->countAllResults();
+        $recentUsers = $db->table('users u')
+            ->select('u.id, u.name, u.email, u.is_active, r.name AS role_name')
+            ->join('roles r', 'r.id = u.role_id')
+            ->orderBy('u.id', 'DESC')
+            ->limit(6)
+            ->get()
+            ->getResultArray();
 
-        $prevSalesVal = (float) ($db->query("SELECT COALESCE(SUM(qty * unit_price), 0) AS t FROM sales_orders WHERE status IN ('confirmed', 'delivered') AND order_date BETWEEN ? AND ?", [$prevStart, $prevEnd])->getRow('t') ?? 0);
+        $warehouseSummary = $this->getWarehouseStockSummary($db);
 
         return view('dashboard/index', array_merge($period, $roleExtras, [
             'title' => 'Dashboard Administrator',
             'role' => $role,
             'productCount' => (new ProductModel())->countAllResults(),
-            'stockValue' => (float) $stockValue,
-            'salesThisMonth' => (float) ($salesRow['total_sales'] ?? 0),
-            'ordersThisMonth' => (int) ($salesRow['total_orders'] ?? 0),
-            'deltaSales' => $this->calcDeltaPct((float) ($salesRow['total_sales'] ?? 0), $prevSalesVal),
+            'customerCount' => $customerCount,
+            'supplierCount' => $supplierCount,
+            'soDocCount' => $soDocCount,
+            'poDocCount' => $poDocCount,
             'userCount' => $userCount,
+            'inactiveUserCount' => $inactiveUserCount,
             'warehouseCount' => $warehouseCount,
             'categoryCount' => $categoryCount,
+            'warehouseSummary' => $warehouseSummary,
             'lowStock' => $this->getLowStockProducts(),
-            'topProducts' => $topProducts,
+            'recentUsers' => $recentUsers,
             'chartData' => $chartData,
         ]));
     }
@@ -820,7 +786,7 @@ class Dashboard extends BaseController
         // Role guard untuk export yang perlu-perlu saja
         $allowedByRole = [
             'manajemen' => ['sales', 'purchase', 'stock'],
-            'admin' => ['sales', 'purchase', 'stock'],
+            'admin' => ['stock'],
             'sales' => ['sales'],
             'purchasing' => ['purchase'],
             'gudang' => ['stock'],
@@ -1090,7 +1056,8 @@ class Dashboard extends BaseController
         $end = $period['endDate'];
 
         $allowedSections = match ($role) {
-            'manajemen', 'admin' => ['summary', 'sales', 'purchase', 'stock', 'top_products', 'low_stock'],
+            'manajemen'          => ['summary', 'sales', 'purchase', 'stock', 'top_products', 'low_stock'],
+            'admin'              => ['summary', 'stock', 'low_stock'],
             'sales'              => ['summary', 'sales', 'top_products', 'low_stock'],
             'purchasing'         => ['summary', 'purchase', 'stock', 'low_stock'],
             'gudang'             => ['summary', 'stock', 'low_stock'],
@@ -1184,6 +1151,38 @@ class Dashboard extends BaseController
         }
 
         return view('dashboard/export_pdf', $data);
+    }
+
+    private function getWarehouseStockSummary($db): array
+    {
+        $warehouses = $db->table('warehouses')->orderBy('id', 'ASC')->get()->getResultArray();
+        $warehouseSummary = [];
+        foreach ($warehouses as $w) {
+            $lastMovements = $db->query(
+                'SELECT DISTINCT ON (product_id) product_id, qty_after 
+                 FROM stock_movements 
+                 WHERE warehouse_id = ? 
+                 ORDER BY product_id, created_at DESC, id DESC',
+                [(int) $w['id']]
+            )->getResultArray();
+            $itemCount = 0;
+            $wStockQty = 0;
+            foreach ($lastMovements as $lm) {
+                if ((int) $lm['qty_after'] > 0) {
+                    $itemCount++;
+                    $wStockQty += (int) $lm['qty_after'];
+                }
+            }
+            $warehouseSummary[] = [
+                'id' => $w['id'],
+                'name' => $w['name'],
+                'code' => $w['code'],
+                'location' => $w['location'],
+                'itemCount' => $itemCount,
+                'totalQty' => $wStockQty,
+            ];
+        }
+        return $warehouseSummary;
     }
 
     protected function getLowStockProducts(): array

@@ -26,6 +26,11 @@ class TrimInputFilter implements FilterInterface
             $_GET = $this->normalizeArray($_GET);
             $request->setGlobal('get', $_GET);
         }
+
+        if (! empty($_REQUEST)) {
+            $_REQUEST = $this->normalizeArray($_REQUEST);
+            $request->setGlobal('request', $_REQUEST);
+        }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

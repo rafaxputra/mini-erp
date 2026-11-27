@@ -460,6 +460,22 @@ document.addEventListener('DOMContentLoaded', function () {
     icon: 'success',
     title: <?= json_encode(session()->getFlashdata('success')) ?>
   });
+  <?php elseif (session()->getFlashdata('info')): ?>
+  const InfoToast = Swal.mixin({
+    toast: true,
+    position: 'top',
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer);
+      toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+  });
+  InfoToast.fire({
+    icon: 'info',
+    title: <?= json_encode(session()->getFlashdata('info')) ?>
+  });
   <?php elseif (session()->getFlashdata('error')): ?>
   Swal.fire({
     icon: 'error',

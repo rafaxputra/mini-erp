@@ -82,9 +82,24 @@ abstract class BaseController extends Controller
         if ($lockKey > 0) {
             $db->query('SELECT pg_advisory_xact_lock(?)', [$lockKey]);
         }
-        $row = $db->query("SELECT COUNT(DISTINCT " . $column . ") AS total FROM " . $table . " WHERE DATE(created_at) = ?", [date('Y-m-d')])->getRowArray();
-        $n = ((int) ($row['total'] ?? 0)) + 1;
-        return $prefix . '-' . date('Ymd') . '-' . str_pad((string) $n, 3, '0', STR_PAD_LEFT);
+        $todayPrefix = $prefix . '-' . date('Ymd') . '-';
+        $seqName = 'doc_seq_' . strtolower(preg_replace('/[^a-z0-9]/i', '', $prefix) ?? $prefix) . '_' . date('Ymd');
+        $db->query("CREATE SEQUENCE IF NOT EXISTS {$seqName} MINVALUE 1 START 1");
+
+        $row = $db->query(
+            "SELECT COALESCE(MAX(CAST(SUBSTRING(" . $column . " FROM '[0-9]+$') AS INTEGER)), 0) AS max_seq FROM " . $table . " WHERE " . $column . " LIKE ?",
+            [$todayPrefix . '%']
+        )->getRowArray();
+        $maxExisting = (int) ($row['max_seq'] ?? 0);
+
+        $seqMeta = $db->query("SELECT last_value, is_called FROM {$seqName}")->getRowArray();
+        $seqLast = ($seqMeta && ! empty($seqMeta['is_called'])) ? (int) $seqMeta['last_value'] : 0;
+        if ($maxExisting > $seqLast) {
+            $db->query('SELECT setval(?, ?, true)', [$seqName, $maxExisting]);
+        }
+
+        $n = (int) ($db->query('SELECT nextval(?) AS v', [$seqName])->getRow('v') ?? 1);
+        return $todayPrefix . str_pad((string) $n, 3, '0', STR_PAD_LEFT);
     }
     protected function fmtRupiah($value): string
     {

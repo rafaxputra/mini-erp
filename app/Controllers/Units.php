@@ -26,7 +26,9 @@ class Units extends BaseController
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa menambah satuan.')) return $r;
         $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
         $_POST['code'] = $code;
+        $_REQUEST['code'] = $code;
         $this->request->setGlobal('post', $_POST);
+        $this->request->setGlobal('request', $_REQUEST);
 
         $messages = [
             'code' => [
@@ -75,7 +77,9 @@ class Units extends BaseController
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengubah satuan.')) return $r;
         $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
         $_POST['code'] = $code;
+        $_REQUEST['code'] = $code;
         $this->request->setGlobal('post', $_POST);
+        $this->request->setGlobal('request', $_REQUEST);
 
         $messages = [
             'code' => [

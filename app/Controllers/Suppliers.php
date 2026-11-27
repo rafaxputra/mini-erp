@@ -47,7 +47,9 @@ class Suppliers extends BaseController
         if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
         $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
         $_POST['code'] = $code;
+        $_REQUEST['code'] = $code;
         $this->request->setGlobal('post', $_POST);
+        $this->request->setGlobal('request', $_REQUEST);
         $rules = ['code' => 'required|max_length[20]|is_unique[suppliers.code]', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
         $messages = [
             'code' => ['required' => 'Kode pemasok wajib diisi.', 'max_length' => 'Kode pemasok maksimal 20 karakter.', 'is_unique' => 'Kode pemasok {value} sudah dipakai.'],
@@ -102,7 +104,9 @@ class Suppliers extends BaseController
         if (! $hasTransactions) {
             $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
             $_POST['code'] = $code;
+            $_REQUEST['code'] = $code;
             $this->request->setGlobal('post', $_POST);
+            $this->request->setGlobal('request', $_REQUEST);
             $rules['code'] = 'required|max_length[20]|is_unique[suppliers.code,id,' . $id . ']';
             $messages['code'] = ['required' => 'Kode pemasok wajib diisi.', 'max_length' => 'Kode pemasok maksimal 20 karakter.', 'is_unique' => 'Kode pemasok {value} sudah dipakai.'];
         }

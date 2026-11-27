@@ -82,14 +82,11 @@ $roleMeta = match ($userRole) {
     default => [
         'pretitle' => 'Pengaturan Sistem & Data Utama',
         'title' => 'Ringkasan Admin',
-        'subtitle' => 'Pantau jumlah produk, pengguna aktif, stok menipis, dan ringkasan transaksi.',
+        'subtitle' => 'Pantau katalog produk, mitra terdaftar, pengguna aktif, serta volume aktivitas dokumen sistem.',
         'pdfOptions' => [
-            'summary'      => ['label' => 'Ringkasan Utama Usaha', 'checked' => true],
-            'sales'        => ['label' => 'Rincian Pesanan Penjualan (SO)', 'checked' => true],
-            'purchase'     => ['label' => 'Rincian Pesanan Pembelian (PO)', 'checked' => true],
-            'top_products' => ['label' => 'Produk Terlaris Periode Ini', 'checked' => false],
-            'stock'        => ['label' => 'Daftar Stok Produk & Nilai Barang', 'checked' => true],
-            'low_stock'    => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
+            'summary'   => ['label' => 'Ringkasan Sistem & Stok Fisik', 'checked' => true],
+            'stock'     => ['label' => 'Daftar Stok Produk & Nilai Barang', 'checked' => true],
+            'low_stock' => ['label' => 'Peringatan Stok Menipis / Habis', 'checked' => true],
         ],
     ],
 };
@@ -135,9 +132,11 @@ $roleMeta = match ($userRole) {
             Cetak Laporan PDF (A4)
           </button>
           <div class="dropdown-divider"></div>
-          <?php if ($userRole === 'manajemen' || $userRole === 'admin'): ?>
+          <?php if ($userRole === 'manajemen'): ?>
             <a class="dropdown-item" href="/dashboard/export?type=sales&amp;<?= $exportQueryBase ?>">Excel Penjualan (.xlsx)</a>
             <a class="dropdown-item" href="/dashboard/export?type=purchase&amp;<?= $exportQueryBase ?>">Excel Pembelian (.xlsx)</a>
+            <a class="dropdown-item" href="/dashboard/export?type=stock&amp;<?= $exportQueryBase ?>">Excel Stok Produk (.xlsx)</a>
+          <?php elseif ($userRole === 'admin'): ?>
             <a class="dropdown-item" href="/dashboard/export?type=stock&amp;<?= $exportQueryBase ?>">Excel Stok Produk (.xlsx)</a>
           <?php elseif ($userRole === 'sales'): ?>
             <a class="dropdown-item" href="/dashboard/export?type=sales&amp;<?= $exportQueryBase ?>">Excel Penjualan (.xlsx)</a>
@@ -932,26 +931,25 @@ $roleMeta = match ($userRole) {
     </a>
   </div>
   <div class="col-sm-6 col-xl-3">
-    <div class="card kpi-card h-100"><div class="card-body p-3">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="subheader">Nilai Persediaan</div>
-        <span class="avatar avatar-sm bg-yellow-lt text-yellow"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0"/><path d="M4 6v6a8 3 0 0 0 16 0v-6"/><path d="M4 12v6a8 3 0 0 0 16 0v-6"/></svg></span>
-      </div>
-      <div class="kpi-value mb-2">Rp <?= number_format((float) ($stockValue ?? 0), 0, ',', '.') ?></div>
-      <div class="text-secondary small">Perkiraan nilai seluruh stok barang</div>
-    </div></div>
+    <a href="/customers" class="kpi-card-link">
+      <div class="card kpi-card h-100"><div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="subheader">Mitra Terdaftar</div>
+          <span class="avatar avatar-sm bg-azure-lt text-azure"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l18 0"/><path d="M3 7v1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1m0 1a3 3 0 0 0 6 0v-1h-18l2 -4h14l2 4"/><path d="M5 21l0 -10.15"/><path d="M19 21l0 -10.15"/></svg></span>
+        </div>
+        <div class="kpi-value mb-2"><?= esc(($customerCount ?? 0) + ($supplierCount ?? 0)) ?> <span class="fs-5 text-secondary fw-normal">Mitra</span></div>
+        <div class="text-secondary small"><?= esc($customerCount ?? 0) ?> Pelanggan &bull; <?= esc($supplierCount ?? 0) ?> Pemasok</div>
+      </div></div>
+    </a>
   </div>
   <div class="col-sm-6 col-xl-3">
     <div class="card kpi-card h-100"><div class="card-body p-3">
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="subheader">Penjualan (<?= esc($pLabel) ?>)</div>
-        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg></span>
+        <div class="subheader">Aktivitas Dokumen</div>
+        <span class="avatar avatar-sm bg-green-lt text-green"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg></span>
       </div>
-      <div class="kpi-value text-success mb-2">Rp <?= number_format((float) ($salesThisMonth ?? 0), 0, ',', '.') ?></div>
-      <div class="d-flex align-items-center justify-content-between gap-2">
-        <span class="text-secondary small"><?= esc($ordersThisMonth ?? 0) ?> pesanan</span>
-        <?= $renderDelta($deltaSales ?? null) ?>
-      </div>
+      <div class="kpi-value mb-2"><?= esc(($soDocCount ?? 0) + ($poDocCount ?? 0)) ?> <span class="fs-5 text-secondary fw-normal">Dokumen</span></div>
+      <div class="text-secondary small"><?= esc($soDocCount ?? 0) ?> SO &bull; <?= esc($poDocCount ?? 0) ?> PO (<?= esc($pLabel) ?>)</div>
     </div></div>
   </div>
   <div class="col-sm-6 col-xl-3">
@@ -962,42 +960,55 @@ $roleMeta = match ($userRole) {
           <span class="avatar avatar-sm bg-purple-lt text-purple"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg></span>
         </div>
         <div class="kpi-value mb-2"><?= esc($userCount ?? 0) ?> <span class="fs-5 text-secondary fw-normal">Akun</span></div>
-        <div class="text-secondary small">Kelola pengguna &amp; peran &rarr;</div>
+        <div class="text-secondary small"><?= !empty($inactiveUserCount) ? esc($inactiveUserCount) . ' nonaktif &bull; ' : '' ?>Kelola pengguna &rarr;</div>
       </div></div>
     </a>
   </div>
 </div>
 
-<!-- Row 2: Penjualan vs Pembelian + Donut Kategori/Role -->
+<!-- Row 2: Sebaran Stok per Gudang + Donut Kategori/Role -->
 <div class="row g-3 mb-4">
   <div class="col-lg-8">
     <div class="card h-100">
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">Aktivitas Penjualan vs Pembelian</h3>
-        <span class="text-secondary small"><?= esc($pLabel) ?></span>
+        <h3 class="card-title m-0">Sebaran Stok Fisik per Gudang</h3>
+        <a href="/warehouses" class="btn btn-sm btn-outline-primary">Kelola Gudang</a>
       </div>
       <div class="card-body">
-        <div id="mainDashboardChart" style="min-height: 280px;"></div>
+        <div id="adminWarehouseChart" style="min-height: 260px;"></div>
       </div>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card h-100">
       <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h3 class="card-title m-0">Rincian Kategori &amp; Peran</h3>
-        <ul class="nav erp-card-tabs" role="tablist">
-          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabAdminCat" type="button">Kategori</button></li>
-          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAdminRole" type="button">Peran</button></li>
-        </ul>
+        <h3 class="card-title m-0">Aktivitas Sistem Terbaru</h3>
+        <a href="/inventory/movements" class="btn btn-sm btn-outline-primary">Semua</a>
       </div>
-      <div class="tab-content card-body d-flex align-items-center justify-content-center">
-        <div class="tab-pane fade show active w-100" id="tabAdminCat">
-          <div id="donutDashboardChart" style="min-height: 260px;"></div>
+      <?php if (empty($recentActivities)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada aktivitas sistem tercatat.</div>
+      <?php else: ?>
+        <div class="list-group list-group-flush">
+          <?php foreach ($recentActivities as $act):
+            $isIn = ($act['movement_type'] ?? '') === 'IN';
+            $badgeCls = $isIn ? 'bg-green-lt text-green' : 'bg-azure-lt text-azure';
+            $typeLabel = $isIn ? 'Masuk' : 'Keluar';
+          ?>
+          <div class="list-group-item py-2 px-3">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div class="min-w-0">
+                <div class="fw-semibold text-dark text-truncate" title="<?= esc($act['product_name']) ?>"><?= esc($act['product_name']) ?></div>
+                <div class="small text-secondary"><?= esc($act['user_name'] ?? 'Sistem') ?> &bull; <?= esc($act['warehouse_name'] ?? 'Gudang') ?></div>
+              </div>
+              <div class="text-end text-nowrap">
+                <span class="badge <?= $badgeCls ?> fw-bold"><?= $isIn ? '+' : '-' ?><?= esc((int) $act['qty']) ?> <?= esc($act['unit']) ?></span>
+                <div class="small text-secondary mt-1"><?= ! empty($act['created_at']) ? date('d M H:i', strtotime($act['created_at'])) : '' ?></div>
+              </div>
+            </div>
+          </div>
+          <?php endforeach; ?>
         </div>
-        <div class="tab-pane fade w-100" id="tabAdminRole">
-          <div id="donutSecondaryChart" style="min-height: 260px;"></div>
-        </div>
-      </div>
+      <?php endif; ?>
     </div>
   </div>
 </div>
@@ -1034,19 +1045,32 @@ $roleMeta = match ($userRole) {
   </div>
   <div class="col-lg-5">
     <div class="card h-100">
-      <div class="card-header bg-transparent"><h3 class="card-title m-0">Produk Paling Laris</h3></div>
-      <?php if (empty($topProducts)): ?>
-        <div class="card-body text-center py-4 text-secondary">Belum ada data penjualan.</div>
+      <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h3 class="card-title m-0">Daftar Akun Pengguna</h3>
+        <a href="/users" class="btn btn-sm btn-outline-primary">Kelola</a>
+      </div>
+      <?php if (empty($recentUsers)): ?>
+        <div class="card-body text-center py-4 text-secondary">Belum ada pengguna terdaftar.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-vcenter card-table table-hover mb-0">
-            <thead><tr><th>Produk</th><th class="text-center">Terjual</th><th class="text-end">Total</th></tr></thead>
+            <thead><tr><th>Pengguna</th><th>Peran</th><th class="text-center">Status</th></tr></thead>
             <tbody>
-              <?php foreach ($topProducts as $tp): ?>
+              <?php foreach ($recentUsers as $ru): ?>
               <tr>
-                <td><div class="fw-semibold"><?= esc($tp['name']) ?></div><div class="small text-secondary"><?= esc($tp['code']) ?></div></td>
-                <td class="text-center"><span class="badge bg-success-lt fw-bold"><?= esc($tp['total_qty']) ?> <?= esc($tp['unit']) ?></span></td>
-                <td class="text-end tabular-nums fw-bold">Rp <?= number_format((float) $tp['total_sales'], 0, ',', '.') ?></td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="avatar avatar-sm bg-primary-lt text-primary fw-bold"><?= esc(mb_strtoupper(mb_substr(trim((string) $ru['name']), 0, 2))) ?></span>
+                    <div>
+                      <div class="fw-semibold"><?= esc($ru['name']) ?></div>
+                      <div class="small text-secondary"><?= esc($ru['email']) ?></div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge bg-secondary-lt fw-semibold"><?= esc(ucfirst($ru['role_name'])) ?></span></td>
+                <td class="text-center">
+                  <span class="badge <?= !empty($ru['is_active']) ? 'bg-success-lt' : 'bg-danger-lt' ?> fw-bold"><?= !empty($ru['is_active']) ? 'Aktif' : 'Nonaktif' ?></span>
+                </td>
               </tr>
               <?php endforeach; ?>
             </tbody>
@@ -1103,6 +1127,37 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // 2. Main Trend Chart
+  const adminWhEl = document.getElementById('adminWarehouseChart');
+  if (adminWhEl && userRole === 'admin') {
+    const whData = <?= json_encode(array_values($warehouseSummary ?? [])) ?>;
+    const whLabels = whData.map(w => w.name);
+    const whTotals = whData.map(w => Number(w.totalQty) || 0);
+    const whItems = whData.map(w => Number(w.itemCount) || 0);
+    new ApexCharts(adminWhEl, {
+      chart: { type: 'bar', height: 260, toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans, sans-serif' },
+      series: [
+        { name: 'Total Stok (Unit)', data: whTotals }
+      ],
+      colors: ['#2563eb'],
+      plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: '52%' } },
+      dataLabels: { enabled: false },
+      xaxis: {
+        categories: whLabels,
+        labels: { formatter: (val) => Math.round(val).toLocaleString('id-ID') + ' unit' }
+      },
+      yaxis: { labels: { maxWidth: 180 } },
+      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 },
+      tooltip: {
+        y: {
+          formatter: (val, opts) => {
+            const idx = opts.dataPointIndex;
+            return Math.round(val).toLocaleString('id-ID') + ' unit (' + (whItems[idx] || 0) + ' jenis produk)';
+          }
+        }
+      }
+    }).render();
+  }
+
   const mainEl = document.getElementById('mainDashboardChart');
   if (mainEl) {
     let chartType = 'area';
@@ -1130,13 +1185,15 @@ document.addEventListener('DOMContentLoaded', function () {
       ];
       colors = ['#10b981', '#2563eb'];
     } else {
+      isCurrency = false;
       series = [
-        { name: 'Penjualan', data: primaryData },
-        { name: 'Pembelian', data: secondaryData }
+        { name: 'Pesanan Jual (SO)', data: primaryData },
+        { name: 'Pesanan Beli (PO)', data: secondaryData }
       ];
       colors = ['#10b981', '#2563eb'];
     }
 
+    const unitLabel = userRole === 'gudang' ? 'unit' : 'dokumen';
     new ApexCharts(mainEl, {
       chart: { type: chartType, height: 280, toolbar: { show: false }, fontFamily: 'Plus Jakarta Sans, sans-serif' },
       series: series,
@@ -1150,12 +1207,12 @@ document.addEventListener('DOMContentLoaded', function () {
       xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false } },
       yaxis: {
         labels: {
-          formatter: (val) => isCurrency ? fmtRpShort(val) : Math.round(val) + ' unit'
+          formatter: (val) => isCurrency ? fmtRpShort(val) : Math.round(val) + ' ' + unitLabel
         }
       },
       tooltip: {
         y: {
-          formatter: (val) => isCurrency ? fmtRp(val) : Math.round(val).toLocaleString('id-ID') + ' unit'
+          formatter: (val) => isCurrency ? fmtRp(val) : Math.round(val).toLocaleString('id-ID') + ' ' + unitLabel
         }
       },
       grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
@@ -1295,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function () {
   } else if (userRole === 'sales') {
     const sd = <?= json_encode($soStatusDist ?? ['labels' => [], 'series' => []]) ?>;
     const tc = <?= json_encode($topCustomers ?? ['labels' => [], 'series' => []]) ?>;
-    renderDonut('donutDashboardChart', sd.labels, sd.series, ['#94a3b8', '#f59e0b', '#2563eb', '#10b981', '#ef4444'], false);
+    renderDonut('donutDashboardChart', sd.labels, sd.series, ['#2563eb', '#10b981', '#f59e0b', '#ef4444'], false);
     renderHBar('barDashboardChart', tc.labels, tc.series, '#10b981', true);
   } else if (userRole === 'purchasing') {
     const pd = <?= json_encode($poStatusDist ?? ['labels' => [], 'series' => []]) ?>;
@@ -1308,11 +1365,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const wsSeries = <?= json_encode(array_map('intval', array_column($warehouseSummary ?? [], 'totalQty'))) ?>;
     renderDonut('donutDashboardChart', cs.labels, cs.series, ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899'], true);
     renderHBar('barDashboardChart', wsLabels, wsSeries, '#2563eb', false);
-  } else {
-    const cp = <?= json_encode($categoryProductDist ?? ['labels' => [], 'series' => []]) ?>;
-    const ur = <?= json_encode($userRoleDist ?? ['labels' => [], 'series' => []]) ?>;
-    renderDonut('donutDashboardChart', cp.labels, cp.series, ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#64748b'], false);
-    renderDonut('donutSecondaryChart', ur.labels, ur.series, ['#0f172a', '#2563eb', '#10b981', '#f59e0b', '#7c3aed'], false);
   }
 
   // 5. Slide-Over Quick Drawer (PO Review / ACC)
