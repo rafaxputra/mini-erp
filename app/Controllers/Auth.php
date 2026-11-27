@@ -13,7 +13,8 @@ class Auth extends BaseController
     public function loginPost()
     {
         $email = strtolower(trim((string) $this->request->getPost('email')));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
+        $_POST['email'] = $email;
+        $this->request->setGlobal('post', $_POST);
 
         $rules = ['email' => 'required|valid_email', 'password' => 'required|min_length[6]'];
         $messages = [

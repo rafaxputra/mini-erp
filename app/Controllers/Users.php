@@ -18,7 +18,8 @@ class Users extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
         $email = strtolower(trim((string) $this->request->getPost('email')));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
+        $_POST['email'] = $email;
+        $this->request->setGlobal('post', $_POST);
         $messages = [
             'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
             'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],
@@ -32,6 +33,9 @@ class Users extends BaseController
             'role_id' => 'required|integer|is_not_unique[roles.id]',
         ], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new UserModel())->where('LOWER(email)', strtolower($email))->first()) {
+            return redirect()->back()->withInput()->with('errors', ['email' => 'Email ' . $email . ' sudah dipakai pengguna lain.']);
         }
         (new UserModel())->insert([
             'name' => $this->request->getPost('name'),
@@ -55,7 +59,8 @@ class Users extends BaseController
         $item = (new UserModel())->find($id);
         if (! $item) return redirect()->to('/users')->with('error', 'Pengguna tidak ditemukan.');
         $email = strtolower(trim((string) $this->request->getPost('email')));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
+        $_POST['email'] = $email;
+        $this->request->setGlobal('post', $_POST);
         $messages = [
             'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
             'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],
@@ -69,6 +74,9 @@ class Users extends BaseController
             'role_id' => 'required|integer|is_not_unique[roles.id]',
         ], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new UserModel())->where('LOWER(email)', strtolower($email))->where('id !=', $id)->first()) {
+            return redirect()->back()->withInput()->with('errors', ['email' => 'Email ' . $email . ' sudah dipakai pengguna lain.']);
         }
         $data = [
             'name' => $this->request->getPost('name'),

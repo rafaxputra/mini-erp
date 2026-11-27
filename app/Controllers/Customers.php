@@ -46,7 +46,8 @@ class Customers extends BaseController
     {
         if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
         $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
+        $_POST['code'] = $code;
+        $this->request->setGlobal('post', $_POST);
         $rules = ['code' => 'required|max_length[20]|is_unique[customers.code]', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
         $messages = [
             'code' => ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'],
@@ -57,6 +58,9 @@ class Customers extends BaseController
 
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new CustomerModel())->where('LOWER(code)', strtolower($code))->first()) {
+            return redirect()->back()->withInput()->with('errors', ['code' => 'Kode pelanggan ' . $code . ' sudah dipakai.']);
         }
         (new CustomerModel())->insert($this->request->getPost(['code', 'name', 'phone', 'email', 'address']));
         return redirect()->to('/customers')->with('success', 'Pelanggan berhasil ditambahkan.');
@@ -97,13 +101,17 @@ class Customers extends BaseController
 
         if (! $hasTransactions) {
             $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
-            $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
+            $_POST['code'] = $code;
+            $this->request->setGlobal('post', $_POST);
             $rules['code'] = 'required|max_length[20]|is_unique[customers.code,id,' . $id . ']';
             $messages['code'] = ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'];
         }
 
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if (! $hasTransactions && (new CustomerModel())->where('LOWER(code)', strtolower($code))->where('id !=', $id)->first()) {
+            return redirect()->back()->withInput()->with('errors', ['code' => 'Kode pelanggan ' . $code . ' sudah dipakai.']);
         }
 
         $updateData = $this->request->getPost(['name', 'phone', 'email', 'address']);

@@ -25,7 +25,8 @@ class Units extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa menambah satuan.')) return $r;
         $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
+        $_POST['code'] = $code;
+        $this->request->setGlobal('post', $_POST);
 
         $messages = [
             'code' => [
@@ -47,6 +48,9 @@ class Units extends BaseController
             'description' => 'permit_empty|max_length[255]',
         ], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new UnitModel())->where('LOWER(code)', strtolower($code))->first()) {
+            return redirect()->back()->withInput()->with('errors', ['code' => 'Kode satuan ' . $code . ' sudah digunakan.']);
         }
 
         (new UnitModel())->insert([
@@ -70,7 +74,8 @@ class Units extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengubah satuan.')) return $r;
         $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
+        $_POST['code'] = $code;
+        $this->request->setGlobal('post', $_POST);
 
         $messages = [
             'code' => [
@@ -92,6 +97,9 @@ class Units extends BaseController
             'description' => 'permit_empty|max_length[255]',
         ], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new UnitModel())->where('LOWER(code)', strtolower($code))->where('id !=', $id)->first()) {
+            return redirect()->back()->withInput()->with('errors', ['code' => 'Kode satuan ' . $code . ' sudah digunakan.']);
         }
 
         $code = strtolower(trim((string) $this->request->getPost('code')));

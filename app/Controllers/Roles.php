@@ -21,13 +21,17 @@ class Roles extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola peran.')) return $r;
         $name = strtolower(trim((string) $this->request->getPost('name')));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['name' => $name]));
+        $_POST['name'] = $name;
+        $this->request->setGlobal('post', $_POST);
         $messages = [
             'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
             'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
         ];
         if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name]', 'description' => 'permit_empty|max_length[255]'], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new RoleModel())->where('LOWER(name)', strtolower($name))->first()) {
+            return redirect()->back()->withInput()->with('errors', ['name' => 'Nama peran ' . $name . ' sudah dipakai.']);
         }
         (new RoleModel())->insert(['name' => $name, 'description' => $this->request->getPost('description')]);
         return redirect()->to('/roles')->with('success', 'Peran berhasil ditambahkan.');
@@ -57,13 +61,17 @@ class Roles extends BaseController
             return redirect()->to('/roles')->with('success', 'Peran berhasil diubah.');
         }
         $name = strtolower(trim((string) $this->request->getPost('name')));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['name' => $name]));
+        $_POST['name'] = $name;
+        $this->request->setGlobal('post', $_POST);
         $messages = [
             'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
             'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
         ];
         if (! $this->validate(['name' => 'required|min_length[2]|max_length[20]|alpha_dash|is_unique[roles.name,id,' . $id . ']', 'description' => 'permit_empty|max_length[255]'], $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if ((new RoleModel())->where('LOWER(name)', strtolower($name))->where('id !=', $id)->first()) {
+            return redirect()->back()->withInput()->with('errors', ['name' => 'Nama peran ' . $name . ' sudah dipakai.']);
         }
         (new RoleModel())->update($id, ['name' => $name, 'description' => $this->request->getPost('description')]);
         return redirect()->to('/roles')->with('success', 'Peran berhasil diubah.');

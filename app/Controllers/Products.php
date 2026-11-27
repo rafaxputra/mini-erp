@@ -60,8 +60,12 @@ class Products extends BaseController
             'selling_price' => $cleanSellPrice,
         ];
         if ($this->request->getPost('code') !== null) {
-            $postMerged['code'] = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+            $cleanCode = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+            $_POST['code'] = $cleanCode;
+            $postMerged['code'] = $cleanCode;
         }
+        $_POST['purchase_price'] = $cleanBuyPrice;
+        $_POST['selling_price'] = $cleanSellPrice;
         $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
 
         $rules = [
@@ -89,6 +93,10 @@ class Products extends BaseController
 
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        $prodCode = (string) $this->request->getPost('code');
+        if ((new ProductModel())->where('LOWER(code)', strtolower($prodCode))->first()) {
+            return redirect()->back()->withInput()->with('errors', ['code' => 'Kode produk ' . $prodCode . ' sudah dipakai produk lain.']);
         }
 
         $minStock = (int) $this->request->getPost('min_stock');
@@ -173,8 +181,12 @@ class Products extends BaseController
             'selling_price' => $cleanSellPrice,
         ];
         if ($this->request->getPost('code') !== null) {
-            $postMerged['code'] = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+            $cleanCode = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+            $_POST['code'] = $cleanCode;
+            $postMerged['code'] = $cleanCode;
         }
+        $_POST['purchase_price'] = $cleanBuyPrice;
+        $_POST['selling_price'] = $cleanSellPrice;
         $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
 
         $db = \Config\Database::connect();
@@ -209,6 +221,12 @@ class Products extends BaseController
 
         if (! $this->validate($rules, $messages)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+        if (! $hasTransactions) {
+            $prodCode = (string) $this->request->getPost('code');
+            if ((new ProductModel())->where('LOWER(code)', strtolower($prodCode))->where('id !=', $id)->first()) {
+                return redirect()->back()->withInput()->with('errors', ['code' => 'Kode produk ' . $prodCode . ' sudah dipakai produk lain.']);
+            }
         }
 
         $minStock = (int) $this->request->getPost('min_stock');
