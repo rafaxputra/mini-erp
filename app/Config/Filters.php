@@ -26,6 +26,7 @@ class Filters extends BaseFilters
      */
     public array $aliases = [
         'auth'          => \App\Filters\AuthFilter::class,
+        'triminput'     => \App\Filters\TrimInputFilter::class,
         'csrf'          => CSRF::class,
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
@@ -73,6 +74,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'triminput',
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',

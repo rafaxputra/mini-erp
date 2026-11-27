@@ -17,6 +17,8 @@ class Users extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
+        $email = strtolower(trim((string) $this->request->getPost('email')));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
         $messages = [
             'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
             'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],
@@ -52,6 +54,8 @@ class Users extends BaseController
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola pengguna.')) return $r;
         $item = (new UserModel())->find($id);
         if (! $item) return redirect()->to('/users')->with('error', 'Pengguna tidak ditemukan.');
+        $email = strtolower(trim((string) $this->request->getPost('email')));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
         $messages = [
             'name' => ['required' => 'Nama pengguna wajib diisi.', 'min_length' => 'Nama pengguna minimal 2 karakter.', 'max_length' => 'Nama pengguna maksimal 100 karakter.'],
             'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.', 'max_length' => 'Email maksimal 150 karakter.', 'is_unique' => 'Email {value} sudah dipakai pengguna lain.'],

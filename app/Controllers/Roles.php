@@ -21,6 +21,7 @@ class Roles extends BaseController
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengelola peran.')) return $r;
         $name = strtolower(trim((string) $this->request->getPost('name')));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['name' => $name]));
         $messages = [
             'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
             'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],
@@ -56,6 +57,7 @@ class Roles extends BaseController
             return redirect()->to('/roles')->with('success', 'Peran berhasil diubah.');
         }
         $name = strtolower(trim((string) $this->request->getPost('name')));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['name' => $name]));
         $messages = [
             'name' => ['required' => 'Nama peran wajib diisi.', 'min_length' => 'Nama peran minimal 2 karakter.', 'max_length' => 'Nama peran maksimal 20 karakter.', 'alpha_dash' => 'Nama peran hanya boleh berisi huruf, angka, garis bawah, dan strip, tanpa spasi.', 'is_unique' => 'Nama peran {value} sudah dipakai.'],
             'description' => ['max_length' => 'Deskripsi maksimal 255 karakter.'],

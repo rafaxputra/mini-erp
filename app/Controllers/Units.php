@@ -24,6 +24,8 @@ class Units extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa menambah satuan.')) return $r;
+        $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
 
         $messages = [
             'code' => [
@@ -67,6 +69,8 @@ class Units extends BaseController
     public function update($id)
     {
         if ($r = $this->requireRole(['admin'], '/dashboard', 'Hanya admin yang bisa mengubah satuan.')) return $r;
+        $code = strtolower(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
 
         $messages = [
             'code' => [

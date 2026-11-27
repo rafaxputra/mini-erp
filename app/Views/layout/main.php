@@ -647,6 +647,29 @@ document.addEventListener('DOMContentLoaded', function () {
       }, 220);
     });
   }
+  // Global Auto-Trim: hapus spasi di awal/akhir pada seluruh input teks/email/textarea (kecuali password)
+  const trimField = function (el) {
+    if (!el || typeof el.value !== 'string') return;
+    const type = (el.getAttribute('type') || 'text').toLowerCase();
+    if (['password', 'file', 'checkbox', 'radio', 'hidden', 'date', 'number'].includes(type)) return;
+    let val = el.value.trim();
+    if (el.getAttribute('name') === 'code') {
+      val = val.replace(/\s+/g, '');
+    }
+    if (el.value !== val) {
+      el.value = val;
+    }
+  };
+  document.addEventListener('focusout', function (e) {
+    if (e.target && e.target.matches('input, textarea')) {
+      trimField(e.target);
+    }
+  });
+  document.addEventListener('submit', function (e) {
+    if (e.target && e.target.matches('form')) {
+      e.target.querySelectorAll('input, textarea').forEach(trimField);
+    }
+  }, true);
 });
 </script>
 

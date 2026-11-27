@@ -45,6 +45,8 @@ class Customers extends BaseController
     public function store()
     {
         if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
         $rules = ['code' => 'required|max_length[20]|is_unique[customers.code]', 'name' => 'required|min_length[2]|max_length[150]', 'phone' => 'permit_empty|max_length[30]', 'email' => 'permit_empty|valid_email|max_length[150]', 'address' => 'permit_empty'];
         $messages = [
             'code' => ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'],
@@ -94,6 +96,8 @@ class Customers extends BaseController
         ];
 
         if (! $hasTransactions) {
+            $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+            $this->request->setGlobal('post', array_merge($this->request->getPost(), ['code' => $code]));
             $rules['code'] = 'required|max_length[20]|is_unique[customers.code,id,' . $id . ']';
             $messages['code'] = ['required' => 'Kode pelanggan wajib diisi.', 'max_length' => 'Kode pelanggan maksimal 20 karakter.', 'is_unique' => 'Kode pelanggan {value} sudah dipakai.'];
         }

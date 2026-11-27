@@ -12,6 +12,9 @@ class Auth extends BaseController
     }
     public function loginPost()
     {
+        $email = strtolower(trim((string) $this->request->getPost('email')));
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), ['email' => $email]));
+
         $rules = ['email' => 'required|valid_email', 'password' => 'required|min_length[6]'];
         $messages = [
             'email' => ['required' => 'Email wajib diisi.', 'valid_email' => 'Format email tidak valid.'],
@@ -20,7 +23,7 @@ class Auth extends BaseController
         if (! $this->validate($rules, $messages)) {
             return redirect()->to('/auth/login')->withInput()->with('errors', $this->validator->getErrors());
         }
-        $user = (new UserModel())->select('users.*, roles.name AS role_name')->join('roles', 'roles.id = users.role_id')->where('email', $this->request->getPost('email'))->first();
+        $user = (new UserModel())->select('users.*, roles.name AS role_name')->join('roles', 'roles.id = users.role_id')->where('LOWER(email)', $email)->first();
         if (! $user || ! password_verify($this->request->getPost('password'), $user['password_hash'])) {
             return redirect()->to('/auth/login')->withInput()->with('error', 'Email atau password salah.');
         }

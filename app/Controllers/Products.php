@@ -55,10 +55,14 @@ class Products extends BaseController
         // Bersihkan format titik ribuan pada harga beli dan harga jual
         $cleanBuyPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('purchase_price'));
         $cleanSellPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('selling_price'));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), [
+        $postMerged = [
             'purchase_price' => $cleanBuyPrice,
             'selling_price' => $cleanSellPrice,
-        ]));
+        ];
+        if ($this->request->getPost('code') !== null) {
+            $postMerged['code'] = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+        }
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
 
         $rules = [
             'code' => 'required|max_length[20]|is_unique[products.code]',
@@ -164,10 +168,14 @@ class Products extends BaseController
         // Bersihkan format titik ribuan pada harga beli dan harga jual
         $cleanBuyPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('purchase_price'));
         $cleanSellPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('selling_price'));
-        $this->request->setGlobal('post', array_merge($this->request->getPost(), [
+        $postMerged = [
             'purchase_price' => $cleanBuyPrice,
             'selling_price' => $cleanSellPrice,
-        ]));
+        ];
+        if ($this->request->getPost('code') !== null) {
+            $postMerged['code'] = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
+        }
+        $this->request->setGlobal('post', array_merge($this->request->getPost(), $postMerged));
 
         $db = \Config\Database::connect();
         $hasTransactions = $db->table('stock_movements')->where('product_id', $id)->countAllResults() > 0
