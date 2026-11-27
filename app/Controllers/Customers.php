@@ -39,12 +39,12 @@ class Customers extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/customers', 'Hanya Admin yang bisa mengelola customer.')) return $r;
         return view('customers/form', ['title' => 'Tambah Pelanggan', 'item' => null]);
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/customers', 'Hanya Admin yang bisa mengelola customer.')) return $r;
         $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
         $_POST['code'] = $code;
         $_REQUEST['code'] = $code;
@@ -69,7 +69,7 @@ class Customers extends BaseController
     }
     public function edit($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/customers', 'Hanya Admin yang bisa mengelola customer.')) return $r;
         $item = (new CustomerModel())->find($id);
         if (! $item) return redirect()->to('/customers')->with('error', 'Pelanggan tidak ditemukan.');
 
@@ -83,7 +83,7 @@ class Customers extends BaseController
     }
     public function update($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/customers', 'Hanya Admin yang bisa mengelola customer.')) return $r;
         $item = (new CustomerModel())->find($id);
         if (! $item) return redirect()->to('/customers')->with('error', 'Pelanggan tidak ditemukan.');
 
@@ -128,7 +128,7 @@ class Customers extends BaseController
     }
     public function delete($id)
     {
-        if ($r = $this->requireRole(['admin', 'sales'], '/customers', 'Hanya Staff Sales dan Admin yang bisa mengelola customer.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/customers', 'Hanya Admin yang bisa mengelola customer.')) return $r;
         
         $hasTransactions = \Config\Database::connect()->table('sales_orders')->where('customer_id', $id)->countAllResults() > 0;
         if ($hasTransactions) {

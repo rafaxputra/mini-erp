@@ -40,7 +40,7 @@ class Products extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/products', 'Hanya Admin yang bisa mengelola produk.')) return $r;
         return view('products/form', [
             'title' => 'Tambah Produk',
             'item' => null,
@@ -50,7 +50,7 @@ class Products extends BaseController
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/products', 'Hanya Admin yang bisa mengelola produk.')) return $r;
         
         // Bersihkan format titik ribuan pada harga beli dan harga jual
         $cleanBuyPrice = (float) str_replace(['.', ','], ['', '.'], (string) $this->request->getPost('purchase_price'));
@@ -154,7 +154,7 @@ class Products extends BaseController
     }
     public function edit($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/products', 'Hanya Admin yang bisa mengelola produk.')) return $r;
         $item = (new ProductModel())->find($id);
         if (! $item) return redirect()->to('/products')->with('error', 'Produk tidak ditemukan.');
 
@@ -173,7 +173,7 @@ class Products extends BaseController
     }
     public function update($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/products', 'Hanya Admin yang bisa mengelola produk.')) return $r;
         $item = (new ProductModel())->find($id);
         if (! $item) return redirect()->to('/products')->with('error', 'Produk tidak ditemukan.');
 
@@ -275,7 +275,7 @@ class Products extends BaseController
     }
     public function delete($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/products', 'Hanya Staff Purchasing dan Admin yang bisa mengelola produk.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/products', 'Hanya Admin yang bisa mengelola produk.')) return $r;
         $prod = (new ProductModel())->find($id);
         if (! $prod) return redirect()->to('/products')->with('error', 'Produk tidak ditemukan.');
 

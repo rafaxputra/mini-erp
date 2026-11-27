@@ -333,7 +333,8 @@ class Dashboard extends BaseController
                 ->join('warehouses w', 'w.id = so.warehouse_id')
                 ->where('so.status', 'confirmed')
                 ->groupBy('so.so_number')
-                ->orderBy('MIN(so.order_date)', 'ASC')
+                ->orderBy('MIN(so.order_date)', 'DESC')
+                ->orderBy('MIN(so.id)', 'DESC')
                 ->limit(6)
                 ->get()
                 ->getResultArray();
@@ -343,7 +344,8 @@ class Dashboard extends BaseController
                 ->join('suppliers s', 's.id = po.supplier_id')
                 ->where('po.status', 'approved')
                 ->groupBy('po.po_number')
-                ->orderBy('MIN(po.order_date)', 'ASC')
+                ->orderBy('MIN(po.order_date)', 'DESC')
+                ->orderBy('MIN(po.id)', 'DESC')
                 ->limit(6)
                 ->get()
                 ->getResultArray();

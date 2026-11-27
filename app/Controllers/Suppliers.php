@@ -39,12 +39,12 @@ class Suppliers extends BaseController
     }
     public function create()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/suppliers', 'Hanya Admin yang bisa mengelola supplier.')) return $r;
         return view('suppliers/form', ['title' => 'Tambah Pemasok', 'item' => null]);
     }
     public function store()
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/suppliers', 'Hanya Admin yang bisa mengelola supplier.')) return $r;
         $code = strtoupper(preg_replace('/\s+/', '', trim((string) $this->request->getPost('code'))) ?? '');
         $_POST['code'] = $code;
         $_REQUEST['code'] = $code;
@@ -69,7 +69,7 @@ class Suppliers extends BaseController
     }
     public function edit($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/suppliers', 'Hanya Admin yang bisa mengelola supplier.')) return $r;
         $item = (new SupplierModel())->find($id);
         if (! $item) return redirect()->to('/suppliers')->with('error', 'Pemasok tidak ditemukan.');
 
@@ -83,7 +83,7 @@ class Suppliers extends BaseController
     }
     public function update($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/suppliers', 'Hanya Admin yang bisa mengelola supplier.')) return $r;
         $item = (new SupplierModel())->find($id);
         if (! $item) return redirect()->to('/suppliers')->with('error', 'Pemasok tidak ditemukan.');
 
@@ -128,7 +128,7 @@ class Suppliers extends BaseController
     }
     public function delete($id)
     {
-        if ($r = $this->requireRole(['admin', 'purchasing'], '/suppliers', 'Hanya Staff Purchasing dan Admin yang bisa mengelola supplier.')) return $r;
+        if ($r = $this->requireRole(['admin'], '/suppliers', 'Hanya Admin yang bisa mengelola supplier.')) return $r;
         
         $hasTransactions = \Config\Database::connect()->table('purchase_orders')->where('supplier_id', $id)->countAllResults() > 0;
         if ($hasTransactions) {
